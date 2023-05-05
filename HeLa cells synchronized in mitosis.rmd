@@ -1,0 +1,23 @@
+---
+title: "Topic 3: Proteome-wide Screen for RNA-dependent Proteins; Subtopic 3: HeLa synchronized in Mitosis"
+author: "Jimena, Alexandra, Verna"
+date: "2023-05-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Topic 3.3: HeLa Cells Synchronized in Mitosis
+#Proteome-wide Screen for RNA-dependent Proteins
+
+Load the dataset from the Dropbox
+
+
+```{r}
+RDeeP_HeLa_Mitosis = read.csv("https://www.dropbox.com/s/ttj1z98mxefq0aj/RDeeP_HeLa_Mitosis.csv?dl=1", header=TRUE, row.names=1, sep = ";")
+head(RDeeP_HeLa_Mitosis)
+```
+
+
