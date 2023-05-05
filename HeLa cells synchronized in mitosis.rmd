@@ -1,6 +1,6 @@
 ---
 title: "Topic 3: Proteome-wide Screen for RNA-dependent Proteins; Subtopic 3: HeLa synchronized in Mitosis"
-author: "Jimena, Alexandra, Verna"
+author: "Jimena, Alexandra, Verena"
 date: "2023-05-05"
 output: html_document
 ---
