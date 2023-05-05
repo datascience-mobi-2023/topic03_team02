@@ -1,0 +1,3 @@
+MS_Table <- read.table("https://www.dropbox.com/s/ttj1z98mxefq0aj/RDeeP_HeLa_Mitosis.csv?dl=0&copy_to_dropbox=true", header=TRUE, row.names=1, sep = ";")
+head(rownames(MS_Table),12)
+head(colnames(MS_Table),12)
