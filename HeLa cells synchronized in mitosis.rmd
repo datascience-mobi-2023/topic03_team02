@@ -10,18 +10,40 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Topic 3.3: HeLa Cells Synchronized in Mitosis
-#Proteome-wide Screen for RNA-dependent Proteins
+
+# Proteome-wide Screen for RNA-dependent Proteins
 
 Load the dataset from the Dropbox
-
 
 ```{r}
 RDeeP_HeLa_Mitosis = read.csv("https://www.dropbox.com/s/ttj1z98mxefq0aj/RDeeP_HeLa_Mitosis.csv?dl=1", header=TRUE, row.names=1, sep = ";")
 head(RDeeP_HeLa_Mitosis)
 ```
 
-Finding which rows are all 0 (and are most likely experimental errors)
+
+## 1. Preparing data for analysis
+
+#### 1.1 Data description
+
+```{r}
+dim(RDeeP_HeLa_Mitosis)
+head(rownames(RDeeP_HeLa_Mitosis))
+head(colnames(RDeeP_HeLa_Mitosis))
+```
+
+#### 1.2 Finding rows with missing values
+
+Finding which rows are all 0 (and are most likely experimental errors). And removing this rows.
+
 ```{r}
 which(rowSums(RDeeP_HeLa_Mitosis)==0)
 ```
+
+#### 1.3 Check data format
+
+```{r}
+sum(apply(RDeeP_HeLa_Mitosis, 1, is.numeric)) == nrow(RDeeP_HeLa_Mitosis)
+```
+
+This means we have numeric data, aka the data from the mass spectrometry.
 
