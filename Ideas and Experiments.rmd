@@ -1,0 +1,108 @@
+---
+title: "Ideas and Experiments"
+author: "Kantelhardt"
+date: "2023-05-23"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### 1.4.1 Reordering columns
+
+```{r}
+HeLa_Mitosis_reordered <- RDeeP_HeLa_Mitosis[, c(
+  paste0("Fraction", 1:25, "_Ctrl_Rep1"),
+  paste0("Fraction", 1:25, "_Ctrl_Rep2"),
+  paste0("Fraction", 1:25, "_Ctrl_Rep3"),
+  paste0("Fraction", 1:25, "_RNase_Rep1"),
+  paste0("Fraction", 1:25, "_RNase_Rep2"),
+  paste0("Fraction", 1:25, "_RNase_Rep3")
+)]
+head(HeLa_Mitosis_reordered)
+sum(apply(HeLa_Mitosis_reordered, 2, is.numeric)) == ncol(RDeeP_HeLa_Mitosis)
+```
+
+#### 1.4.2 Separate Ctrl and RNase
+
+```{r}
+MS_Table_Ctrl <-MS_Table_reordered[,1:75]
+#View(MS_Table_Ctrl)
+MS_Table_RNase <-MS_Table_reordered[,76:150]
+#View(MS_Table_RNase)
+```
+
+## 2. Scale and Reduce Dataset
+
+#### 2.1 Normalization (mean value methode)
+
+For the normalization each replicate has to be separated, therefore we design 6 separate dataframes.
+
+```{r}
+MS_Table_Ctrl_rep1 <-MS_Table_reordered[,1:25]
+MS_Table_Ctrl_rep2 <-MS_Table_reordered[,26:50]
+MS_Table_Ctrl_rep3 <-MS_Table_reordered[,51:75]
+MS_Table_RNase_rep1 <-MS_Table_reordered[,76:100]
+MS_Table_RNase_rep2 <-MS_Table_reordered[,101:125]
+MS_Table_RNase_rep3 <-MS_Table_reordered[,126:150]
+```
+
+On them we apply separately the mean value methode.
+
+```{r}
+#rowMeans(MS_Table_Ctrl_rep1)
+#apply(MS_Table_Ctrl_rep1,1,sd)
+MS_Table_Ctrl_rep1_normalized <- apply(t(MS_Table_Ctrl_rep1),1, function(x)(x - mean(x)) / sd(x))
+View(MS_Table_Ctrl_rep1_normalized)
+```
+
+Another idea to apply the mean value method on each row of every dataframe. All values below 0 are set back to 0.
+
+```{r}
+
+# MS_Table_Ctrl_rep1
+MS_Table_Ctrl_rep1_normalized <- t(apply(MS_Table_Ctrl_rep1, 1, function(x) {
+  normalized <- x - mean(x)
+  normalized[normalized < 0] <- 0
+  return(normalized)
+}))
+
+# View(MS_Table_Ctrl_rep1_normalized)
+
+# MS_Table_Ctrl_rep2
+MS_Table_Ctrl_rep2_normalized <- t(apply(MS_Table_Ctrl_rep2, 1, function(x) {
+  normalized <- x - mean(x)
+  normalized[normalized < 0] <- 0
+  return(normalized)
+}))
+
+# MS_Table_Ctrl_rep3
+MS_Table_Ctrl_rep3_normalized <- t(apply(MS_Table_Ctrl_rep3, 1, function(x) {
+  normalized <- x - mean(x)
+  normalized[normalized < 0] <- 0
+  return(normalized)
+}))
+
+# MS_Table_RNase_rep1
+MS_Table_RNase_rep1_normalized <- t(apply(MS_Table_RNase_rep1, 1, function(x) {
+  normalized <- x - mean(x)
+  normalized[normalized < 0] <- 0
+  return(normalized)
+}))
+
+# MS_Table_RNase_rep2
+MS_Table_RNase_rep2_normalized <- t(apply(MS_Table_RNase_rep2, 1, function(x) {
+  normalized <- x - mean(x)
+  normalized[normalized < 0] <- 0
+  return(normalized)
+}))
+
+# MS_Table_RNase_rep3
+MS_Table_RNase_rep3_normalized <- t(apply(MS_Table_RNase_rep3, 1, function(x) {
+  normalized <- x - mean(x)
+  normalized[normalized < 0] <- 0
+  return(normalized)
+}))
+
+```
