@@ -10,10 +10,10 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Topic 3.3: HeLa Cells Synchronized in Mitosis
+
 #Proteome-wide Screen for RNA-dependent Proteins
 
 Load the dataset from the Dropbox
-
 
 ```{r}
 RDeeP_HeLa_Mitosis = read.csv("https://www.dropbox.com/s/ttj1z98mxefq0aj/RDeeP_HeLa_Mitosis.csv?dl=1", header=TRUE, row.names=1, sep = ";")
@@ -21,6 +21,7 @@ head(RDeeP_HeLa_Mitosis)
 ```
 
 Finding which rows are all 0 (and are most likely experimental errors)
+
 ```{r}
 which(rowSums(RDeeP_HeLa_Mitosis)==0)
 ```
@@ -29,4 +30,3 @@ which(rowSums(RDeeP_HeLa_Mitosis)==0)
 #Complete DataSet
 View(RDeeP_HeLa_Mitosis)
 ```
-
