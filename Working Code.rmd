@@ -37,7 +37,9 @@ Finding which rows are all 0 (and are most likely experimental errors). And remo
 
 ```{r}
 which(rowSums(RDeeP_HeLa_Mitosis)==0)
-RDeeP_HeLa_Mitosis[-which(rowSums(RDeeP_HeLa_Mitosis)==0)]
+RDeeP_HeLa_Mitosis = RDeeP_HeLa_Mitosis[-which(rowSums(RDeeP_HeLa_Mitosis)==0)]
+#Tabelle ohne die Nullzeile wieder in der Variable gespeichert
+
 ```
 #### 1.2.2 Deleting weird rows
 
