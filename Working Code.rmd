@@ -54,10 +54,21 @@ RDeeP_HeLa_Mitosis[-1]
 #### 1.3 Check data format
 
 ```{r}
-sum(apply(RDeeP_HeLa_Mitosis, 1, is.numeric)) == nrow(RDeeP_HeLa_Mitosis)
+#? how does this work
+# Idea: determine data type -> numerical, categorical, etc
+
+nrow(RDeeP_HeLa_Mitosis)
+ncol(RDeeP_HeLa_Mitosis)
+sum(apply(RDeeP_HeLa_Mitosis, 1, is.na)) # Summe aller Spalten, die NA Werte haben
+sum(apply(RDeeP_HeLa_Mitosis, 2, is.na)) # Summe aller Zeilen, die NA Werte haben
+sum(apply(RDeeP_HeLa_Mitosis, 1, is.numeric))
+sum(apply(RDeeP_HeLa_Mitosis, 2, is.numeric))
+
+#sum(apply(RDeeP_HeLa_Mitosis, 1, is.numeric)) == nrow(RDeeP_HeLa_Mitosis)
 ```
 
 This means we have numeric data, aka the data from the mass spectrometry.
+
 
 ```{r}
 #Complete DataSet
