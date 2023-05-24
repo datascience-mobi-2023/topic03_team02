@@ -37,6 +37,7 @@ Finding which rows are all 0 (and are most likely experimental errors). And remo
 
 ```{r}
 which(rowSums(RDeeP_HeLa_Mitosis)==0)
+RDeeP_HeLa_Mitosis[-which(rowSums(RDeeP_HeLa_Mitosis)==0)]
 ```
 
 #### 1.3 Check data format
