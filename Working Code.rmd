@@ -31,7 +31,7 @@ head(rownames(RDeeP_HeLa_Mitosis))
 head(colnames(RDeeP_HeLa_Mitosis))
 ```
 
-#### 1.2 Finding rows with missing values
+#### 1.2.1 Finding rows with missing values
 
 Finding which rows are all 0 (and are most likely experimental errors). And removing this rows.
 
@@ -39,6 +39,17 @@ Finding which rows are all 0 (and are most likely experimental errors). And remo
 which(rowSums(RDeeP_HeLa_Mitosis)==0)
 RDeeP_HeLa_Mitosis[-which(rowSums(RDeeP_HeLa_Mitosis)==0)]
 ```
+#### 1.2.2 Deleting weird rows
+
+When looking at the dataset we noticed that the first 7 rows have no accumulation of protein in one fraction. We can't work with them, therefore we delete them
+
+```{r}
+RDeeP_HeLa_Mitosis[-1]
+
+#Ich bin mir nicht ganz sicher was hier ab geht: Das ist der gleiche Befehl wie oben, wo er die Zeile löscht. Nur hier löscht er eine Spalte
+```
+
+
 
 #### 1.3 Check data format
 
