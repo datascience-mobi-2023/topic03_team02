@@ -9,7 +9,13 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-#### 1.4.1 Reordering columns
+
+```{r}
+RDeeP_HeLa_Mitosis = read.csv("https://www.dropbox.com/s/ttj1z98mxefq0aj/RDeeP_HeLa_Mitosis.csv?dl=1", header=TRUE, row.names=1, sep = ";")
+head(RDeeP_HeLa_Mitosis)
+```
+
+## Reordering columns
 
 ```{r}
 HeLa_Mitosis_reordered <- RDeeP_HeLa_Mitosis[, c(
