@@ -11,8 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Topic 3.3: HeLa Cells Synchronized in Mitosis
 
-
-# Proteome-wide Screen for RNA-dependent Proteins
+### Proteome-wide Screen for RNA-dependent Proteins
 
 Load the dataset from the Dropbox
 
@@ -21,7 +20,7 @@ RDeeP_HeLa_Mitosis = read.csv("https://www.dropbox.com/s/ttj1z98mxefq0aj/RDeeP_H
 head(RDeeP_HeLa_Mitosis)
 ```
 
-## 1. Preparing data for analysis
+## 1. Preparing data for analysis (Data Cleanup)
 
 #### 1.1 Data description
 
@@ -31,33 +30,43 @@ head(rownames(RDeeP_HeLa_Mitosis))
 head(colnames(RDeeP_HeLa_Mitosis))
 ```
 
-#### 1.2.1 Finding rows with missing values
+#### 1.2 Finding rows with missing values
 
 Finding which rows are all 0 (and are most likely experimental errors). And removing this rows.
 
 ```{r}
 which(rowSums(RDeeP_HeLa_Mitosis)==0)
+
 RDeeP_HeLa_Mitosis = RDeeP_HeLa_Mitosis[-which(rowSums(RDeeP_HeLa_Mitosis)==0)]
 #Tabelle ohne die Nullzeile wieder in der Variable gespeichert
 
 ```
-#### 1.2.2 Deleting weird rows
 
-When looking at the dataset we noticed that the first 7 rows have no accumulation of protein in one fraction. We can't work with them, therefore we delete them
+#### 1.3 Handeling other wierd rows
+
+When looking at the dataset we noticed that already the first 7 rows have accumulation of protein in every fraction. We are not sure if we can work with them as they maybe have no clear peak, therefore we first identify them and then maybe delete them later.
 
 ```{r}
-RDeeP_HeLa_Mitosis[-1]
+# Find rows without any zeros
+nonzero_rows <- RDeeP_HeLa_Mitosis[rowSums(RDeeP_HeLa_Mitosis == 0) == 0, ]
 
-#Ich bin mir nicht ganz sicher was hier ab geht: Das ist der gleiche Befehl wie oben, wo er die Zeile löscht. Nur hier löscht er eine Spalte
+#The condition rowSums(RDeep_Hela_Mitosis == 0) == 0 checks which rows have a sum of zeros equal to zero, indicating that those rows do *not* contain any zeros.Then we selects these rows without any zeros from our table and store it in a new table.
+
+# Print the rows without any zeros
+print(nonzero_rows)
+nrow(nonzero_rows) #320 rows do not have zeros
+
+
+#Possibly deleting these nonzero rows and storing it in the original matrix:
+#RDeeP_HeLa_Mitosis <- RDeeP_HeLa_Mitosis[rowSums(RDeeP_HeLa_Mitosis == 0) > 0, ]
+
 ```
 
+#### 1.4 Check data format
 
-
-#### 1.3 Check data format
-
+Here we try to determine data type of our dataset, whether it is numerical, categorical, etc
 ```{r}
-#? how does this work
-# Idea: determine data type -> numerical, categorical, etc
+
 
 nrow(RDeeP_HeLa_Mitosis)
 ncol(RDeeP_HeLa_Mitosis)
@@ -71,9 +80,22 @@ sum(apply(RDeeP_HeLa_Mitosis, 2, is.numeric))
 
 This means we have numeric data, aka the data from the mass spectrometry.
 
-
 ```{r}
 #Complete DataSet
 View(RDeeP_HeLa_Mitosis)
 ```
 
+#### 1.5 Checking reproducibility with student t-test
+
+```{r}
+# Extract the first three values from the column
+subset_values <- RDeeP_HeLa_Mitosis[1, 1:3]
+
+# Perform the t-test
+t_test_result <- t.test(subset_values)
+
+# Print the t-test result
+print(t_test_result)
+```
+
+#### 1.6 Checking reproducubility with correlation?
