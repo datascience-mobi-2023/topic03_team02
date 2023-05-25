@@ -135,7 +135,7 @@ head(RDeeP_HeLa_Mitosis_RNase)
 Now in the next step we try to apply a student t-test on every three values, and then finding the maxima of all these p-values.
 
 ```{r}
-#THIS CODE IS NOT WORKING YET! BUT IT IS AN BEGINNING IDEA FOR THE PROBLEM
+#THIS CODE IS NOT WORKING YET! BUT IT IS AN BEGINNING IDEA...
 
 # Create an empty data frame to store the p-values
 p_values_Ctrl <- data.frame()
@@ -152,6 +152,9 @@ for (i in 1:nrow(RDeeP_HeLa_Mitosis_Ctrl)) {
   # Add the p-value to the new table
   p_values_Ctrl <- rbind(p_values_Ctrl, p_value)
 }
+
+#Optional, rename the column:
+colnames(p_values_Ctrl) <- paste("P-Values", 1:(ncol(p_values_Ctrl)))
 
 head(p_values_Ctrl)
 
