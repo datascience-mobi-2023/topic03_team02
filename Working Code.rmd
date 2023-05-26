@@ -78,7 +78,7 @@ sum(apply(RDeeP_HeLa_Mitosis, 2, is.na)) # Summe aller Zeilen, die NA Werte habe
 sum(apply(RDeeP_HeLa_Mitosis, 1, is.numeric))
 sum(apply(RDeeP_HeLa_Mitosis, 2, is.numeric))
 
-#sum(apply(RDeeP_HeLa_Mitosis, 1, is.numeric)) == nrow(RDeeP_HeLa_Mitosis)
+sum(apply(RDeeP_HeLa_Mitosis, 1, is.numeric)) == nrow(RDeeP_HeLa_Mitosis)
 
 ```
 
@@ -95,7 +95,7 @@ The first step would be to perform a student t-test on the first three values in
 
 ```{r}
 # Extract the first three values from the table
-protein1_Ctrl_frac1 <- RDeeP_HeLa_Mitosis[1, 1:3]
+protein1_Ctrl_frac1 <- RDeeP_HeLa_Mitosis[1, 1:3] #Zeile 1, Spalten eins bis drei
 
 # Perform the t-test
 t_test_result <- t.test(protein1_Ctrl_frac1)
@@ -122,7 +122,7 @@ Here all three repetitions were 0, thus making our p-value not determinable. Thi
 Here an attempt to generalize the code for all fractions for one Protein (Control and RNAse separate)
 
 ```{r}
-#easiest way is to separatly define the columns we want to put into the new dataframe
+#easiest way is to separately define the columns we want to put into the new data frame
 
 RDeeP_HeLa_Mitosis_Ctrl = cbind(RDeeP_HeLa_Mitosis[,1:3],RDeeP_HeLa_Mitosis[,7:9],RDeeP_HeLa_Mitosis[,13:15],RDeeP_HeLa_Mitosis[,19:21],RDeeP_HeLa_Mitosis[,25:27],RDeeP_HeLa_Mitosis[,31:33],RDeeP_HeLa_Mitosis[,37:39],RDeeP_HeLa_Mitosis[,43:45],RDeeP_HeLa_Mitosis[,49:51],RDeeP_HeLa_Mitosis[,55:57],RDeeP_HeLa_Mitosis[,61:63],RDeeP_HeLa_Mitosis[,67:69],RDeeP_HeLa_Mitosis[,73:75],RDeeP_HeLa_Mitosis[,79:81],RDeeP_HeLa_Mitosis[,85:87],RDeeP_HeLa_Mitosis[,91:93],RDeeP_HeLa_Mitosis[,97:99],RDeeP_HeLa_Mitosis[,103:105],RDeeP_HeLa_Mitosis[,109:111],RDeeP_HeLa_Mitosis[,115:117],RDeeP_HeLa_Mitosis[,121:123],RDeeP_HeLa_Mitosis[,127:129],RDeeP_HeLa_Mitosis[,133:135],RDeeP_HeLa_Mitosis[,139:141],RDeeP_HeLa_Mitosis[,145:147])
 
@@ -135,30 +135,96 @@ head(RDeeP_HeLa_Mitosis_RNase)
 Now in the next step we try to apply a student t-test on every three values, and then finding the maxima of all these p-values.
 
 ```{r}
-#THIS CODE IS NOT WORKING YET! BUT IT IS AN BEGINNING IDEA...
+# Create an empty dataframe to store the p-values
+p_values_Ctrl <- data.frame(matrix(ncol = ncol(RDeeP_HeLa_Mitosis_Ctrl)/3, nrow = nrow(RDeeP_HeLa_Mitosis_Ctrl)))
 
-# Create an empty data frame to store the p-values
-p_values_Ctrl <- data.frame()
-
-# Iterate over the rows of the original table
+# Iterate over every row (protein) in the original table
 for (i in 1:nrow(RDeeP_HeLa_Mitosis_Ctrl)) {
-  # Extract the values for the current row
+  # Extract the values for the current row (protein)
   row_values <- RDeeP_HeLa_Mitosis_Ctrl[i, ]
   
-  # Perform the t-test on the row values and calculate the p-value
-  t_result <- t.test(row_values[1:3])
-  p_value <- t_result$p.value
+  # Create an empty vector to store the p-values for the current row (protein)
+  p_values_row <- c()
   
-  # Add the p-value to the new table
-  p_values_Ctrl <- rbind(p_values_Ctrl, p_value)
+  # Iterate over every three columns in the current row (protein)
+  for (j in seq(1, ncol(RDeeP_HeLa_Mitosis_Ctrl), by = 3)) {
+    # Extract the values for the current set of three columns
+    column_values <- row_values[j:(j + 2)]
+    
+    # Calculate the p-value for the set of three columns using t-test
+    t_result <- t.test(column_values)
+    p_value <- t_result$p.value
+    
+    # Append the p-value to the vector for the current row (protein)
+    p_values_row <- c(p_values_row, p_value)
+  }
+  
+  # Assign the p-values for the current row (protein) to the corresponding row in the new dataframe
+  p_values_Ctrl[i, ] <- p_values_row
 }
 
-#Optional, rename the column:
+# Optional: Rename the columns
 colnames(p_values_Ctrl) <- paste("P-Values", 1:(ncol(p_values_Ctrl)))
 
-head(p_values_Ctrl)
-
+# Print the new dataframe
+print(p_values_Ctrl)
 ```
+
+Almost everything seems to work out fine, the code just takes VERY LONG. Here is a more efficient/faster solution, trying to use the power of vectorization in R.
+
+```{r}
+# Identify the numeric columns in the table
+numeric_cols <- sapply(RDeeP_HeLa_Mitosis_Ctrl, is.numeric)
+
+# Subset the table to include only numeric columns
+numeric_table <- RDeeP_HeLa_Mitosis_Ctrl[, numeric_cols]
+
+# Calculate the number of sets in the numeric table
+num_sets <- ncol(numeric_table) %/% 3
+
+# Create an empty dataframe to store the p-values
+p_values_Ctrl <- data.frame(matrix(ncol = num_sets, nrow = nrow(numeric_table)))
+
+# Iterate over every set of three columns
+for (i in seq(1, ncol(numeric_table), by = 3)) {
+  # Extract the values for the current set of three columns
+  column_values <- numeric_table[, i:(i + 2)]
+  
+  # Calculate the p-values for the set of three columns using t-tests
+  p_values <- apply(column_values, 1, function(x) {
+    if (length(unique(x)) > 1) {
+      t_result <- t.test(x)
+      t_result$p.value
+    } else {
+      NA  # Assign NA if the data is constant
+    }
+  })
+  
+  # Assign the p-values to the corresponding column in the new dataframe
+  p_values_Ctrl[, (i %/% 3 + 1)] <- p_values
+}
+
+# Optional: Rename the columns
+colnames(p_values_Ctrl) <- paste("P-Values", 1:num_sets)
+
+# Print the new dataframe
+print(p_values_Ctrl)
+```
+
+
+Finding the maximum value for each row, then deciding if it is smaller than our significance level (either 5% or 10%, has to be decided beforehand)
+
+```{r}
+# Create a new dataframe to store the maximum values
+max_values <- data.frame(MaxValue = apply(p_values_Ctrl[, -1], 1, max))
+
+# Add the protein names to the new dataframe
+max_values$Protein <- p_values_Ctrl$Protein
+
+# Print the new dataframe
+print(max_values)
+```
+This still leaves us with the problems on how to handel NA values, as soon as several zeros appear in the experiment, the student t-test causes issues. Either we try to fix this or we try another method...
 
 
 #### 1.6 Checking reproducubility with correlation?
