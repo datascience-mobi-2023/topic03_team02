@@ -98,10 +98,9 @@ The first step would be to perform a student t-test on the first three values in
 protein1_Ctrl_frac1 <- RDeeP_HeLa_Mitosis[1, 1:3] #Zeile 1, Spalten eins bis drei
 
 # Perform the t-test
-t_test_result <- t.test(protein1_Ctrl_frac1)
+print(t.test(protein1_Ctrl_frac1))
 
-# Print the t-test result
-print(t_test_result)
+#beide schritte kann man theoretisch auch noch in einem vereinigen.
 ```
 Here our p-value is over 5%, thus we can determine the reproducibility of the experiment is not given and we would have to delete the entire protein. How much sense this makes we will see later. 
 
@@ -112,10 +111,7 @@ Now the same for protein 8
 protein8_Ctrl_frac1 <- RDeeP_HeLa_Mitosis[8, 1:3]
 
 # Perform the t-test
-t_test_result <- t.test(protein8_Ctrl_frac1)
-
-# Print the t-test result
-print(t_test_result)
+print(t.test(protein8_Ctrl_frac1))
 ```
 Here all three repetitions were 0, thus making our p-value not determinable. This is normal and we would have to repeat this for all fractions and then check if there are any p-values in the entire protein above 5%. If not, we can confidently confirm the reproducibility.
 
@@ -206,6 +202,7 @@ for (i in seq(1, ncol(numeric_table), by = 3)) {
 
 # Optional: Rename the columns
 colnames(p_values_Ctrl) <- paste("P-Values", 1:num_sets)
+rownames(p_values_Ctrl) <- rownames(RDeeP_HeLa_Mitosis_Ctrl)
 
 # Print the new dataframe
 print(p_values_Ctrl)
@@ -218,16 +215,46 @@ Finding the maximum value for each row, then deciding if it is smaller than our 
 # Create a new dataframe to store the maximum values
 max_values <- data.frame(MaxValue = apply(p_values_Ctrl[, -1], 1, max))
 
-# Add the protein names to the new dataframe
-max_values$Protein <- p_values_Ctrl$Protein
+# Adding the protein names to the new dataframe:
+rownames(max_values) <- rownames(p_values_Ctrl)
 
 # Print the new dataframe
 print(max_values)
 ```
-This still leaves us with the problems on how to handel NA values, as soon as several zeros appear in the experiment, the student t-test causes issues. Either we try to fix this or we try another method...
+WARNING! This still leaves us with the problem on how to handle the many *NA values* (caused if zeros appear in the experiment, which then causes student t-test to have issues, even though those are important data). I am not sure how to fix this.
 
 
-#### 1.6 Checking reproducubility with correlation?
+#### 1.6 Checking reproducibility with correlation?
+
+Testing the correlation for the first three entries in our Control dataset.A possible idea is to apply this all on the entire dataset again, and then for example sort out all proteins in which the correlation between the fractions is less than 95%. This will then guarantee that all remaining fractions have a high correlation and thus a high reproducibility. But there is still a lot to do!
+
+```{r}
+# Calculate the pairwise correlations between the first three columns
+cor_matrix_frac1 <- cor(RDeeP_HeLa_Mitosis_Ctrl[, 1:3], method = "pearson")
+
+# Visualize the correlation matrix using a heatmap
+heatmap(cor_matrix_frac1,
+        col = colorRampPalette(c("blue", "white", "red"))(100),
+        main = "Correlation Heatmap")
+
+# we maybe still have to adjust the color Palette. 
+
+print(as.table(cor_matrix_frac1))
+```
+
+#### 1.7 Data scaling
+
+After we have removed all rows with low reproducibility (this still has to be done!!), we can then move on to scale all remaining data to 100. This makes the most sense if we first take the mean value of all replicates and then scale them.
+
+```{r}
+#First we take our RDeep_Hela_Mitosis_Ctrl table again. 
+```
+
+
+
+#### 1.8 Min Max scaling
+
+This would be an alternative to the mean value data scaling method. Here we would take the max und min value of each row (control and RNase separate) and scale all data in between these margins. Not sure yet how to implement this. 
 
 
 
