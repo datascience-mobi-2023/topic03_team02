@@ -47,25 +47,82 @@ head(RDeeP_HeLa_Mitosis_RNase)
 
 ## 2. Scale and Reduce Dataset
 
-#### 2.1 Normalization (z-transformation or scaling?)
+#### 2.1 Normalization (scaling, or z-transformation?)
 
-z-transformation: x - mean(x)) / sd(x)
+Old complicated version for finding mean:
+
+1. Create an empty dataframe to store the mean values
+mean_values <- data.frame(matrix(ncol = ncol(RDeeP_HeLa_Mitosis_Ctrl)/3, nrow = nrow(RDeeP_HeLa_Mitosis_Ctrl)))
+
+2.Outer loop: Iterate over every row (protein) in the original table
+for (i in 1:nrow(RDeeP_HeLa_Mitosis_Ctrl)) {
+  # Inner loop: Iterate over every three columns at a time
+  for (j in seq(1, ncol(RDeeP_HeLa_Mitosis_Ctrl), by = 3)) {
+    # Select the three columns for the current iteration
+    selected_columns <- RDeeP_HeLa_Mitosis_Ctrl[i, j:(j + 2)]
+    
+    # Calculate the mean of the selected columns
+    mean_value <- mean(selected_columns, na.rm = TRUE)
+    
+    # Assign the mean value to the corresponding cell in the mean_values dataframe
+    mean_values[i, (j + 2) %/% 3] <- mean_value
+  }
+}
+
+NEW VERSION:
 
 ```{r}
-#First finding the mean of all three replicates:
+#First finding the mean of all three replicates for every fraction separately:
+Mitosis_Ctrl_mean = as.data.frame(
+  sapply(seq(0,72,3), function(i) { #outer loop to repeatedly select the three replicates for each fraction
+    apply(RDeeP_HeLa_Mitosis_Ctrl[,c(1,2,3)+c(i,i,i)], 1, function(x) {mean(x)})
+    #inner loop which calculates the mean for the three replicates, for each row anew. 
+    
+    }))
 
-#Then applying the z transformation on each row was a whole, Control and RNase separate. 
-Mitosis_Ctrl_norm <- apply(t(Mitosis_Ctrl_mean),1, function(x)(x - mean(x)) / sd(x))
-#transpose is necessary as "apply" is always iterates the command or each column 
+#To have logical new column names, it is possible to paste the fraction number and add Ctrl_Mean separately to each new column name.
+colnames(Mitosis_Ctrl_mean) = paste("Fraction",seq(1,25,1),"_Ctrl_Mean",sep="")
 
-head(RDeeP_HeLa_Mitosis_Ctrl)
+head(Mitosis_Ctrl_mean)
 ```
 
-Mean value:
+Now trying data scaling to 100:
+```{r}
+Mitosis_Ctrl_100 <- as.data.frame(sapply(Mitosis_Ctrl_mean, function(i){(i/apply(Mitosis_Ctrl_mean,1,sum))*100}))
+
+head(Mitosis_Ctrl_100)
+
+```
+Seems to work? Now all the same for RNase:
+
+```{r}
+#First finding mean:
+Mitosis_RNase_mean = as.data.frame(
+  sapply(seq(0,72,3), function(i) {
+    apply(RDeeP_HeLa_Mitosis_Ctrl[,c(1,2,3)+c(i,i,i)], 1, function(x) {mean(x)})
+    }))
+
+colnames(Mitosis_RNase_mean) = paste("Fraction",seq(1,25,1),"_RNase_Mean",sep="")
+
+#Now scaling 
+Mitosis_RNase_100 <- as.data.frame(sapply(Mitosis_RNase_mean, function(i){(i/apply(Mitosis_RNase_mean,1,sum))*100}))
+
+head(Mitosis_RNase_100)
+
+```
+
+
+```{r}
+#Then maybe applying the z transformation on each row was a whole, Control and RNase separate? Still needs a lot of refining...
+#Mitosis_Ctrl_norm <- apply(t(Mitosis_Ctrl_mean),1, function(x)(x - mean(x)) / sd(x))
+
+#transpose is necessary as "apply" is always iterates the command or each column 
+
+head(Mitosis_Ctrl_mean)
+```
+
 
 Min Max scaling?
-
-Auf 100 scaling:
 
 
 

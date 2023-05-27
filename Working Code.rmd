@@ -40,8 +40,12 @@ which(rowSums(RDeeP_HeLa_Mitosis)==0)
 print(RDeeP_HeLa_Mitosis["KLD10_HUMAN",])
 
 RDeeP_HeLa_Mitosis <- RDeeP_HeLa_Mitosis[-which(rowSums(RDeeP_HeLa_Mitosis)==0),] #Habe hier das letzte Komma hinzugefügt und das = in ein <- geändert.
-
 #Tabelle ohne die Nullzeile wieder in der Variable gespeichert
+
+#We might have to repeat this later, for when we have separated Control and RNase, as the same argumentation applies if already only one of them only has zeros.
+#which(rowSums(RDeeP_HeLa_Mitosis_Ctrl)==0)
+#which(rowSums(RDeeP_HeLa_Mitosis_RNase)==0)
+
 
 dim(RDeeP_HeLa_Mitosis)
 ```
@@ -247,7 +251,9 @@ print(as.table(cor_matrix_frac1))
 After we have removed all rows with low reproducibility (this still has to be done!!), we can then move on to scale all remaining data to 100. This makes the most sense if we first take the mean value of all replicates and then scale them.
 
 ```{r}
-#First we take our RDeep_Hela_Mitosis_Ctrl table again. 
+#First we take our RDeep_Hela_Mitosis_Ctrl table again and find the mean of each replicate
+
+#STARTED THIS IN IDEAS AND EXPERIMENTS...
 ```
 
 
