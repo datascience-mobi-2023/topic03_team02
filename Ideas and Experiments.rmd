@@ -60,10 +60,8 @@ for (i in 1:nrow(RDeeP_HeLa_Mitosis_Ctrl)) {
   for (j in seq(1, ncol(RDeeP_HeLa_Mitosis_Ctrl), by = 3)) {
     # Select the three columns for the current iteration
     selected_columns <- RDeeP_HeLa_Mitosis_Ctrl[i, j:(j + 2)]
-    
     # Calculate the mean of the selected columns
     mean_value <- mean(selected_columns, na.rm = TRUE)
-    
     # Assign the mean value to the corresponding cell in the mean_values dataframe
     mean_values[i, (j + 2) %/% 3] <- mean_value
   }
@@ -80,7 +78,7 @@ Mitosis_Ctrl_mean = as.data.frame(
     
     }))
 
-#To have logical new column names, it is possible to paste the fraction number and add Ctrl_Mean separately to each new column name.
+#To have logical new column names, it is possible to paste the fraction number and add Ctrl_Mean separately to each new column name. The sequence goes from 1 to 25 in steps of one.
 colnames(Mitosis_Ctrl_mean) = paste("Fraction",seq(1,25,1),"_Ctrl_Mean",sep="")
 
 head(Mitosis_Ctrl_mean)
@@ -123,7 +121,20 @@ head(Mitosis_Ctrl_mean)
 
 
 Min Max scaling?
+We rescale the values to a fixed range, typically between 0 and 1. The scaling process involves subtracting the minimum value from each value in the variable and then dividing by the range (maximum value minus the minimum value). This transformation ensures that all values are proportionally scaled within the specified range.
 
 
+```{r}
+# Min-max scaling function
+min_max_scaling <- function(x) {
+  (x - min(x)) / (max(x) - min(x))
+}
 
+# Apply min-max scaling
+Mitosis_Ctrl_MM <- t(apply(Mitosis_Ctrl_mean, 1, min_max_scaling)) #apply function with MARGIN = 1 specifies that the function should be applied to each row (without t() it would be applied on each column). 
 
+# Print the scaled data
+View(Mitosis_Ctrl_MM)
+```
+
+We can later decide which method to chose. 
