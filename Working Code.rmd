@@ -263,7 +263,7 @@ After we have removed all rows with low reproducibility (this still has to be do
 Mitosis_Ctrl_mean = as.data.frame(
   sapply(seq(0,72,3), function(i) { #outer loop to repeatedly select the three replicates for each fraction
     apply(RDeeP_HeLa_Mitosis_Ctrl[,c(1,2,3)+c(i,i,i)], 1, function(x) {mean(x)})
-    #inner loop which calculates the mean for the three replicates, for each row anew. 
+    #inner loop which calculates the mean for the three replicates, for each row anew. and CAUTION: if we delete some rows, we might have to adjust the name of the dataframe.
     
     }))
 
@@ -287,7 +287,7 @@ Seems to work? Now all the same for RNase:
 #First finding mean:
 Mitosis_RNase_mean = as.data.frame(
   sapply(seq(0,72,3), function(i) {
-    apply(RDeeP_HeLa_Mitosis_Ctrl[,c(1,2,3)+c(i,i,i)], 1, function(x) {mean(x)})
+    apply(RDeeP_HeLa_Mitosis_RNase[,c(1,2,3)+c(i,i,i)], 1, function(x) {mean(x)})
     }))
 
 colnames(Mitosis_RNase_mean) = paste("Fraction",seq(1,25,1),"_RNase_Mean",sep="")
