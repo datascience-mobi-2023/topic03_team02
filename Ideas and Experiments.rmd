@@ -162,7 +162,7 @@ legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd
 
 Also added ylim
 ```{r}
-plot(1:25, Mitosis_Ctrl_100[which(rownames(RDeeP_HeLa_Mitosis)==c("1433B_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="1433B_HUMAN Normalized", ylim=c(0,100))
+plot(1:25, Mitosis_Ctrl_100[which(rownames(RDeeP_HeLa_Mitosis)==c("1433B_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="1433B_HUMAN Normalized", ylim=c(0,50))
 lines(1:25, Mitosis_RNase_100[which(rownames(RDeeP_HeLa_Mitosis)==c("1433B_HUMAN")),], type="l",lwd=3,col="red")
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)

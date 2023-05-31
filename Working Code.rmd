@@ -44,7 +44,7 @@ RDeeP_HeLa_Mitosis <- RDeeP_HeLa_Mitosis[-which(rowSums(RDeeP_HeLa_Mitosis)==0),
 
 #We might have to repeat this later, for when we have separated Control and RNase, as the same argumentation applies if already only one of them only has zeros.
 #which(rowSums(RDeeP_HeLa_Mitosis_Ctrl)==0)
-#which(rowSums(RDeeP_HeLa_Mitosis_RNase)==0)
+#which(rowSums(RDeeP_HeLa_Mitosis_RNase)==0) #Careful, that we have to delete the the zero rows of RNase also in the Control Dataframe
 
 
 dim(RDeeP_HeLa_Mitosis)
@@ -196,7 +196,7 @@ for (i in seq(1, ncol(numeric_table), by = 3)) {
       t_result <- t.test(x)
       t_result$p.value
     } else {
-      NA  # Assign NA if the data is constant
+      0  # Assign 0 if the data is constant (OR NA, then we have to replace na with zero later on)
     }
   })
   
@@ -213,10 +213,10 @@ print(p_values_Ctrl)
 ```
 
 
-Finding the maximum value for each row, then deciding if it is smaller than our significance level (either 5% or 10%, has to be decided beforehand)
+Finding the maximum value for each row, then deciding if it is smaller than our significance level (either 5% or 1%, has to be decided beforehand)
 
 ```{r}
-# Replace NA values with zero in p_values_Ctrl
+# Replace NA values with zero in p_values_Ctrl dataframe
 # p_values_Ctrl[is.na(p_values_Ctrl)] <- 0
 
 # Create a new dataframe to store the maximum values
@@ -229,12 +229,13 @@ rownames(max_values) <- rownames(p_values_Ctrl)
 print(max_values)
 ```
 
-WARNING! This still leaves us with the problem on how to handle the many *NA values* (caused if zeros appear in the experiment, which then causes student t-test to have issues, even though those are important data). I am not sure how to fix this.
+This is ugly though. We still have to determine which p-values are over 5% and use that information on the dataframe.
+
 
 
 #### 1.6 Checking reproducibility with correlation?
 
-Testing the correlation for the first three entries in our Control dataset.A possible idea is to apply this all on the entire dataset again, and then for example sort out all proteins in which the correlation between the fractions is less than 95%. This will then guarantee that all remaining fractions have a high correlation and thus a high reproducibility. But there is still a lot to do!
+Testing the correlation for the first three entries in our Control dataset. A possible idea is to apply this all on the entire dataset again, and then for example sort out all proteins in which the correlation between the fractions is less than 95%. This will then guarantee that all remaining fractions have a high correlation and thus a high reproducibility. But there is still a lot to do!
 
 ```{r}
 # Calculate the pairwise correlations between the first three columns
@@ -302,7 +303,7 @@ head(Mitosis_RNase_100)
 
 #### 1.8 Min Max scaling
 
-This would be an alternative to the data scaling to 100 method.We rescale the values to a fixed range, typically between 0 and 1. The scaling process involves subtracting the minimum value from each value in the variable and then dividing by the range (maximum value minus the minimum value). This transformation ensures that all values are proportionally scaled within the specified range.
+This would be an alternative to the data scaling to 100 method. We rescale the values to a fixed range, typically between 0 and 1. The scaling process involves subtracting the minimum value from each value in the variable and then dividing by the range (maximum value minus the minimum value). This transformation ensures that all values are proportionally scaled within the specified range.
 
 
 ```{r}
@@ -315,7 +316,7 @@ min_max_scaling <- function(x) {
 Mitosis_Ctrl_MM <- t(apply(Mitosis_Ctrl_mean, 1, min_max_scaling)) #apply function with MARGIN = 1 specifies that the function should be applied to each row (without t() it would be applied on each column). 
 
 # Print the scaled data
-View(Mitosis_Ctrl_MM)
+head(as.data.frame(Mitosis_Ctrl_MM))
 ```
 
 We can later decide which method to chose. 
