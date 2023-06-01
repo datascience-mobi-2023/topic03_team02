@@ -132,63 +132,19 @@ RDeeP_HeLa_Mitosis_RNase=RDeeP_HeLa_Mitosis[,-which(names(RDeeP_HeLa_Mitosis) %i
 head(RDeeP_HeLa_Mitosis_RNase)
 ```
 
-Now in the next step we try to apply a student t-test on every three values, and then finding the maxima of all these p-values.
+Now in the next step we try to apply a student t-test on every three values, and then finding the maxima of all these p-values. Here is efficient solution, using the power of vectorization in R.
 
 ```{r}
-# Create an empty dataframe to store the p-values
-p_values_Ctrl <- data.frame(matrix(ncol = ncol(RDeeP_HeLa_Mitosis_Ctrl)/3, nrow = nrow(RDeeP_HeLa_Mitosis_Ctrl)))
-
-# Iterate over every row (protein) in the original table
-for (i in 1:nrow(RDeeP_HeLa_Mitosis_Ctrl)) {
-  # Extract the values for the current row (protein)
-  row_values <- RDeeP_HeLa_Mitosis_Ctrl[i, ]
-  
-  # Create an empty vector to store the p-values for the current row (protein)
-  p_values_row <- c()
-  
-  # Iterate over every three columns in the current row (protein)
-  for (j in seq(1, ncol(RDeeP_HeLa_Mitosis_Ctrl), by = 3)) {
-    # Extract the values for the current set of three columns
-    column_values <- row_values[j:(j + 2)]
-    
-    # Calculate the p-value for the set of three columns using t-test
-    t_result <- t.test(column_values)
-    p_value <- t_result$p.value
-    
-    # Append the p-value to the vector for the current row (protein)
-    p_values_row <- c(p_values_row, p_value)
-  }
-  
-  # Assign the p-values for the current row (protein) to the corresponding row in the new dataframe
-  p_values_Ctrl[i, ] <- p_values_row
-}
-
-# Optional: Rename the columns
-colnames(p_values_Ctrl) <- paste("P-Values", 1:(ncol(p_values_Ctrl)))
-
-# Print the new dataframe
-print(p_values_Ctrl)
-```
-
-Almost everything seems to work out fine, the code just takes VERY LONG. Here is a more efficient/faster solution, trying to use the power of vectorization in R.
-
-```{r}
-# Identify the numeric columns in the table
-numeric_cols <- sapply(RDeeP_HeLa_Mitosis_Ctrl, is.numeric)
-
-# Subset the table to include only numeric columns
-numeric_table <- RDeeP_HeLa_Mitosis_Ctrl[, numeric_cols]
-
-# Calculate the number of sets in the numeric table
-num_sets <- ncol(numeric_table) %/% 3
+# Calculate the number of sets in the Control Dataset
+num_sets <- ncol(RDeeP_HeLa_Mitosis_Ctrl) %/% 3
 
 # Create an empty dataframe to store the p-values
-p_values_Ctrl <- data.frame(matrix(ncol = num_sets, nrow = nrow(numeric_table)))
+p_values_Ctrl <- data.frame(matrix(ncol = num_sets, nrow = nrow(RDeeP_HeLa_Mitosis_Ctrl)))
 
 # Iterate over every set of three columns
-for (i in seq(1, ncol(numeric_table), by = 3)) {
+for (i in seq(1, ncol(RDeeP_HeLa_Mitosis_Ctrl), by = 3)) {
   # Extract the values for the current set of three columns
-  column_values <- numeric_table[, i:(i + 2)]
+  column_values <- RDeeP_HeLa_Mitosis_Ctrl[, i:(i + 2)]
   
   # Calculate the p-values for the set of three columns using t-tests
   p_values <- apply(column_values, 1, function(x) {
@@ -220,20 +176,105 @@ Finding the maximum value for each row, then deciding if it is smaller than our 
 # p_values_Ctrl[is.na(p_values_Ctrl)] <- 0
 
 # Create a new dataframe to store the maximum values
-max_values <- data.frame(MaxValue = apply(p_values_Ctrl[, -1], 1, max))
+max_values_Ctrl <- data.frame(MaxValue = apply(p_values_Ctrl[, -1], 1, max))
 
 # Adding the protein names to the new dataframe:
-rownames(max_values) <- rownames(p_values_Ctrl)
+rownames(max_values_Ctrl) <- rownames(p_values_Ctrl)
 
 # Print the new dataframe
-print(max_values)
+print(max_values_Ctrl)
 ```
 
-This is ugly though. We still have to determine which p-values are over 5% and use that information on the dataframe.
+We still have to determine which p-values are over 5% and use that information on the dataframe. But now first all the same for the RNase:
+
+```{r}
+# Calculate the number of sets in the RNase dataset
+num_sets <- ncol(RDeeP_HeLa_Mitosis_RNase) %/% 3
+
+# Create an empty dataframe to store the p-values
+p_values_RNase <- data.frame(matrix(ncol = num_sets, nrow = nrow(RDeeP_HeLa_Mitosis_RNase)))
+
+# Iterate over every set of three columns
+for (i in seq(1, ncol(RDeeP_HeLa_Mitosis_RNase), by = 3)) {
+  # Extract the values for the current set of three columns
+  column_values <- RDeeP_HeLa_Mitosis_RNase[, i:(i + 2)]
+  
+  # Calculate the p-values for the set of three columns using t-tests
+  p_values <- apply(column_values, 1, function(x) {
+    if (length(unique(x)) > 1) {
+      t_result <- t.test(x)
+      t_result$p.value
+    } else {
+      0  # Assign 0 if the data is constant (OR NA, then we have to replace na with zero later on)
+    }
+  })
+  
+  # Assign the p-values to the corresponding column in the new dataframe
+  p_values_RNase[, (i %/% 3 + 1)] <- p_values
+}
+
+# Optional: Rename the columns
+colnames(p_values_RNase) <- paste("P-Values_Frac", 1:25,sep="")
+rownames(p_values_RNase) <- rownames(RDeeP_HeLa_Mitosis_RNase)
+
+# Print the new dataframe
+print(p_values_RNase)
+```
+```{r}
+#Finding the maximum
+# Create a new dataframe to store the maximum values
+max_values_RNase <- data.frame(MaxValue = apply(p_values_RNase[, -1], 1, max))
+
+# Adding the protein names to the new dataframe:
+rownames(max_values_RNase) <- rownames(p_values_RNase)
+
+# Print the new dataframe
+print(max_values_RNase)
+
+#Testing how many RNase values I have above 5%/10%:
+sum(max_values_RNase > 0.05)
+sum(max_values_RNase > 0.1)
+
+#Alternative thingies
+length(which(max_values_RNase > 0.1))
+length(max_values_RNase[max_values_RNase$MaxValue > 0.1, ])
+```
+Whoops, thats A LOT!
+
+Now adding the columns to the main dataframe and doing the same, identify the rows in which the p-value exceeds 5%:
+```{r}
+RDeeP_HeLa_Mitosis_p <- data.frame(RDeeP_HeLa_Mitosis, max_values_Ctrl, max_values_RNase) 
+
+# Identify all rows where the value in _one_ of the last two columns exceeds 5/10%
+bad_proteins5 <- which(RDeeP_HeLa_Mitosis_p[, 151] > 0.05 | RDeeP_HeLa_Mitosis_p[, 152] > 0.05)
+bad_proteins10 <- which(RDeeP_HeLa_Mitosis_p[, 151] > 0.1 | RDeeP_HeLa_Mitosis_p[, 152] > 0.1)
 
 
+#Alternative 5%/10% BUT CAUTION! This sorts only the rows in which BOTH Control AND RNase exceed 5%? MAYBE? BUT THERE ARE MORE VALUES? HUHHH WAIT IM CONFUSED 
+#bad_proteins5 <- which(RDeeP_HeLa_Mitosis_p[, 151:152] > 0.05)
+#bad_proteins10 <- which(RDeeP_HeLa_Mitosis_p[, 151:152] > 0.1)
 
-#### 1.6 Checking reproducibility with correlation?
+length(bad_proteins5)
+length(bad_proteins10)
+```
+Thats more than half (or more than a quarter) of our data...
+
+Anywayyyy, let's work with the 10 % margin and delete all corresponding rows.
+
+```{r}
+
+RDeeP_HeLa_Mitosis_clean <- RDeeP_HeLa_Mitosis_p[!(RDeeP_HeLa_Mitosis_p[, 151] > 0.05 | RDeeP_HeLa_Mitosis_p[, 152] > 0.05), ] #the ! Operator negate the condition.It excludes rows where the condition is TRUE, thus effectively filtering out rows that exceed 10%.
+
+# Remove the last two columns
+RDeeP_HeLa_Mitosis_clean <- RDeeP_HeLa_Mitosis_clean[, 1:(ncol(RDeeP_HeLa_Mitosis_clean) - 2)]
+
+#Print the new dataframe
+print(RDeeP_HeLa_Mitosis_clean)
+```
+
+
+#### 1.6 Checking reproducibility with correlation? 
+-> NOT RELEVANT IF T-TEST WORKS... was aber noch in den Sternen steht. 
 
 Testing the correlation for the first three entries in our Control dataset. A possible idea is to apply this all on the entire dataset again, and then for example sort out all proteins in which the correlation between the fractions is less than 95%. This will then guarantee that all remaining fractions have a high correlation and thus a high reproducibility. But there is still a lot to do!
 
