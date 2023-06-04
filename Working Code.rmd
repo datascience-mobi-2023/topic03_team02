@@ -60,8 +60,7 @@ nonzero_rows <- RDeeP_HeLa_Mitosis[rowSums(RDeeP_HeLa_Mitosis == 0) == 0, ]
 
 #The condition rowSums(RDeep_Hela_Mitosis == 0) == 0 checks which rows have a sum of zeros equal to zero, indicating that those rows do *not* contain any zeros.Then we selects these rows without any zeros from our table and store it in a new table.
 
-# Print the rows without any zeros
-print(nonzero_rows)
+# Print the rows without any zeros: print(nonzero_rows)
 nrow(nonzero_rows) #320 rows do not have zeros
 
 
@@ -90,7 +89,7 @@ This means we have numeric data, aka the data from the mass spectrometry.
 
 ```{r}
 #Complete DataSet
-View(RDeeP_HeLa_Mitosis)
+#View(RDeeP_HeLa_Mitosis)
 ```
 
 #### 1.5 Checking reproducibility with student t-test
@@ -185,7 +184,7 @@ rownames(max_values_Ctrl) <- rownames(p_values_Ctrl)
 print(max_values_Ctrl)
 ```
 
-We still have to determine which p-values are over 5% and use that information on the dataframe. But now first all the same for the RNase:
+We still have to determine which p-values are over 10% and use that information on the dataframe. But now first all the same for the RNase:
 
 ```{r}
 # Calculate the number of sets in the RNase dataset
@@ -221,7 +220,7 @@ rownames(p_values_RNase) <- rownames(RDeeP_HeLa_Mitosis_RNase)
 print(p_values_RNase)
 ```
 ```{r}
-#Finding the maximum
+# Finding the maximum
 # Create a new dataframe to store the maximum values
 max_values_RNase <- data.frame(MaxValue = apply(p_values_RNase[, -1], 1, max))
 
@@ -234,35 +233,45 @@ print(max_values_RNase)
 #Testing how many RNase values I have above 5%/10%:
 sum(max_values_RNase > 0.05)
 sum(max_values_RNase > 0.1)
+#For control
+sum(max_values_Ctrl > 0.05)
+sum(max_values_Ctrl > 0.1)
+# --> RNase has a lot more fluctiation in comparison to Control!
 
-#Alternative thingies
-length(which(max_values_RNase > 0.1))
-length(max_values_RNase[max_values_RNase$MaxValue > 0.1, ])
+#Alternative ways to calculate the above
+#length(which(max_values_RNase > 0.1))
+#length(max_values_RNase[max_values_RNase$MaxValue > 0.1, ])
 ```
-Whoops, thats A LOT!
+Whoops, that is A LOT! Sometimes that is more than half (or more than a quarter) of our data...
 
-Now adding the columns to the main dataframe and doing the same, identify the rows in which the p-value exceeds 5%:
+
+Now adding the columns to the main dataframe and doing the same, identify the rows in which the p-value exceeds 10%:
 ```{r}
 RDeeP_HeLa_Mitosis_p <- data.frame(RDeeP_HeLa_Mitosis, max_values_Ctrl, max_values_RNase) 
 
 # Identify all rows where the value in _one_ of the last two columns exceeds 5/10%
-bad_proteins5 <- which(RDeeP_HeLa_Mitosis_p[, 151] > 0.05 | RDeeP_HeLa_Mitosis_p[, 152] > 0.05)
+
+#bad_proteins5 <- which(RDeeP_HeLa_Mitosis_p[, 151] > 0.05 | RDeeP_HeLa_Mitosis_p[, 152] > 0.05)
 bad_proteins10 <- which(RDeeP_HeLa_Mitosis_p[, 151] > 0.1 | RDeeP_HeLa_Mitosis_p[, 152] > 0.1)
 
+#When using the logical OR (|) operator, if either condition is true, the result will be true. 
 
-#Alternative 5%/10% BUT CAUTION! This sorts only the rows in which BOTH Control AND RNase exceed 5%? MAYBE? BUT THERE ARE MORE VALUES? HUHHH WAIT IM CONFUSED 
+
+#Rows in which both Control and RNase p-values exceed 5%:
+#bad_proteins5 <- which(RDeeP_HeLa_Mitosis_p[, 151] > 0.05 & RDeeP_HeLa_Mitosis_p[, 152] > 0.05)
+#length(bad_proteins5)
+
+#Alternative 5%/10% BUT THIS RESULTS IN ANTOHER VALUE, WHY? I DO NOT KNOW.
 #bad_proteins5 <- which(RDeeP_HeLa_Mitosis_p[, 151:152] > 0.05)
-#bad_proteins10 <- which(RDeeP_HeLa_Mitosis_p[, 151:152] > 0.1)
+bad_proteins10wierd <- which(RDeeP_HeLa_Mitosis_p[, 151:152] > 0.1)
 
-length(bad_proteins5)
+#length(bad_proteins5)
 length(bad_proteins10)
+length(bad_proteins10wierd)
 ```
-Thats more than half (or more than a quarter) of our data...
-
 Anywayyyy, let's work with the 10 % margin and delete all corresponding rows.
 
 ```{r}
-
 RDeeP_HeLa_Mitosis_clean <- RDeeP_HeLa_Mitosis_p[!(RDeeP_HeLa_Mitosis_p[, 151] > 0.05 | RDeeP_HeLa_Mitosis_p[, 152] > 0.05), ] #the ! Operator negate the condition.It excludes rows where the condition is TRUE, thus effectively filtering out rows that exceed 10%.
 
 # Remove the last two columns
@@ -270,6 +279,14 @@ RDeeP_HeLa_Mitosis_clean <- RDeeP_HeLa_Mitosis_clean[, 1:(ncol(RDeeP_HeLa_Mitosi
 
 #Print the new dataframe
 print(RDeeP_HeLa_Mitosis_clean)
+```
+```{r}
+#Now we have to again separate our clean dataframe into Control and RNase
+
+Mitosis_Ctrl_clean = cbind(RDeeP_HeLa_Mitosis_clean[,1:3],RDeeP_HeLa_Mitosis_clean[,7:9],RDeeP_HeLa_Mitosis_clean[,13:15],RDeeP_HeLa_Mitosis_clean[,19:21],RDeeP_HeLa_Mitosis_clean[,25:27],RDeeP_HeLa_Mitosis_clean[,31:33],RDeeP_HeLa_Mitosis_clean[,37:39],RDeeP_HeLa_Mitosis_clean[,43:45],RDeeP_HeLa_Mitosis_clean[,49:51],RDeeP_HeLa_Mitosis_clean[,55:57],RDeeP_HeLa_Mitosis_clean[,61:63],RDeeP_HeLa_Mitosis_clean[,67:69],RDeeP_HeLa_Mitosis_clean[,73:75],RDeeP_HeLa_Mitosis_clean[,79:81],RDeeP_HeLa_Mitosis_clean[,85:87],RDeeP_HeLa_Mitosis_clean[,91:93],RDeeP_HeLa_Mitosis_clean[,97:99],RDeeP_HeLa_Mitosis_clean[,103:105],RDeeP_HeLa_Mitosis_clean[,109:111],RDeeP_HeLa_Mitosis_clean[,115:117],RDeeP_HeLa_Mitosis_clean[,121:123],RDeeP_HeLa_Mitosis_clean[,127:129],RDeeP_HeLa_Mitosis_clean[,133:135],RDeeP_HeLa_Mitosis_clean[,139:141],RDeeP_HeLa_Mitosis_clean[,145:147])
+
+#For RNase
+Mitosis_RNase_clean=RDeeP_HeLa_Mitosis_clean[,-which(names(RDeeP_HeLa_Mitosis_clean) %in% colnames(Mitosis_Ctrl_clean))]
 ```
 
 
@@ -291,20 +308,18 @@ heatmap(cor_matrix_frac1,
 print(as.data.frame(cor_matrix_frac1))
 ```
 
-```{r}
 
-```
+## 2. Data scaling
 
+#### 2.1 Finding mean
 
-#### 1.7 Data scaling
+After we have removed all rows with low reproducibility, we can then move on to scale all remaining data to 100. This makes the most sense if we first take the mean value of all replicates and then scale them.
 
-After we have removed all rows with low reproducibility (this still has to be done!!), we can then move on to scale all remaining data to 100. This makes the most sense if we first take the mean value of all replicates and then scale them.
-
-```{r}
-#First finding the mean of all three replicates for every fraction separately in our RDeep_Hela_Mitosis_Ctrl data:
+```{r Finding mean}
+#First finding the mean of all three replicates for every fraction separately in our Mitosis_Ctrl_clean data:
 Mitosis_Ctrl_mean = as.data.frame(
   sapply(seq(0,72,3), function(i) { #outer loop to repeatedly select the three replicates for each fraction
-    apply(RDeeP_HeLa_Mitosis_Ctrl[,c(1,2,3)+c(i,i,i)], 1, function(x) {mean(x)})
+    apply(Mitosis_Ctrl_clean[,c(1,2,3)+c(i,i,i)], 1, function(x) {mean(x)})
     #inner loop which calculates the mean for the three replicates, for each row anew. and CAUTION: if we delete some rows, we might have to adjust the name of the dataframe.
     
     }))
@@ -315,8 +330,10 @@ colnames(Mitosis_Ctrl_mean) = paste("Fraction",seq(1,25,1),"_Ctrl_Mean",sep="")
 head(Mitosis_Ctrl_mean)
 ```
 
+#### 2.2 Data scaling to 100
+
 Now trying data scaling to 100:
-```{r}
+```{r scaling Ctrl to 100}
 Mitosis_Ctrl_100 <- as.data.frame(sapply(Mitosis_Ctrl_mean, function(i){(i/apply(Mitosis_Ctrl_mean,1,sum))*100}))
 
 head(Mitosis_Ctrl_100)
@@ -329,7 +346,7 @@ Seems to work? Now all the same for RNase:
 #First finding mean:
 Mitosis_RNase_mean = as.data.frame(
   sapply(seq(0,72,3), function(i) {
-    apply(RDeeP_HeLa_Mitosis_RNase[,c(1,2,3)+c(i,i,i)], 1, function(x) {mean(x)})
+    apply(Mitosis_RNase_clean[,c(1,2,3)+c(i,i,i)], 1, function(x) {mean(x)})
     }))
 
 colnames(Mitosis_RNase_mean) = paste("Fraction",seq(1,25,1),"_RNase_Mean",sep="")
@@ -338,16 +355,15 @@ colnames(Mitosis_RNase_mean) = paste("Fraction",seq(1,25,1),"_RNase_Mean",sep=""
 Mitosis_RNase_100 <- as.data.frame(sapply(Mitosis_RNase_mean, function(i){(i/apply(Mitosis_RNase_mean,1,sum))*100}))
 
 head(Mitosis_RNase_100)
-
 ```
 
 
-#### 1.8 Min Max scaling
+#### 2.3 Min Max scaling
 
 This would be an alternative to the data scaling to 100 method. We rescale the values to a fixed range, typically between 0 and 1. The scaling process involves subtracting the minimum value from each value in the variable and then dividing by the range (maximum value minus the minimum value). This transformation ensures that all values are proportionally scaled within the specified range.
 
 
-```{r}
+```{r Min Max scaling}
 # Min-max scaling function
 min_max_scaling <- function(x) {
   (x - min(x)) / (max(x) - min(x))
@@ -356,10 +372,31 @@ min_max_scaling <- function(x) {
 # Apply min-max scaling
 Mitosis_Ctrl_MM <- t(apply(Mitosis_Ctrl_mean, 1, min_max_scaling)) #apply function with MARGIN = 1 specifies that the function should be applied to each row (without t() it would be applied on each column). 
 
+#For RNase
+Mitosis_RNase_MM <- t(apply(Mitosis_RNase_mean, 1, min_max_scaling)) 
+
 # Print the scaled data
 head(as.data.frame(Mitosis_Ctrl_MM))
 ```
 
-We can later decide which method to chose. 
+We can later decide which method to chose.
+
+```{r Clean environment}
+#I think it's time to clean up the environment to maintain an overview
+rm(nonzero_rows, column_values,max_values_Ctrl,max_values_RNase,p_values_Ctrl,p_values_RNase,RDeeP_HeLa_Mitosis_p,bad_proteins10,bad_proteins10wierd,num_sets,p_values)
+```
+
+
+## 3. Gaussian plots
+
+#### Attempt no.1
+
+Okay, Idea is to fit a gaussian graph to each protein and calculating the 
+```{r}
+
+```
+
+
+
 
 

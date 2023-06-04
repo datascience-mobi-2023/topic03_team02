@@ -185,14 +185,14 @@ We can later decide which method to chose.
 
 ##### Without Normalization
 ```{r}
-plot(1:25, Mitosis_Ctrl_mean[which(rownames(RDeeP_HeLa_Mitosis)==c("1433B_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="1433B_HUMAN")
-lines(1:25, Mitosis_RNase_mean[which(rownames(RDeeP_HeLa_Mitosis)==c("1433B_HUMAN")),], type="l",lwd=3,col="red")
+plot(1:25, Mitosis_Ctrl_mean[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("SIN3B_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Absolute Protein Amount",main="SIN3B_HUMAN", ylim=c(0,180000))
+lines(1:25, Mitosis_RNase_mean[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("SIN3B_HUMAN")),], type="l",lwd=3,col="red")
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
 ```{r}
-plot(1:25, Mitosis_Ctrl_mean[which(rownames(RDeeP_HeLa_Mitosis)==c("2A5A_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="2A5A_HUMAN")
-lines(1:25, Mitosis_RNase_mean[which(rownames(RDeeP_HeLa_Mitosis)==c("2A5A_HUMAN")),], type="l",lwd=3,col="red")
+plot(1:25, Mitosis_Ctrl_mean[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("CASP7_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Absolute Protein Amount",main="CASP7_HUMAN",ylim=c(0,1500000))
+lines(1:25, Mitosis_RNase_mean[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("CASP7_HUMAN")),], type="l",lwd=3,col="red")
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
@@ -201,21 +201,38 @@ legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd
 
 Also added ylim
 ```{r}
-plot(1:25, Mitosis_Ctrl_100[which(rownames(RDeeP_HeLa_Mitosis)==c("1433B_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="1433B_HUMAN Normalized", ylim=c(0,50))
-lines(1:25, Mitosis_RNase_100[which(rownames(RDeeP_HeLa_Mitosis)==c("1433B_HUMAN")),], type="l",lwd=3,col="red")
+plot(1:25, Mitosis_Ctrl_100[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("SIN3B_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="SIN3B_HUMAN Normalized", ylim=c(0,100))
+lines(1:25, Mitosis_RNase_100[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("SIN3B_HUMAN")),], type="l",lwd=3,col="red")
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
 
 ```{r}
-plot(1:25, Mitosis_Ctrl_100[which(rownames(RDeeP_HeLa_Mitosis)==c("2A5A_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="2A5A_HUMAN Normailzed", ylim=c(0,100))
-#lines(1:25, Mitosis_RNase_100[which(rownames(RDeeP_HeLa_Mitosis)==c("2A5A_HUMAN")),], type="l",lwd=3,col="red")
+plot(1:25, Mitosis_Ctrl_100[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("TARA_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="TARA_HUMAN Normailzed", ylim=c(0,100))
+lines(1:25, Mitosis_RNase_100[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("TARA_HUMAN")),], type="l",lwd=3,col="red")
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
 With this last plot we already see a potential problem, as Control and RNase seem to be identical after scaling? Confusion
 
-##### With Normalization (min max scaling)
+##### With Normalization (min max scaling) 
+
+```{r}
+plot(1:25, Mitosis_Ctrl_MM[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("CASP7_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Absolute Protein Amount",main="CASP7_HUMAN MinMax",ylim=c(0,1))
+lines(1:25, Mitosis_RNase_MM[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("CASP7_HUMAN")),], type="l",lwd=3,col="red")
+grid()
+legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
+```
+
+#### EXTRAS
+
+"Shifters": Laut maiwen SIN3A und CASP7
+"Non-shifters": ASNS (Asparagine synthetase), MCM2 (DNA replication licensing factor MCM2), etc.
+
+```{r}
+library(nloptr)  # for optimization
+library(ggplot2) # for visualization
+```
 
 
 
