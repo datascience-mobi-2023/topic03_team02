@@ -185,14 +185,14 @@ We can later decide which method to chose.
 
 ##### Without Normalization
 ```{r}
-plot(1:25, Mitosis_Ctrl_mean[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("SIN3B_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Absolute Protein Amount",main="SIN3B_HUMAN", ylim=c(0,180000))
-lines(1:25, Mitosis_RNase_mean[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("SIN3B_HUMAN")),], type="l",lwd=3,col="red")
+plot(1:25, Mitosis_Ctrl_mean[which(rownames(Mitosis_Ctrl_mean)==c("SIN3B_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Absolute Protein Amount",main="SIN3B_HUMAN", ylim=c(0,180000))
+lines(1:25, Mitosis_RNase_mean[which(rownames(Mitosis_RNase_mean)==c("SIN3B_HUMAN")),], type="l",lwd=3,col="red")
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
 ```{r}
-plot(1:25, Mitosis_Ctrl_mean[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("CASP7_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Absolute Protein Amount",main="CASP7_HUMAN",ylim=c(0,1500000))
-lines(1:25, Mitosis_RNase_mean[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("CASP7_HUMAN")),], type="l",lwd=3,col="red")
+plot(1:25, Mitosis_Ctrl_mean[which(rownames(Mitosis_Ctrl_mean)==c("CASP7_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Absolute Protein Amount",main="CASP7_HUMAN",ylim=c(0,1500000))
+lines(1:25, Mitosis_RNase_mean[which(rownames(Mitosis_RNase_mean)==c("CASP7_HUMAN")),], type="l",lwd=3,col="red")
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
@@ -201,15 +201,15 @@ legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd
 
 Also added ylim
 ```{r}
-plot(1:25, Mitosis_Ctrl_100[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("SIN3B_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="SIN3B_HUMAN Normalized", ylim=c(0,100))
-lines(1:25, Mitosis_RNase_100[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("SIN3B_HUMAN")),], type="l",lwd=3,col="red")
+plot(1:25, Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100)==c("SIN3B_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="SIN3B_HUMAN Normalized", ylim=c(0,100))
+lines(1:25, Mitosis_RNase_100[which(rownames(Mitosis_RNase_100)==c("SIN3B_HUMAN")),], type="l",lwd=3,col="red")
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
 
 ```{r}
-plot(1:25, Mitosis_Ctrl_100[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("TARA_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="TARA_HUMAN Normailzed", ylim=c(0,100))
-lines(1:25, Mitosis_RNase_100[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("TARA_HUMAN")),], type="l",lwd=3,col="red")
+plot(1:25, Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100)==c("TARA_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="TARA_HUMAN Normailzed", ylim=c(0,100))
+lines(1:25, Mitosis_RNase_100[which(rownames(Mitosis_RNase_100)==c("TARA_HUMAN")),], type="l",lwd=3,col="red")
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
@@ -218,8 +218,8 @@ With this last plot we already see a potential problem, as Control and RNase see
 ##### With Normalization (min max scaling) 
 
 ```{r}
-plot(1:25, Mitosis_Ctrl_MM[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("CASP7_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Absolute Protein Amount",main="CASP7_HUMAN MinMax",ylim=c(0,1))
-lines(1:25, Mitosis_RNase_MM[which(rownames(RDeeP_HeLa_Mitosis_clean)==c("CASP7_HUMAN")),], type="l",lwd=3,col="red")
+plot(1:25, Mitosis_Ctrl_MM[which(rownames(Mitosis_Ctrl_MM)==c("CASP7_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Absolute Protein Amount",main="CASP7_HUMAN MinMax",ylim=c(0,1))
+lines(1:25, Mitosis_RNase_MM[which(rownames(Mitosis_RNase_MM)==c("CASP7_HUMAN")),], type="l",lwd=3,col="red")
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
@@ -230,9 +230,107 @@ legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd
 "Non-shifters": ASNS (Asparagine synthetase), MCM2 (DNA replication licensing factor MCM2), etc.
 
 ```{r}
-library(nloptr)  # for optimization
-library(ggplot2) # for visualization
+# Step 1: Extract the row you want to fit the Gaussian to
+row_data <- Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100)==c("1433F_HUMAN")),]
+
+# Step 2: Define the Gaussian function
+gaussian <- function(x, mean, sd, amplitude) {
+  amplitude * dnorm(x, mean, sd)
+}
+
+# Step 3: Define the negative log-likelihood (NLL) function
+nll <- function(params, x, y) {
+  mean <- params[1]
+  sd <- params[2]
+  amplitude <- params[3]
+  
+  y_pred <- gaussian(x, mean, sd, amplitude)
+  -sum(log(y_pred + 1e-10))  # Adding a small value to avoid log(0)
+}
+
+# Step 4: Fit the Gaussian using optimization
+nonzero_data <- row_data[row_data != 0]
+nonzero_indices <- which(row_data != 0)
+
+initial_params <- c(mean = mean(nonzero_data),
+                    sd = sd(nonzero_data),
+                    amplitude = max(nonzero_data))
+
+fitted_params <- optim(par = initial_params,
+                       fn = nll,
+                       x = nonzero_indices,
+                       y = nonzero_data,
+                       method = "L-BFGS-B",
+                       lower = c(-Inf, 0, 0),  # Lower bounds for parameters
+                       upper = c(Inf, Inf, Inf))  # Upper bounds for parameters
+
+mean_fitted <- fitted_params$par[1]
+sd_fitted <- fitted_params$par[2]
+amplitude_fitted <- fitted_params$par[3]
+
+# Step 5: Visualize the original data and the fitted Gaussian
+x_values <- seq(1, length(row_data), length.out = 100)
+y_values <- gaussian(x_values, mean_fitted, sd_fitted, amplitude_fitted)
+
+# Plot the data points and the fitted Gaussian curve
+plot(seq_along(row_data), row_data, type = "p", col = "blue", xlab = "Index", ylab = "Value")
+lines(x_values, y_values, col = "red")
+```
+Gauss Graph funktioniert nicht immer, nur bei manchen verteilungen! Vielleicht t-verteilung?
+
+```{r}
+# Step 1: Extract the row you want to fit the t-distribution to
+row_data <- Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100) == "CASP7_HUMAN"), ]
+
+# Step 2: Define the t-distribution function
+t_distribution <- function(x, df, mean, scale) {
+  dt((x - mean) / scale, df) / scale
+}
+
+# Step 3: Define the negative log-likelihood (NLL) function
+nll_t <- function(params, x, y) {
+  df <- params[1]
+  mean <- params[2]
+  scale <- params[3]
+  
+  if (df <= 0 || scale <= 0) {
+    return(Inf)  # Return infinite value if parameters are invalid
+  }
+  
+  y_pred <- t_distribution(x, df, mean, scale)
+  -sum(log(y_pred + 1e-10))  # Adding a small value to avoid log(0)
+}
+
+# Step 4: Fit the t-distribution using optimization
+nonzero_data <- row_data[row_data != 0]
+nonzero_indices <- which(row_data != 0)
+
+initial_params <- c(df = 1,
+                    mean = mean(nonzero_data),
+                    scale = sd(nonzero_data))
+
+fitted_params <- optim(par = initial_params,
+                       fn = nll_t,
+                       x = nonzero_indices,
+                       y = nonzero_data,
+                       method = "L-BFGS-B",
+                       lower = c(0.01, -Inf, 0.01),  # Adjust parameter bounds if needed
+                       upper = c(Inf, Inf, Inf))
+
+df_fitted <- fitted_params$par[1]
+mean_fitted <- fitted_params$par[2]
+scale_fitted <- fitted_params$par[3]
+
+# Step 5: Visualize the original data and the fitted t-distribution
+x_values <- seq(1, length(row_data), length.out = 100)
+y_values <- t_distribution(x_values, df_fitted, mean_fitted, scale_fitted)
+
+# Plot the data points and the fitted t-distribution curve
+plot(seq_along(row_data), row_data, type = "p", col = "blue", xlab = "Index", ylab = "Value",ylim=c(0,1))
+lines(x_values, y_values, col = "red")
+
 ```
 
-
+Funktioniert schonmal besser...
+God this is so much work AHHHHHHHHHHHHHHH
 
