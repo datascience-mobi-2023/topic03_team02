@@ -231,7 +231,7 @@ legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd
 
 ```{r}
 # Step 1: Extract the row you want to fit the Gaussian to
-row_data <- Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100)==c("1433F_HUMAN")),]
+row_data <- Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100)==c("CASP7_HUMAN")),]
 
 # Step 2: Define the Gaussian function
 gaussian <- function(x, mean, sd, amplitude) {
@@ -326,11 +326,28 @@ x_values <- seq(1, length(row_data), length.out = 100)
 y_values <- t_distribution(x_values, df_fitted, mean_fitted, scale_fitted)
 
 # Plot the data points and the fitted t-distribution curve
-plot(seq_along(row_data), row_data, type = "p", col = "blue", xlab = "Index", ylab = "Value",ylim=c(0,1))
+plot(seq_along(row_data), row_data, type = "p", col = "blue", xlab = "Index", ylab = "Value",ylim=c(0,0.5))
 lines(x_values, y_values, col = "red")
 
 ```
 
 Funktioniert schonmal besser...
 God this is so much work AHHHHHHHHHHHHHHH
+```{r}
+library(peakutils)
+
+# Step 1: Extract the row you want to find peaks in
+row_index <- 1  # Adjust the row index as needed
+row_data <- Mitosis_Ctrl_mean[row_index, ]
+
+# Step 2: Find the indices of the peaks in the row data
+peaks <- peakutils::indexes(row_data, thres = 0.5, min.dist = 5)
+
+# Step 3: Visualize the peaks on a plot
+plot(seq_along(row_data), row_data, type = "l", xlab = "Index", ylab = "Value")
+points(peaks, row_data[peaks], col = "red", pch = 16)
+
+```
+
+
 

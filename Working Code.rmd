@@ -230,7 +230,7 @@ rownames(max_values_RNase) <- rownames(p_values_RNase)
 # Print the new dataframe
 print(max_values_RNase)
 
-#Testing how many RNase values I have above 5%/10%:
+#Testing how many RNase values we have above 5%/10%:
 sum(max_values_RNase > 0.05)
 sum(max_values_RNase > 0.1)
 #For control
@@ -249,9 +249,9 @@ Now adding the columns to the main dataframe and doing the same, identify the ro
 ```{r}
 RDeeP_HeLa_Mitosis_p <- data.frame(RDeeP_HeLa_Mitosis, max_values_Ctrl, max_values_RNase) 
 
-# Identify all rows where the value in _one_ of the last two columns exceeds 5/10%
+# Identify all rows where the value in _one_ of the last two columns exceeds 5% or 10%
 
-#bad_proteins5 <- which(RDeeP_HeLa_Mitosis_p[, 151] > 0.05 | RDeeP_HeLa_Mitosis_p[, 152] > 0.05)
+bad_proteins5 <- which(RDeeP_HeLa_Mitosis_p[, 151] > 0.05 | RDeeP_HeLa_Mitosis_p[, 152] > 0.05)
 bad_proteins10 <- which(RDeeP_HeLa_Mitosis_p[, 151] > 0.1 | RDeeP_HeLa_Mitosis_p[, 152] > 0.1)
 
 #When using the logical OR (|) operator, if either condition is true, the result will be true. 
@@ -265,14 +265,14 @@ bad_proteins10 <- which(RDeeP_HeLa_Mitosis_p[, 151] > 0.1 | RDeeP_HeLa_Mitosis_p
 #bad_proteins5 <- which(RDeeP_HeLa_Mitosis_p[, 151:152] > 0.05)
 bad_proteins10wierd <- which(RDeeP_HeLa_Mitosis_p[, 151:152] > 0.1)
 
-#length(bad_proteins5)
+length(bad_proteins5)
 length(bad_proteins10)
 length(bad_proteins10wierd)
 ```
 Anywayyyy, let's work with the 10 % margin and delete all corresponding rows.
 
 ```{r}
-RDeeP_HeLa_Mitosis_clean <- RDeeP_HeLa_Mitosis_p[!(RDeeP_HeLa_Mitosis_p[, 151] > 0.05 | RDeeP_HeLa_Mitosis_p[, 152] > 0.05), ] #the ! Operator negate the condition.It excludes rows where the condition is TRUE, thus effectively filtering out rows that exceed 10%.
+RDeeP_HeLa_Mitosis_clean <- RDeeP_HeLa_Mitosis_p[!(RDeeP_HeLa_Mitosis_p[, 151] > 0.1 | RDeeP_HeLa_Mitosis_p[, 152] > 0.1), ] #the ! Operator negate the condition.It excludes rows where the condition is TRUE, thus effectively filtering out rows that exceed 10%.
 
 # Remove the last two columns
 RDeeP_HeLa_Mitosis_clean <- RDeeP_HeLa_Mitosis_clean[, 1:(ncol(RDeeP_HeLa_Mitosis_clean) - 2)]
@@ -391,7 +391,7 @@ rm(nonzero_rows, column_values,max_values_Ctrl,max_values_RNase,p_values_Ctrl,p_
 
 #### Attempt no.1
 
-Okay, Idea is to fit a gaussian graph to each protein and calculating the 
+Okay, Idea is to fit a gaussian graph to each protein and calculating the maximum
 ```{r}
 
 ```
