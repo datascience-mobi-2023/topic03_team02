@@ -224,12 +224,12 @@ grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
 
-#### EXTRAS
+#### Gaussian attempt
 
 "Shifters": Laut maiwen SIN3A und CASP7
 "Non-shifters": ASNS (Asparagine synthetase), MCM2 (DNA replication licensing factor MCM2), etc.
 
-```{r}
+```{r gaussian distribution}
 # Step 1: Extract the row you want to fit the Gaussian to
 row_data <- Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100)==c("CASP7_HUMAN")),]
 
@@ -278,7 +278,7 @@ lines(x_values, y_values, col = "red")
 ```
 Gauss Graph funktioniert nicht immer, nur bei manchen verteilungen! Vielleicht t-verteilung?
 
-```{r}
+```{r t-distribution}
 # Step 1: Extract the row you want to fit the t-distribution to
 row_data <- Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100) == "CASP7_HUMAN"), ]
 
@@ -334,6 +334,8 @@ lines(x_values, y_values, col = "red")
 Funktioniert schonmal besser...
 God this is so much work AHHHHHHHHHHHHHHH
 
+#### multiple peak stuff
+
 ```{r}
 # Step 1: Create an empty vector to store the row indices with multiple peaks
 rows_with_multiple_peaks <- c()
@@ -357,12 +359,13 @@ for (row_index in 1:nrow(Mitosis_Ctrl_mean)) {
 }
 
 # Step 5: Print the row indices with multiple peaks
-print(rows_with_multiple_peaks)
+head(rows_with_multiple_peaks)
 
 ```
+
 ```{r}
 # Step 1: Extract the row you want to find peaks in
-row_index <- 3  # Adjust the row index as needed
+row_index <- 6  # Adjust the row index as needed
 row_data <- Mitosis_Ctrl_mean[row_index, ]
 
 # Step 2: Find the peaks in the row data
@@ -378,27 +381,3 @@ plot(seq_along(row_data), row_data, type = "l", xlab = "Index", ylab = "Value")
 points(peaks, row_data[peaks], col = "red", pch = 16)
 
 ```
-
-Option of a more efficient code from ChatGTP
-```{r}
-# Step 1: Find the indices of local maxima in a vector
-find_local_maxima <- function(x) {
-  is_local_max <- c(FALSE, x[-1] > x[-length(x)], FALSE)
-  local_maxima_indices <- which(is_local_max)
-  return(local_maxima_indices)
-}
-
-# Step 2: Iterate over all rows in the dataframe and identify rows with multiple peaks
-rows_with_multiple_peaks <- which(
-  apply(Mitosis_Ctrl_mean, 1, function(row) {
-    local_maxima_indices <- find_local_maxima(row)
-    length(local_maxima_indices) > 1
-  })
-)
-
-# Step 3: Print the row indices with multiple peaks
-print(rows_with_multiple_peaks)
-
-```
-
-
