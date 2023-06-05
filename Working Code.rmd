@@ -136,9 +136,11 @@ Now in the next step we try to apply a student t-test on every three values, and
 ```{r}
 # Calculate the number of sets in the Control Dataset
 num_sets <- ncol(RDeeP_HeLa_Mitosis_Ctrl) %/% 3
+print(num_sets) #25 - number of fractions
 
 # Create an empty dataframe to store the p-values
 p_values_Ctrl <- data.frame(matrix(ncol = num_sets, nrow = nrow(RDeeP_HeLa_Mitosis_Ctrl)))
+print(p_values_Ctrl)
 
 # Iterate over every set of three columns
 for (i in seq(1, ncol(RDeeP_HeLa_Mitosis_Ctrl), by = 3)) {
@@ -168,7 +170,7 @@ print(p_values_Ctrl)
 ```
 
 
-Finding the maximum value for each row, then deciding if it is smaller than our significance level (either 5% or 1%, has to be decided beforehand)
+Finding the maximum value for each row, then deciding if it is smaller than our significance level (either 5% or 10%, has to be decided beforehand)
 
 ```{r}
 # Replace NA values with zero in p_values_Ctrl dataframe
@@ -422,6 +424,7 @@ This code helps us visualize one specific protein
 ```{r}
 # Step 1: Extract the row you want to find peaks in
 row_index <- 6  # Adjust the row index as needed
+row_name <- row.names(Mitosis_Ctrl_100)[row_index] #name of plot adapts depending on protein viewed #also works if Mitosis_RNase_100, bc both dataframes would plot the same protein
 
 # Step 2: Find the peaks for Ctrl in the row data
 row_data_Ctrl <- Mitosis_Ctrl_100[row_index, ]
@@ -444,7 +447,7 @@ for (i in 2:(length(row_data_RNase) - 1)) {
 }
 
 # Step 4: Visualize the peaks on a plot
-plot(1:25, Mitosis_Ctrl_100[row_index, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,60))
+plot(1:25, Mitosis_Ctrl_100[row_index, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,60), main = row_name)
 points(peaks_Ctrl, row_data_Ctrl[peaks_Ctrl], col = "blue", pch = 16)
 
 lines(1:25, Mitosis_RNase_100[row_index, ], type="l",col="red")

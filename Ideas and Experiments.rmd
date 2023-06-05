@@ -367,6 +367,7 @@ head(rows_with_multiple_peaks)
 # Step 1: Extract the row you want to find peaks in
 row_index <- 6  # Adjust the row index as needed
 row_data <- Mitosis_Ctrl_mean[row_index, ]
+row_name <- row.names(Mitosis_Ctrl_mean)[row_index]
 
 # Step 2: Find the peaks in the row data
 peaks <- c()
@@ -377,7 +378,8 @@ for (i in 2:(length(row_data) - 1)) {
 }
 
 # Step 3: Visualize the peaks on a plot
-plot(seq_along(row_data), row_data, type = "l", xlab = "Index", ylab = "Value")
+plot(seq_along(row_data), row_data, type = "l", xlab = "Index", ylab = "Value", main = row_name)
 points(peaks, row_data[peaks], col = "red", pch = 16)
+#legend("topright",legend=c("Control mean"),col=c("black"),bg="white",lwd=2)
 
 ```
