@@ -393,7 +393,7 @@ rm(nonzero_rows, column_values,max_values_Ctrl,max_values_RNase,p_values_Ctrl,p_
 
 #### Attempt no.1
 
-This code allows us to identify all rows with mulitple pleaks
+This code allows us to identify all rows with multiple peaks
 ```{r}
 # Step 1: Create an empty vector to store the row indices with multiple peaks
 rows_with_multiple_peaks <- c()
@@ -417,13 +417,47 @@ for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
 }
 
 # Step 5: Print the row indices with multiple peaks
-length(rows_with_multiple_peaks)
+length(rows_with_multiple_peaks) #this is already a vector
+rows_with_multiple_peaks
+
+
+#rows_with_multiple_peaks_df <- data.frame(Row_Name = rownames(Mitosis_Ctrl_100), value = rows_with_multiple_peaks) 
+
+#rows_with_multiple_peaks_df
+#rownames(Mitosis_Ctrl_100 %in% rows_with_multiple_peaks)
 ```
 
+
+
+
+Rows with just one peak
+still does not want to cooperate :l
+```{r}
+# Iterate over each row in the dataframe
+for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
+  # Extract the row
+  row <- Mitosis_Ctrl_100[row_index, ]
+  
+  # Find the global maximum in the row
+  global_max <- max(row)
+  
+  # Check if the row has only one peak
+  has_one_peak <- sum(row == global_max) == 1 && all(diff(row) < 0)
+  
+  # Print the result for the current row
+  print(paste("Row", row_index, "has one peak:", has_one_peak))
+}
+
+
+
+```
+
+
+## 3.2 Specific visualization of proteins
 This code helps us visualize one specific protein
 ```{r}
 # Step 1: Extract the row you want to find peaks in
-row_index <- 157  # Adjust the row index as needed
+row_index <- 20  # Adjust the row index as needed
 row_name <- row.names(Mitosis_Ctrl_100)[row_index] #name of plot adapts depending on protein viewed #also works if Mitosis_RNase_100, bc both dataframes would plot the same protein
 
 # Step 2: Find the peaks for Ctrl in the row data
@@ -455,11 +489,12 @@ points(peaks_RNase, row_data_RNase[peaks_RNase], col = "red", pch = 16)
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
+
 Nooww, a similar code, but plots the graph using the name of the protein and not just its index in the dataframe
 -> Does basically the same as the previous code, but its cool to plot just using the protein name hehe
 ```{r}
 # Select a specific row by name
-row_name <- "ADK_HUMAN"
+row_name <- "3BP5_HUMAN"
 
 # Step 1: Find the desired row by the name
 row_data <- Mitosis_Ctrl_100[Mitosis_Ctrl_100$Row_Name == row_name, -1]  # Exclude the first column (row names)
@@ -493,5 +528,7 @@ points(peaks_RNase, row_data_RNase[peaks_RNase], col = "red", pch = 16)
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
+
+## 4. Shift one peak proteins
 
 
