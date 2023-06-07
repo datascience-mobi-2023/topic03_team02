@@ -463,7 +463,9 @@ TRUE, this means all proteins without a peak have either accumulated in first or
 ## Peak finder
 According to Fabio, the code above does not help us, soo now we try to code a new peak finder for only global maxima
 
-Here we have a "web search" for protein indices in the Ctrl Dataframe. It shows us in which fraction the maximun protein amount was meassured and how much this amount is
+#### Web search Ctrl peak finder
+Here we have a "web search" for protein indices in the Ctrl Dataframe. It shows us in which fraction the maximun protein amount was measured and how much this amount is.
+It is nice for visualization or to look up for information quick. But for further analysis, more like a simple vector with just values necessary.
 ```{r}
 # Row index for which to find the column and value of global maximum
 #Change Index as necessary
@@ -513,6 +515,7 @@ value <- row[column_index]
 print(paste("Column Name:", column_name))
 print(paste("Value:", value))
 ```
+#### Web search RNase peak finder
 "Web search" for protein indices in the RNase Dataframe
 ```{r}
 # Row index for which to find the column and value of global maximum
@@ -562,6 +565,70 @@ value <- row[column_index]
 # Print the column name and value
 print(paste("Column Name:", column_name))
 print(paste("Value:", value))
+```
+
+#### useful peak finder?
+
+Overview to know in which fraction the max was found. The vector should then help for further analysis.
+Overview for Ctrl Dataframe.
+```{r}
+# Find the column index of the global maximum for each row
+column_indices <- apply(Mitosis_Ctrl_100, 1, which.max)
+
+# Find the global maximum for each row
+global_maxima <- apply(Mitosis_Ctrl_100, 1, max)
+
+# Find the row names
+row_names <- row.names(Mitosis_Ctrl_100)
+
+# Create a dataframe with the results
+Ctrl_fraction_max_value <- data.frame(Fraction = column_indices, MaxValue = global_maxima)
+Ctrl_fraction_max <- data.frame(Fraction = column_indices)
+
+# Print the results
+#Shows protein name, fraction where global maxima was found and the maximum value
+print(Ctrl_fraction_max_value)
+print(Ctrl_fraction_max)
+
+#Results as vector
+as.vector(Ctrl_fraction_max) #just numbers (aka fractions where max) 
+
+```
+Overview RNase Dataframe.
+-> error in function: I don't know why, its the same code as above :'l
+```{r}
+# Find the column index of the global maximum for each row
+column_indices <- apply(Mitosis_RNase_100, 1, which.max)
+
+# Find the global maximum for each row
+global_maxima <- apply(Mitosis_RNase_100, 1, max)
+
+# Find the row names
+row_names <- row.names(Mitosis_RNase_100)
+
+# Create a dataframe with the results
+RNase_fraction_max_value <- data.frame(Fraction = column_indices, MaxValue = global_maxima)
+RNase_fraction_max <- data.frame(Fraction = column_indices)
+
+# Print the results
+#Shows protein name, fraction where global maxima was found and the maximum value
+print(RNase_fraction_max_value)
+print(RNase_fraction_max)
+
+#Results as vector
+as.vector(Ctrl_fraction_max) #just numbers (aka fractions where max)
+
+```
+
+And this is how I imagine we could detect shifts.
+We substract the value from Ctrl_fraction_max (Ctrl fraction where max) from RNase_fraction_max (RNase fraction where max). If the result:
+= 0: no shift
+≥ 0: (positive number) left shift  
+≤ 0: (negative number) right shift
+Only problem: the code does not jet cooperate opsi
+
+```{r}
+as.vector(Ctrl_fraction_max) -as.vector(RNase_fraction_max)
 ```
 
 
