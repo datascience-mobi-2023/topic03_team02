@@ -361,6 +361,7 @@ for (row_index in 1:nrow(Mitosis_Ctrl_mean)) {
 }
 
 # Step 5: Print the row indices with multiple peaks
+length(rows_with_multiple_peaks)
 head(rows_with_multiple_peaks)
 ```
 
@@ -370,7 +371,7 @@ This code allows us to identify all rows with ONE peak each
 rows_with_one_peak <- c()
 
 # Step 2: Iterate over all rows in the dataframe
-for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
+for (row_index in 1:nrow(Mitosis_Ctrl_100)) {   #why here with MitosisCtrl100 and above with MitosisCtrlMean?? Should it not be the same for comparison?
   row_data <- Mitosis_Ctrl_100[row_index, ]
   
   # Step 3: Find the peaks in the row data
@@ -390,9 +391,12 @@ for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
 # Step 5: Print the row indices with only one peak
 length(rows_with_one_peak)  # Number of rows with one peak
 rows_with_one_peak  # Row indices with one peak
+head(rows_with_one_peak)
 
 # COMPARISON
 length(rows_with_multiple_peaks) + length(rows_with_one_peak) == nrow(Mitosis_Ctrl_100)
+length(rows_with_multiple_peaks) + length(rows_with_one_peak) #7074 rows
+nrow(Mitosis_Ctrl_100) #7158 rows
 
 ```
 Mhmm, it is FALSE, so maybe:
@@ -420,7 +424,8 @@ for (row_index in 1:nrow(Mitosis_Ctrl_100)) { #Ich habe das gleiche auch mit dem
 }
 
 # Step 5: Print the row indices with no peak
-length(rows_with_no_peak)  # Number of rows with no peak
+length(rows_with_no_peak)  # Number of rows with no peak #84
+#what are rows with no peaks? Theoretically we already cleaned up the dataframe, should it not be free of 0 rows? #what does it mean (for our data) that the protein accumulates in the first/last fraction
 
 # COMPARISON
 length(rows_with_multiple_peaks) + length(rows_with_one_peak) + length(rows_with_no_peak) == nrow(Mitosis_Ctrl_100)
@@ -447,8 +452,118 @@ has_max_in_first_col <- apply(Mitosis_Ctrl_100[rows_with_no_peak, ], 1, function
 are_complementary <- all(has_max_in_last_col != has_max_in_first_col)
 are_complementary
 
+plot(seq_along(row_data), row_data, type = "l", xlab = "Index", ylab = "Value", main = row_name)
+points(peaks, row_data[peaks], col = "red", pch = 16)
+legend("topright",legend=c("Control mean"),col=c("black"),bg="white",lwd=2)
+
 ```
 TRUE, this means all proteins without a peak have either accumulated in first or last fraction.
+-> does it mean error? or normalization side effect?
+
+## Peak finder
+According to Fabio, the code above does not help us, soo now we try to code a new peak finder for only global maxima
+
+Here we have a "web search" for protein indices in the Ctrl Dataframe. It shows us in which fraction the maximun protein amount was meassured and how much this amount is
+```{r}
+# Row index for which to find the column and value of global maximum
+#Change Index as necessary
+row_index <- 2
+
+# Extract the row from the dataframe
+row <- Mitosis_Ctrl_100[row_index, ]
+
+# Find the column index of the global maximum
+column_index <- which.max(row)
+
+# Find the column name corresponding to the column index
+column_name <- colnames(Mitosis_Ctrl_100)[column_index]
+
+# Find the value corresponding to the column of the global maximum
+value <- row[column_index]
+
+# Find the row name
+row_name <- row.names(Mitosis_Ctrl_100)[row_index]
+
+# Print the column name and value
+print(paste("Protein:", row_name))
+print(paste("Column Name:", column_name))
+print(paste("Value:", value))
+
+```
+
+The same as above, but for a protein name based search :)
+```{r}
+# Row name for which to find the column and value of global maximum
+#Change as necessary
+row_name <- "2A5E_HUMAN"
+
+# Extract the row from the dataframe
+row <- Mitosis_Ctrl_100[row_name, ]
+
+# Find the column index of the global maximum
+column_index <- which.max(row)
+
+# Find the column name corresponding to the column index
+column_name <- colnames(Mitosis_Ctrl_100)[column_index]
+
+# Find the value corresponding to the column of the global maximum
+value <- row[column_index]
+
+# Print the column name and value
+print(paste("Column Name:", column_name))
+print(paste("Value:", value))
+```
+"Web search" for protein indices in the RNase Dataframe
+```{r}
+# Row index for which to find the column and value of global maximum
+#Change Index as necessary
+row_index <- 2
+
+# Extract the row from the dataframe
+row <- Mitosis_RNase_100[row_index, ]
+
+# Find the column index of the global maximum
+column_index <- which.max(row)
+
+# Find the column name corresponding to the column index
+column_name <- colnames(Mitosis_RNase_100)[column_index]
+
+# Find the value corresponding to the column of the global maximum
+value <- row[column_index]
+
+# Find the row name
+row_name <- row.names(Mitosis_RNase_100)[row_index]
+
+# Print the column name and value
+print(paste("Protein:", row_name))
+print(paste("Column Name:", column_name))
+print(paste("Value:", value))
+
+```
+
+"Web search" for protein names in the RNase Dataframe
+```{r}
+# Row name for which to find the column and value of global maximum
+#Change as necessary
+row_name <- "2A5E_HUMAN"
+
+# Extract the row from the dataframe
+row <- Mitosis_RNase_100[row_name, ]
+
+# Find the column index of the global maximum
+column_index <- which.max(row)
+
+# Find the column name corresponding to the column index
+column_name <- colnames(Mitosis_RNase_100)[column_index]
+
+# Find the value corresponding to the column of the global maximum
+value <- row[column_index]
+
+# Print the column name and value
+print(paste("Column Name:", column_name))
+print(paste("Value:", value))
+```
+
 
 ## Visualization
 
