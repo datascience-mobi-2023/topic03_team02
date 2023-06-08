@@ -402,6 +402,7 @@ column_name <- colnames(Mitosis_Ctrl_100)[column_index]
 value <- row[column_index]
 
 # Print the column name and value
+print(paste("Protein:", row_name))
 print(paste("Column Name:", column_name))
 print(paste("Value:", value))
 ```
@@ -453,6 +454,7 @@ column_name <- colnames(Mitosis_RNase_100)[column_index]
 value <- row[column_index]
 
 # Print the column name and value
+print(paste("Protein:", row_name))
 print(paste("Column Name:", column_name))
 print(paste("Value:", value))
 ```
@@ -501,6 +503,7 @@ row_names <- row.names(Mitosis_RNase_100)
 # Create a dataframe with the results
 RNase_fraction_max_value <- data.frame(Fraction = column_indices, MaxValue = global_maxima)
 RNase_fraction_max <- data.frame(Fraction = column_indices)
+#hier kommt bei mir Fehler raus, da anscheinend unsere Daten unterschiedlich lang sind
 
 # Print the results
 #Shows protein name, fraction where global maxima was found and the maximum value
