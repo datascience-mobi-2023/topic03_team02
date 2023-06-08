@@ -524,7 +524,7 @@ FOR ONE PEAK PROTEINS:
 
 # Get the row data from Mitosis_Ctrl_100 and Mitosis_RNase_100
 row_data_ctrl <- Mitosis_Ctrl_100[rows_with_one_peak,]
-row_data_rnase <- Mitosis_Ctrl_100[rows_with_one_peak,] #HERE IT SHOULD SAY RNASE, BUT THEN THE CODE DOESNT WORK AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHh
+row_data_rnase <- Mitosis_RNase_100[rows_with_one_peak,] #HERE IT SHOULD SAY RNASE, BUT THEN THE CODE DOESNT WORK AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHh
   
 # Find the column index with the maximum value in each row
 max_col_ctrl <- max.col(row_data_ctrl)
