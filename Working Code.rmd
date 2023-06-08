@@ -289,6 +289,13 @@ Mitosis_Ctrl_clean = cbind(RDeeP_HeLa_Mitosis_clean[,1:3],RDeeP_HeLa_Mitosis_cle
 
 #For RNase
 Mitosis_RNase_clean=RDeeP_HeLa_Mitosis_clean[,-which(names(RDeeP_HeLa_Mitosis_clean) %in% colnames(Mitosis_Ctrl_clean))]
+
+#additional cleanup: deleting all rows in RNase and Ctrl which are zero, removing these rows from the entire clean dataframe
+which(rowSums(Mitosis_Ctrl_clean)==0)
+which(rowSums(Mitosis_RNase_clean)==0) 
+# Removing BT2A3_HUMAN SEPP1_HUMAN from each dataframe and saving in in the same variable again:
+Mitosis_Ctrl_clean <- Mitosis_Ctrl_clean[!(rownames(Mitosis_Ctrl_clean) %in% c("BT2A3_HUMAN", "SEPP1_HUMAN")), ]
+Mitosis_RNase_clean <- Mitosis_RNase_clean[!(rownames(Mitosis_RNase_clean) %in% c("BT2A3_HUMAN", "SEPP1_HUMAN")), ]
 ```
 
 

@@ -180,7 +180,7 @@ View(Mitosis_Ctrl_MM)
 We can later decide which method to chose. 
 
 
-### Plot visulization ideas VERY MESSY
+### Plot visulization ideas
 
 
 ##### Without Normalization
@@ -190,6 +190,7 @@ lines(1:25, Mitosis_RNase_mean[which(rownames(Mitosis_RNase_mean)==c("SIN3B_HUMA
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
+
 ```{r}
 plot(1:25, Mitosis_Ctrl_mean[which(rownames(Mitosis_Ctrl_mean)==c("CASP7_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Absolute Protein Amount",main="CASP7_HUMAN",ylim=c(0,1500000))
 lines(1:25, Mitosis_RNase_mean[which(rownames(Mitosis_RNase_mean)==c("CASP7_HUMAN")),], type="l",lwd=3,col="red")
@@ -223,117 +224,6 @@ lines(1:25, Mitosis_RNase_MM[which(rownames(Mitosis_RNase_MM)==c("CASP7_HUMAN"))
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
-
-#### Gaussian attempt
-
-"Shifters": Laut maiwen SIN3A und CASP7
-"Non-shifters": ASNS (Asparagine synthetase), MCM2 (DNA replication licensing factor MCM2), etc.
-
-```{r gaussian distribution}
-# Step 1: Extract the row you want to fit the Gaussian to
-row_data <- Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100)==c("CASP7_HUMAN")),]
-
-# Step 2: Define the Gaussian function
-gaussian <- function(x, mean, sd, amplitude) {
-  amplitude * dnorm(x, mean, sd)
-}
-
-# Step 3: Define the negative log-likelihood (NLL) function
-nll <- function(params, x, y) {
-  mean <- params[1]
-  sd <- params[2]
-  amplitude <- params[3]
-  
-  y_pred <- gaussian(x, mean, sd, amplitude)
-  -sum(log(y_pred + 1e-10))  # Adding a small value to avoid log(0)
-}
-
-# Step 4: Fit the Gaussian using optimization
-nonzero_data <- row_data[row_data != 0]
-nonzero_indices <- which(row_data != 0)
-
-initial_params <- c(mean = mean(nonzero_data),
-                    sd = sd(nonzero_data),
-                    amplitude = max(nonzero_data))
-
-fitted_params <- optim(par = initial_params,
-                       fn = nll,
-                       x = nonzero_indices,
-                       y = nonzero_data,
-                       method = "L-BFGS-B",
-                       lower = c(-Inf, 0, 0),  # Lower bounds for parameters
-                       upper = c(Inf, Inf, Inf))  # Upper bounds for parameters
-
-mean_fitted <- fitted_params$par[1]
-sd_fitted <- fitted_params$par[2]
-amplitude_fitted <- fitted_params$par[3]
-
-# Step 5: Visualize the original data and the fitted Gaussian
-x_values <- seq(1, length(row_data), length.out = 100)
-y_values <- gaussian(x_values, mean_fitted, sd_fitted, amplitude_fitted)
-
-# Plot the data points and the fitted Gaussian curve
-plot(seq_along(row_data), row_data, type = "p", col = "blue", xlab = "Index", ylab = "Value")
-lines(x_values, y_values, col = "red")
-```
-
-Gauss Graph funktioniert nicht immer, nur bei manchen verteilungen! Vielleicht t-verteilung?
-
-```{r t-distribution}
-# Step 1: Extract the row you want to fit the t-distribution to
-row_data <- Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100) == "CASP7_HUMAN"), ]
-
-# Step 2: Define the t-distribution function
-t_distribution <- function(x, df, mean, scale) {
-  dt((x - mean) / scale, df) / scale
-}
-
-# Step 3: Define the negative log-likelihood (NLL) function
-nll_t <- function(params, x, y) {
-  df <- params[1]
-  mean <- params[2]
-  scale <- params[3]
-  
-  if (df <= 0 || scale <= 0) {
-    return(Inf)  # Return infinite value if parameters are invalid
-  }
-  
-  y_pred <- t_distribution(x, df, mean, scale)
-  -sum(log(y_pred + 1e-10))  # Adding a small value to avoid log(0)
-}
-
-# Step 4: Fit the t-distribution using optimization
-nonzero_data <- row_data[row_data != 0]
-nonzero_indices <- which(row_data != 0)
-
-initial_params <- c(df = 1,
-                    mean = mean(nonzero_data),
-                    scale = sd(nonzero_data))
-
-fitted_params <- optim(par = initial_params,
-                       fn = nll_t,
-                       x = nonzero_indices,
-                       y = nonzero_data,
-                       method = "L-BFGS-B",
-                       lower = c(0.01, -Inf, 0.01),  # Adjust parameter bounds if needed
-                       upper = c(Inf, Inf, Inf))
-
-df_fitted <- fitted_params$par[1]
-mean_fitted <- fitted_params$par[2]
-scale_fitted <- fitted_params$par[3]
-
-# Step 5: Visualize the original data and the fitted t-distribution
-x_values <- seq(1, length(row_data), length.out = 100)
-y_values <- t_distribution(x_values, df_fitted, mean_fitted, scale_fitted)
-
-# Plot the data points and the fitted t-distribution curve
-plot(seq_along(row_data), row_data, type = "p", col = "blue", xlab = "Index", ylab = "Value",ylim=c(0,0.5))
-lines(x_values, y_values, col = "red")
-
-```
-
-Funktioniert schonmal besser... Aber noch immer höchst ungünstig.
-
 
 
 #### PEAK ANALYSIS OLD
@@ -458,10 +348,10 @@ legend("topright",legend=c("Control mean"),col=c("black"),bg="white",lwd=2)
 
 ```
 TRUE, this means all proteins without a peak have either accumulated in first or last fraction.
--> does it mean error? or normalization side effect? NO
+-> does it mean error? or normalization side effect? No.
 
 ## Peak finder
-According to Fabio, the code above does not help us, soo now we try to code a new peak finder for only global maxima
+According to Fabio, the code above does not help us, so now we try to code a new peak finder for only global maxima
 
 #### Web search Ctrl peak finder
 Here we have a "web search" for protein indices in the Ctrl Dataframe. It shows us in which fraction the maximun protein amount was measured and how much this amount is.
@@ -497,7 +387,7 @@ The same as above, but for a protein name based search :)
 ```{r}
 # Row name for which to find the column and value of global maximum
 #Change as necessary
-row_name <- "2A5E_HUMAN"
+row_name <- "2A5B_HUMAN"
 
 # Extract the row from the dataframe
 row <- Mitosis_Ctrl_100[row_name, ]
@@ -597,6 +487,8 @@ as.vector(Ctrl_fraction_max) #just numbers (aka fractions where max)
 Overview RNase Dataframe.
 -> error in function: I don't know why, its the same code as above :'l
 ```{r}
+# ERROR because we had RNAse rows with only zeros. I fixed that, for this code to run simply run the working code again. 
+
 # Find the column index of the global maximum for each row
 column_indices <- apply(Mitosis_RNase_100, 1, which.max)
 
@@ -616,103 +508,39 @@ print(RNase_fraction_max_value)
 print(RNase_fraction_max)
 
 #Results as vector
-as.vector(Ctrl_fraction_max) #just numbers (aka fractions where max)
+as.vector(RNase_fraction_max) #just numbers (aka fractions where max) 
 
 ```
 
 And this is how I imagine we could detect shifts.
-We substract the value from Ctrl_fraction_max (Ctrl fraction where max) from RNase_fraction_max (RNase fraction where max). If the result:
-= 0: no shift
-≥ 0: (positive number) left shift  
-≤ 0: (negative number) right shift
-Only problem: the code does not jet cooperate opsi
+We subtract the value in Ctrl_fraction_max (Ctrl fraction where max) with the value in RNase_fraction_max (RNase fraction where max) . If the result:
+'=' 0: no shift
+'>' 0: (positive number) left shift (normal, bedeutet max fraction bei Control ist größer als max fraction bei RNase)
+'<' 0: (negative number) right shift (ungewöhnlich, bedeutet RNase Fraktion ist größer als Control fraktion, Protein ist irgendwie schwerer geowrden)
+
 
 ```{r}
-as.vector(Ctrl_fraction_max) -as.vector(RNase_fraction_max)
+# Subtract the values and determine the shift
+shift_result <- Ctrl_fraction_max - RNase_fraction_max
+shift_result <- ifelse(shift_result == 0, "no shift", ifelse(shift_result > 0, "left shift", "right shift"))
+
+# Create a new dataframe with the shift result and row names
+shift_dataframe <- data.frame(Shift = shift_result, row.names = row.names(Ctrl_fraction_max))
+colnames(shift_dataframe)[1] <- "Shift"
+
+# Print the new dataframe
+print(shift_dataframe)
+
+#Von Jimena: as.vector(Ctrl_fraction_max) -as.vector(RNase_fraction_max)
 ```
-
-
-## Visualization
-
 ```{r}
-# Step 1: Extract the row you want to find peaks in
-row_index <- 1382  # Adjust the row index as needed
-row_data <- Mitosis_Ctrl_100[row_index, ]
-row_name <- row.names(Mitosis_Ctrl_100)[row_index]
-
-# Step 2: Find the peaks in the row data
-peaks <- c()
-for (i in 2:(length(row_data) - 1)) {
-  if (row_data[i] > row_data[i-1] && row_data[i] > row_data[i+1]) {
-    peaks <- c(peaks, i)
-  }
-}
-
-# Step 3: Visualize the peaks on a plot
-plot(seq_along(row_data), row_data, type = "l", xlab = "Index", ylab = "Value", main = row_name)
-points(peaks, row_data[peaks], col = "red", pch = 16)
-legend("topright",legend=c("Control mean"),col=c("black"),bg="white",lwd=2)
+# Count the number of left shifts
+sum(shift_dataframe$Shift == "left shift")
+sum(shift_dataframe$Shift == "right shift")
+sum(shift_dataframe$Shift == "no shift")
 ```
+Nice :)
 
+Next step would be now to compare all the location of the absolute and local maxima in Control and RNase with each other, and then only count the proteins in which the multiple peaks are not all in the same fractions, as this would hint at measurement inaccuracies.  
 
-#### SHIFT ANALYSIS
-
-Now the first idea is to start working on shift analysis. First step would be determine the fractions, in which the maximum peak is, and then substract the Control and RNase shifts. This all will be the easiest in proteins with one peak per Control/RNase.
-FOR ONE PEAK PROTEINS:
-
-```{r}
-# Step 1: Create an empty vector to store the results
-#one_peak_shifts <- vector("character", length = length(rows_with_one_peak))
-#names(one_peak_shifts) <- rownames(Mitosis_Ctrl_100)[rows_with_one_peak]
-
-#Doesn't matter if we take the row indexes from the control or RNase dataset, theoretically they should be identical. Testing my theory:
-#nrow(Mitosis_Ctrl_100[rows_with_one_peak,])
-#nrow(Mitosis_RNase_100[rows_with_one_peak,]) #--> works, is identical :)
-
-# Get the row data from Mitosis_Ctrl_100 and Mitosis_RNase_100
-row_data_ctrl <- Mitosis_Ctrl_100[rows_with_one_peak,]
-row_data_rnase <- Mitosis_RNase_100[rows_with_one_peak,] #HERE IT SHOULD SAY RNASE, BUT THEN THE CODE DOESNT WORK AHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHh
-  
-# Find the column index with the maximum value in each row
-max_col_ctrl <- max.col(row_data_ctrl)
-max_col_rnase <- max.col(row_data_rnase)
-
-# Create an empty dataframe to store the results
-result_df <- data.frame(Result = character(length(rows_with_one_peak)), stringsAsFactors = FALSE)
-rownames(result_df) <- seq_along(rows_with_one_peak)
-
-# Compare the elements of the vectors
-comparison <- mapply(function(x, y) {
-  diff <- x - y 
-  
-  if (diff < 0) {
-    return("right shift")
-  } else if (diff > 0) {
-    return("left shift")
-  } else {
-    return("no shift")
-  }
-}, max_col_ctrl, max_col_rnase)
-
-# Create the result dataframe
-result_df <- data.frame(Result = comparison, row.names = seq_along(rows_with_one_peak))
-
-# Print the result dataframe
-print(result_df)
-```
-
-Also haven't managed to add the names, not sure how yet.
-
-```{r}
-# Count the occurrences of "left shift"
-left_shift_count <- table(result_df$Result)["left shift"]
-right_shift_count <- table(result_df$Result)["right shift"]
-no_shift_count <- table(result_df$Result)["no shift"]
-
-# Print the count
-print(left_shift_count)
-print(right_shift_count)
-print(no_shift_count)
-```
-WELL in principle the code gives a close to right result, I haven't changed Ctrl to RNase yet, but that gives me an error, I do not know why.
 
