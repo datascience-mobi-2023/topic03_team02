@@ -385,127 +385,22 @@ We can later decide which method to chose.
 
 ```{r Clean environment}
 #I think it's time to clean up the environment to maintain an overview
-rm(nonzero_rows, column_values,max_values_Ctrl,max_values_RNase,p_values_Ctrl,p_values_RNase,RDeeP_HeLa_Mitosis_p,bad_proteins10,bad_proteins10wierd,num_sets,p_values)
+rm(nonzero_rows, column_values,max_values_Ctrl,max_values_RNase,p_values_Ctrl,p_values_RNase,RDeeP_HeLa_Mitosis_p,bad_proteins10,bad_proteins10wierd,num_sets,p_values,protein1_Ctrl_frac1,protein8_Ctrl_frac1,bad_proteins5)
 ```
 
 
 ## 3. Finding global/local maxima
 
-#### Attempt no.1
-
-This code allows us to identify all rows with multiple peaks
-```{r}
-# Step 1: Create an empty vector to store the row indices with multiple peaks
-rows_with_multiple_peaks <- c()
-
-# Step 2: Iterate over all rows in the dataframe
-for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
-  row_data <- Mitosis_Ctrl_100[row_index, ]
-  
-  # Step 3: Find the peaks in the row data
-  peaks <- c()
-  for (i in 2:(length(row_data) - 1)) {
-    if (row_data[i] > row_data[i-1] && row_data[i] > row_data[i+1]) {
-      peaks <- c(peaks, i)
-    }
-  }
-  
-  # Step 4: Check if the row has multiple peaks
-  if (length(peaks) > 1) {
-    rows_with_multiple_peaks <- c(rows_with_multiple_peaks, row_index)
-  }
-}
-
-# Step 5: Print the row indices with multiple peaks
-length(rows_with_multiple_peaks) #this is already a vector
-rows_with_multiple_peaks
-
-
-#rows_with_multiple_peaks_df <- data.frame(Row_Name = rownames(Mitosis_Ctrl_100), value = rows_with_multiple_peaks) 
-
-#rows_with_multiple_peaks_df
-#rownames(Mitosis_Ctrl_100 %in% rows_with_multiple_peaks)
-```
-
-
-
-
-Rows with just one peak
-still does not want to cooperate :l
-```{r}
-# Iterate over each row in the dataframe
-for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
-  # Extract the row
-  row <- Mitosis_Ctrl_100[row_index, ]
-  
-  # Find the global maximum in the row
-  global_max <- max(row)
-  
-  # Check if the row has only one peak
-  has_one_peak <- sum(row == global_max) == 1 && all(diff(row) < 0)
-  
-  # Print the result for the current row
-  print(paste("Row", row_index, "has one peak:", has_one_peak))
-}
-
-
-
-```
-still does  not coopertae
-```{r}
-# Create an empty list to store results
-maxima_results <- list()
-
-# Iterate over each row in the dataframe
-for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
-  row <- Mitosis_Ctrl_100[row_index, ]
-  
-  # Find the maximum value in the row
-  max_value <- max(row)
-  
-  # Find the indices of maxima in the row
-  max_indices <- which(row == max_value)
-  
-  # Check if each maximum is a global or local maximum
-  max_types <- c()
-  for (i in max_indices) {
-    if (i > 1 && i < length(row)) {
-      if (row[i] > row[i-1] && row[i] > row[i+1]) {
-        max_types <- append(max_types, "Local")
-      } else {
-        max_types <- append(max_types, "Global")
-      }
-    } else {
-      max_types <- append(max_types, "Global")
-    }
-  }
-  
-  # Store the results in the list
-  maxima_results[[row_index]] <- data.frame(MaximaValue = row[max_indices], MaximaIndex = max_indices, MaximaType = max_types)
-}
-
-# Print the results
-for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
-  print(paste("Row", row_index, "Maxima:"))
-  print(maxima_results[[row_index]])
-}
-
-
-```
-
-
-
-## 3.2 Specific visualization of proteins
+## 3.1 Specific visualization of proteins
 This code helps us visualize one specific protein
 ```{r}
 # Step 1: Extract the row you want to find peaks in
-row_index <- 20  # Adjust the row index as needed
+row_index <- 6  # Adjust the row index as needed
 row_name <- row.names(Mitosis_Ctrl_100)[row_index] #name of plot adapts depending on protein viewed #also works if Mitosis_RNase_100, bc both dataframes would plot the same protein
 
-# Step 2: Find the peaks for Ctrl in the row data
+# Step 2: Extrakt the data for Ctrl and RNase
 row_data_Ctrl <- Mitosis_Ctrl_100[row_index, ]
 row_data_RNase <- Mitosis_RNase_100[row_index, ]
-
 
 # Step 3: Find the peaks in the row data
 peaks_Ctrl <- c()
@@ -532,19 +427,14 @@ grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
 
-Nooww, a similar code, but plots the graph using the name of the protein and not just its index in the dataframe
--> Does basically the same as the previous code, but its cool to plot just using the protein name hehe
+View a protein and its peak using the protein name
 ```{r}
-# Select a specific row by name
-row_name <- "1433B_HUMAN"
-
-# Step 1: Find the desired row by the name
-row_data <- Mitosis_Ctrl_100[Mitosis_Ctrl_100$Row_Name == row_name, -1]  # Exclude the first column (row names)
+# Step 1: Select a specific row by name
+row_name <- "2A5E_HUMAN"
 
 # Step 2: Find the peaks for Ctrl in the row data
 row_data_Ctrl <- Mitosis_Ctrl_100[row_name, ]
 row_data_RNase <- Mitosis_RNase_100[row_name, ]
-
 
 # Step 3: Find the peaks in the row data
 peaks_Ctrl <- c()
