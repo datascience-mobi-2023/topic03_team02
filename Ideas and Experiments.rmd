@@ -536,6 +536,7 @@ print(shift_dataframe)
 
 #Von Jimena: as.vector(Ctrl_fraction_max) -as.vector(RNase_fraction_max)
 ```
+
 ```{r}
 # Count the number of left shifts
 sum(shift_dataframe$Shift == "left shift")
@@ -544,6 +545,11 @@ sum(shift_dataframe$Shift == "no shift")
 ```
 Nice :)
 
-Next step would be now to compare all the location of the absolute and local maxima in Control and RNase with each other, and then only count the proteins in which the multiple peaks are not all in the same fractions, as this would hint at measurement inaccuracies.  
+## Statistical analysis
+
+#### kmeans
+
+
+
 
 
