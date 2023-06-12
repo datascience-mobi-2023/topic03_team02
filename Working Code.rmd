@@ -546,8 +546,9 @@ sum(shift_dataframe$Shift == "no shift")
 
 Next step would to further analyse our left shift and right shift proteins. Sometimes, as seen in Protein 2A5E_HUMAN, the shift is only observed due to different y-Axis heights and thus result in a shift (even though this is probably wrong).
 
-For our shift proteins, we now want to compare all the location of the absolute and local maxima in Control and RNase with each other. Here, I save the column indices of Mitosis_RNase_100, with all maxima, no matter local or absolute, in a new dataframe (RNase_maxima) and repeat this process with Mitosis_Ctrl_100. Then I compare if the amount of maxima AND the column indices of each row are identical. If BOTH is identical, then I would like the result TRUE to be saved in for this row specifically. If not, then false. 
-
+For our shift proteins, we now want to compare all the location of the absolute and local maxima in Control and RNase with each other. Here, I save the column indices of Mitosis_RNase_100, with all maxima, no matter local or absolute, in a new dataframe (RNase_maxima) and repeat this process with Mitosis_Ctrl_100. Then I compare if maxima AND the column indices of each row are identical. If BOTH is identical, then I would like the result TRUE to be saved in for this row specifically. If not, then false. 
+TRUE: no shift, da alle local maxima identisch
+FALSE: shifter
 ```{r}
 # Step 1: Find column indices of local maxima in Mitosis_RNase_100
 RNase_maxima <- apply(Mitosis_RNase_100, 1, function(row) {
@@ -576,7 +577,6 @@ print(identical_fractions)
 
 Of course we get true results for all no shift proteins, meaning they have identical local and absolute maxima. Now we still have to check what is the case with our right/left shift proteins, identify the ones with TRUE results and possibly deleting them. Then we would only count the proteins in which the multiple peaks are not all in the same fractions, as otherwise this would hint at measurement inaccuracies
 
-THIS HAS TO BE CONTINUED, E.G. DONE WITH A DATAFRAME WITH ONLY THE SHIFT PROTEINS..
 
 MAYBE ALSO COLOR PROTEINS ACCORDING TO THEIR SHIFTING BEHAVIOUR IN A GRAPH?
 
