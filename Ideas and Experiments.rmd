@@ -545,9 +545,37 @@ sum(shift_dataframe$Shift == "no shift")
 ```
 Nice :)
 
+#### Testing stuff
+
+All rows with "left shift" or "right shift" in the shift_dataframe dataframe are to be compared with all "TRUE" results in the identical_fractions dataframe. If the row names fullfill both criteria in the respective dataframe, I want to create a new dataframe named dogey_proteins, in which these rows have the result "TRUE". 
+(this code only works if you run the working code beforehand)
+```{r}
+# Create an empty dataframe to store the results
+dodgy_proteins <- data.frame(Result = logical(nrow(shift_dataframe)), row.names = row.names(shift_dataframe))
+
+# Iterate over the rows of shift_dataframe
+for (row_name in row.names(shift_dataframe)) {
+  # Check if the row meets the criteria in shift_dataframe
+  if (shift_dataframe[row_name, ] %in% c("left shift", "right shift") & identical_fractions[row_name, ]) {
+    # Assign TRUE to the corresponding row in dodgy_proteins
+    dodgy_proteins[row_name, ] <- TRUE
+  } else {
+    # Assign FALSE to the corresponding row in dodgy_proteins
+    dodgy_proteins[row_name, ] <- FALSE
+  }
+}
+
+# Print the dogey_proteins dataframe
+print(dodgy_proteins)
+
+sum(dodgy_proteins$Result)
+```
+We have no TRUE results? Mhm... This would mean all our proteins really are true shifters. We'll see...
+
+
 ## Statistical analysis
 
-#### kmeans
+#### k-means
 
 
 
