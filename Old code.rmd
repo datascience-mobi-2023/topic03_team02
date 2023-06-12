@@ -149,6 +149,24 @@ lines(x_values, y_values, col = "red")
 Funktioniert schonmal besser... Aber noch immer höchst ungünstig.
 
 
+#### Checking reproducibility with correlation?
+
+-\> NOT RELEVANT IF T-TEST IS ACCEPTED.
+
+Testing the correlation for the first three entries in our Control dataset. A possible idea is to apply this all on the entire dataset again, and then for example sort out all proteins in which the correlation between the fractions is less than 95%. This will then guarantee that all remaining fractions have a high correlation and thus a high reproducibility. But there is still a lot to do!
+
+```{r}
+# Calculate the pairwise correlations between the first three columns
+cor_matrix_frac1 <- cor(RDeeP_HeLa_Mitosis_Ctrl[, 1:3], method = "pearson")
+
+# Visualize the correlation matrix using a heatmap
+heatmap(cor_matrix_frac1,
+        col = colorRampPalette(c("blue", "white", "red"))(100),
+        main = "Correlation Heatmap")
+
+#Printing the correlation matrix as data frame
+print(as.data.frame(cor_matrix_frac1))
+```
 
 #### Shift analysis old
 
@@ -210,3 +228,112 @@ print(right_shift_count)
 print(no_shift_count)
 ```
 WELL in principle the code gives a close to right result, I haven't changed Ctrl to RNase yet, but that gives me an error, I do not know why.
+
+
+
+##### Jimenas Old Code?
+
+<<<<<<< Updated upstream
+## 3.1 Specific visualization of proteins
+=======
+#### Attempt no.1
+
+This code allows us to identify all rows with multiple peaks
+
+```{r}
+# Step 1: Create an empty vector to store the row indices with multiple peaks
+rows_with_multiple_peaks <- c()
+
+# Step 2: Iterate over all rows in the dataframe
+for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
+  row_data <- Mitosis_Ctrl_100[row_index, ]
+  
+  # Step 3: Find the peaks in the row data
+  peaks <- c()
+  for (i in 2:(length(row_data) - 1)) {
+    if (row_data[i] > row_data[i-1] && row_data[i] > row_data[i+1]) {
+      peaks <- c(peaks, i)
+    }
+  }
+  
+  # Step 4: Check if the row has multiple peaks
+  if (length(peaks) > 1) {
+    rows_with_multiple_peaks <- c(rows_with_multiple_peaks, row_index)
+  }
+}
+
+# Step 5: Print the row indices with multiple peaks
+length(rows_with_multiple_peaks) #this is already a vector
+rows_with_multiple_peaks
+
+
+#rows_with_multiple_peaks_df <- data.frame(Row_Name = rownames(Mitosis_Ctrl_100), value = rows_with_multiple_peaks) 
+
+#rows_with_multiple_peaks_df
+#rownames(Mitosis_Ctrl_100 %in% rows_with_multiple_peaks)
+```
+
+Rows with just one peak still does not want to cooperate :l
+
+```{r}
+# Iterate over each row in the dataframe
+for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
+  # Extract the row
+  row <- Mitosis_Ctrl_100[row_index, ]
+  
+  # Find the global maximum in the row
+  global_max <- max(row)
+  
+  # Check if the row has only one peak
+  has_one_peak <- sum(row == global_max) == 1 && all(diff(row) < 0)
+  
+  # Print the result for the current row
+  print(paste("Row", row_index, "has one peak:", has_one_peak))
+}
+
+
+
+```
+
+still does not cooperte
+
+```{r}
+# Create an empty list to store results
+maxima_results <- list()
+
+# Iterate over each row in the dataframe
+for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
+  row <- Mitosis_Ctrl_100[row_index, ]
+  
+  # Find the maximum value in the row
+  max_value <- max(row)
+  
+  # Find the indices of maxima in the row
+  max_indices <- which(row == max_value)
+  
+  # Check if each maximum is a global or local maximum
+  max_types <- c()
+  for (i in max_indices) {
+    if (i > 1 && i < length(row)) {
+      if (row[i] > row[i-1] && row[i] > row[i+1]) {
+        max_types <- append(max_types, "Local")
+      } else {
+        max_types <- append(max_types, "Global")
+      }
+    } else {
+      max_types <- append(max_types, "Global")
+    }
+  }
+  
+  # Store the results in the list
+  maxima_results[[row_index]] <- data.frame(MaximaValue = row[max_indices], MaximaIndex = max_indices, MaximaType = max_types)
+}
+
+# Print the results
+for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
+  print(paste("Row", row_index, "Maxima:"))
+  print(maxima_results[[row_index]])
+}
+```
+
+
