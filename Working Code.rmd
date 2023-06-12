@@ -72,6 +72,7 @@ nrow(nonzero_rows) #320 rows do not have zeros
 #### 1.4 Check data format
 
 Here we try to determine data type of our dataset, whether it is numerical, categorical, etc
+
 ```{r}
 
 nrow(RDeeP_HeLa_Mitosis)
@@ -105,7 +106,8 @@ print(t.test(protein1_Ctrl_frac1))
 
 #beide schritte kann man theoretisch auch noch in einem vereinigen.
 ```
-Here our p-value is over 5%, thus we can determine the reproducibility of the experiment is not given and we would have to delete the entire protein. How much sense this makes we will see later. 
+
+Here our p-value is over 5%, thus we can determine the reproducibility of the experiment is not given and we would have to delete the entire protein. How much sense this makes we will see later.
 
 Now the same for protein 8
 
@@ -116,6 +118,7 @@ protein8_Ctrl_frac1 <- RDeeP_HeLa_Mitosis[8, 1:3]
 # Perform the t-test
 print(t.test(protein8_Ctrl_frac1))
 ```
+
 Here all three repetitions were 0, thus making our p-value not determinable. This is normal and we would have to repeat this for all fractions and then check if there are any p-values in the entire protein above 5%. If not, we can confidently confirm the reproducibility.
 
 Here an attempt to generalize the code for all fractions for one Protein (Control and RNAse separate)
@@ -169,7 +172,6 @@ rownames(p_values_Ctrl) <- rownames(RDeeP_HeLa_Mitosis_Ctrl)
 print(p_values_Ctrl)
 ```
 
-
 Finding the maximum value for each row, then deciding if it is smaller than our significance level (either 5% or 10%, has to be decided beforehand)
 
 ```{r}
@@ -221,6 +223,7 @@ rownames(p_values_RNase) <- rownames(RDeeP_HeLa_Mitosis_RNase)
 # Print the new dataframe
 print(p_values_RNase)
 ```
+
 ```{r}
 # Finding the maximum
 # Create a new dataframe to store the maximum values
@@ -244,10 +247,11 @@ sum(max_values_Ctrl > 0.1)
 #length(which(max_values_RNase > 0.1))
 #length(max_values_RNase[max_values_RNase$MaxValue > 0.1, ])
 ```
+
 Whoops, that is A LOT! Sometimes that is more than half (or more than a quarter) of our data...
 
-
 Now adding the columns to the main dataframe and doing the same, identify the rows in which the p-value exceeds 10%:
+
 ```{r}
 RDeeP_HeLa_Mitosis_p <- data.frame(RDeeP_HeLa_Mitosis, max_values_Ctrl, max_values_RNase) 
 
@@ -271,6 +275,7 @@ length(bad_proteins5)
 length(bad_proteins10)
 length(bad_proteins10wierd)
 ```
+
 Anywayyyy, let's work with the 10 % margin and delete all corresponding rows.
 
 ```{r}
@@ -282,6 +287,7 @@ RDeeP_HeLa_Mitosis_clean <- RDeeP_HeLa_Mitosis_clean[, 1:(ncol(RDeeP_HeLa_Mitosi
 #Print the new dataframe
 print(RDeeP_HeLa_Mitosis_clean)
 ```
+
 ```{r}
 #Now we have to again separate our clean dataframe into Control and RNase
 
@@ -298,9 +304,9 @@ Mitosis_Ctrl_clean <- Mitosis_Ctrl_clean[!(rownames(Mitosis_Ctrl_clean) %in% c("
 Mitosis_RNase_clean <- Mitosis_RNase_clean[!(rownames(Mitosis_RNase_clean) %in% c("BT2A3_HUMAN", "SEPP1_HUMAN")), ]
 ```
 
+#### 1.6 Checking reproducibility with correlation?
 
-#### 1.6 Checking reproducibility with correlation? 
--> NOT RELEVANT IF T-TEST WORKS... was aber noch in den Sternen steht. 
+-\> NOT RELEVANT IF T-TEST WORKS... was aber noch in den Sternen steht.
 
 Testing the correlation for the first three entries in our Control dataset. A possible idea is to apply this all on the entire dataset again, and then for example sort out all proteins in which the correlation between the fractions is less than 95%. This will then guarantee that all remaining fractions have a high correlation and thus a high reproducibility. But there is still a lot to do!
 
@@ -316,7 +322,6 @@ heatmap(cor_matrix_frac1,
 #Printing the correlation matrix as data frame
 print(as.data.frame(cor_matrix_frac1))
 ```
-
 
 ## 2. Data scaling
 
@@ -342,6 +347,7 @@ head(Mitosis_Ctrl_mean)
 #### 2.2 Data scaling to 100
 
 Now trying data scaling to 100:
+
 ```{r scaling Ctrl to 100}
 Mitosis_Ctrl_100 <- as.data.frame(sapply(Mitosis_Ctrl_mean, function(i){(i/apply(Mitosis_Ctrl_mean,1,sum))*100}))
 
@@ -366,11 +372,9 @@ Mitosis_RNase_100 <- as.data.frame(sapply(Mitosis_RNase_mean, function(i){(i/app
 head(Mitosis_RNase_100)
 ```
 
-
 #### 2.3 Min Max scaling
 
 This would be an alternative to the data scaling to 100 method. We rescale the values to a fixed range, typically between 0 and 1. The scaling process involves subtracting the minimum value from each value in the variable and then dividing by the range (maximum value minus the minimum value). This transformation ensures that all values are proportionally scaled within the specified range.
-
 
 ```{r Min Max scaling}
 # Min-max scaling function
@@ -395,11 +399,118 @@ We can later decide which method to chose.
 rm(nonzero_rows, column_values,max_values_Ctrl,max_values_RNase,p_values_Ctrl,p_values_RNase,RDeeP_HeLa_Mitosis_p,bad_proteins10,bad_proteins10wierd,num_sets,p_values,protein1_Ctrl_frac1,protein8_Ctrl_frac1,bad_proteins5)
 ```
 
-
 ## 3. Finding global/local maxima
 
+<<<<<<< Updated upstream
 ## 3.1 Specific visualization of proteins
+=======
+#### Attempt no.1
+
+This code allows us to identify all rows with multiple peaks
+
+```{r}
+# Step 1: Create an empty vector to store the row indices with multiple peaks
+rows_with_multiple_peaks <- c()
+
+# Step 2: Iterate over all rows in the dataframe
+for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
+  row_data <- Mitosis_Ctrl_100[row_index, ]
+  
+  # Step 3: Find the peaks in the row data
+  peaks <- c()
+  for (i in 2:(length(row_data) - 1)) {
+    if (row_data[i] > row_data[i-1] && row_data[i] > row_data[i+1]) {
+      peaks <- c(peaks, i)
+    }
+  }
+  
+  # Step 4: Check if the row has multiple peaks
+  if (length(peaks) > 1) {
+    rows_with_multiple_peaks <- c(rows_with_multiple_peaks, row_index)
+  }
+}
+
+# Step 5: Print the row indices with multiple peaks
+length(rows_with_multiple_peaks) #this is already a vector
+rows_with_multiple_peaks
+
+
+#rows_with_multiple_peaks_df <- data.frame(Row_Name = rownames(Mitosis_Ctrl_100), value = rows_with_multiple_peaks) 
+
+#rows_with_multiple_peaks_df
+#rownames(Mitosis_Ctrl_100 %in% rows_with_multiple_peaks)
+```
+
+Rows with just one peak still does not want to cooperate :l
+
+```{r}
+# Iterate over each row in the dataframe
+for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
+  # Extract the row
+  row <- Mitosis_Ctrl_100[row_index, ]
+  
+  # Find the global maximum in the row
+  global_max <- max(row)
+  
+  # Check if the row has only one peak
+  has_one_peak <- sum(row == global_max) == 1 && all(diff(row) < 0)
+  
+  # Print the result for the current row
+  print(paste("Row", row_index, "has one peak:", has_one_peak))
+}
+
+
+
+```
+
+still does not cooperte
+
+```{r}
+# Create an empty list to store results
+maxima_results <- list()
+
+# Iterate over each row in the dataframe
+for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
+  row <- Mitosis_Ctrl_100[row_index, ]
+  
+  # Find the maximum value in the row
+  max_value <- max(row)
+  
+  # Find the indices of maxima in the row
+  max_indices <- which(row == max_value)
+  
+  # Check if each maximum is a global or local maximum
+  max_types <- c()
+  for (i in max_indices) {
+    if (i > 1 && i < length(row)) {
+      if (row[i] > row[i-1] && row[i] > row[i+1]) {
+        max_types <- append(max_types, "Local")
+      } else {
+        max_types <- append(max_types, "Global")
+      }
+    } else {
+      max_types <- append(max_types, "Global")
+    }
+  }
+  
+  # Store the results in the list
+  maxima_results[[row_index]] <- data.frame(MaximaValue = row[max_indices], MaximaIndex = max_indices, MaximaType = max_types)
+}
+
+# Print the results
+for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
+  print(paste("Row", row_index, "Maxima:"))
+  print(maxima_results[[row_index]])
+}
+
+
+```
+
+## 3.2 Specific visualization of proteins
+
+>>>>>>> Stashed changes
 This code helps us visualize one specific protein
+
 ```{r}
 # Step 1: Extract the row you want to find peaks in
 row_index <- 6  # Adjust the row index as needed
@@ -434,7 +545,12 @@ grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
 
+<<<<<<< Updated upstream
 View a protein and its peak using the protein name
+=======
+Nooww, a similar code, but plots the graph using the name of the protein and not just its index in the dataframe -\> Does basically the same as the previous code, but its cool to plot just using the protein name hehe
+
+>>>>>>> Stashed changes
 ```{r}
 # Step 1: Select a specific row by name
 row_name <- "2A5E_HUMAN"
@@ -469,5 +585,3 @@ legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd
 ```
 
 ## 4. Shift one peak proteins
-
-
