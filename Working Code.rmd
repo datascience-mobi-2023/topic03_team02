@@ -585,5 +585,18 @@ MAYBE ALSO COLOR PROTEINS ACCORDING TO THEIR SHIFTING BEHAVIOUR IN A GRAPH?
 
 #### 5.1 k-means
 
+Trying to create three cluster: left-shift, right-shift (possibly RBP); no shift (no RBP)
+
+```{r}
+
+#generate a dataframe that holds the nummeric data of the shift
+shift_result_nummeric <- Ctrl_fraction_max - RNase_fraction_max
+show(shift_result_nummeric)
+
+#optimale Anzahl an clustern via silhouette method or elbow method. 
+
+#then a k-means clustering with the optimal amount of cluter and interpretation
+
+```
 
 
