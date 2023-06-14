@@ -252,7 +252,7 @@ for (row_index in 1:nrow(Mitosis_Ctrl_mean)) {
 
 # Step 5: Print the row indices with multiple peaks
 length(rows_with_multiple_peaks)
-head(rows_with_multiple_peaks)
+rows_with_multiple_peaks
 ```
 
 This code allows us to identify all rows with ONE peak each
@@ -350,12 +350,44 @@ legend("topright",legend=c("Control mean"),col=c("black"),bg="white",lwd=2)
 TRUE, this means all proteins without a peak have either accumulated in first or last fraction.
 -> does it mean error? or normalization side effect? No.
 
-## Peak finder
-According to Fabio, the code above does not help us, so now we try to code a new peak finder for only global maxima
+## Visualization
+```{r}
+# Step 1: Extract the row you want to find peaks in
+row_index <- 477  # Adjust the row index as needed
+row_name <- row.names(Mitosis_Ctrl_100)[row_index] #name of plot adapts depending on protein viewed #also works if Mitosis_RNase_100, bc both dataframes would plot the same protein
 
-#### Web search Ctrl peak finder
-Here we have a "web search" for protein indices in the Ctrl Dataframe. It shows us in which fraction the maximun protein amount was measured and how much this amount is.
-It is nice for visualization or to look up for information quick. But for further analysis, more like a simple vector with just values necessary.
+# Step 2: Extrakt the data for Ctrl and RNase
+row_data_Ctrl <- Mitosis_Ctrl_100[row_index, ]
+row_data_RNase <- Mitosis_RNase_100[row_index, ]
+
+# Step 3: Find the peaks in the row data
+peaks_Ctrl <- c()
+for (i in 2:(length(row_data_Ctrl) - 1)) {
+  if (row_data_Ctrl[i] > row_data_Ctrl[i-1] && row_data_Ctrl[i] > row_data_Ctrl[i+1]) {
+    peaks_Ctrl <- c(peaks_Ctrl, i)
+  }
+}
+
+peaks_RNase <- c()
+for (i in 2:(length(row_data_RNase) - 1)) {
+  if (row_data_RNase[i] > row_data_RNase[i-1] && row_data_RNase[i] > row_data_RNase[i+1]) {
+    peaks_RNase <- c(peaks_RNase, i)
+  }
+}
+
+# Step 4: Visualize the peaks on a plot
+plot(1:25, Mitosis_Ctrl_100[row_index, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,100), main = row_name)
+points(peaks_Ctrl, row_data_Ctrl[peaks_Ctrl], col = "blue", pch = 16)
+
+lines(1:25, Mitosis_RNase_100[row_index, ], type="l",col="red")
+points(peaks_RNase, row_data_RNase[peaks_RNase], col = "red", pch = 16)
+grid()
+legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
+```
+
+
+#### Index finder (not visualization)
+
 ```{r}
 # Row index for which to find the column and value of global maximum
 #Change Index as necessary
@@ -406,6 +438,7 @@ print(paste("Protein:", row_name))
 print(paste("Column Name:", column_name))
 print(paste("Value:", value))
 ```
+
 #### Web search RNase peak finder
 "Web search" for protein indices in the RNase Dataframe
 ```{r}
