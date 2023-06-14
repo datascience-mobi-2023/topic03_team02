@@ -590,14 +590,26 @@ Trying to create three cluster: left-shift, right-shift (possibly RBP); no shift
 ```{r}
 
 #generate a dataframe that holds the nummeric data of the shift. Dataframe has to have 2 dimension: RNase fraction and control fraction
-maxium_fraction <- data.frame(Ctrl_fraction_max, RNase_fraction_max)
-colnames(maxium_fraction) <- c("Ctrl_fraction_max", "RNase_fraction_max")
-show(maxium_fraction)
+maximum_fraction <- data.frame(Ctrl_fraction_max, RNase_fraction_max)
+colnames(maximum_fraction) <- c("Ctrl_fraction_max", "RNase_fraction_max")
+show(maximum_fraction)
+plot(maximum_fraction, main = "comparison of maxima")
+
 
 #find the optimal amount of cluster before k-means
+#hier bin ich für die Funktion "fviz_nbclust" nicht darum gekommen das package factoextra zu installieren. Nach Alternativen suche ich noch 
+fviz_nbclust(maximum_fraction, kmeans, method='silhouette') #optimal number of cluster = 2
+fviz_nbclust(maximum_fraction, kmeans, method='wss')        #optimal number of cluster = 2
+#fviz_nbclust(maximum_fraction, kmeans, method='gap_stat')   #optimal number of cluster = 6 ?!
+
+
 
 #then a k-means clustering with the optimal amount of cluster and interpretation
+km <- kmeans(maximum_fraction, centers = 2, nstart = 25)
 
+#visualizing the result of kmeans
+km
+fviz_cluster(km, data = maximum_fraction)
 
 ```
 
