@@ -610,13 +610,18 @@ We have no TRUE results? Mhm... This would mean all our proteins really are true
 
 #### y- shifts
 
-Bestimmung von y-shifts aka die Differenz zwischen global max in Ctrl und global max in RNase
+Detection of y-shifts aka difference between global max in Ctrl und global max in RNase.
+We observe the changes of peaks in the Ctrl Dataframe (here Mitosis_mean) after the addition of RNase and thats why we calculate the shifts as: Ctrl - RNase
+If the result is:
+'=' 0: no shift 
+'>' 0: (positive number) Ctrl peak is higher than RNase peak -> Down shift as Ctrl goes 'down' to RNase
+'<' 0: (negative number) Ctrl peak is lower than RNase peak -> Up shift as Ctrl goes 'up' to RNase
 ```{r}
 #Mitosis_Ctrl_clean
 #Mitosis_Ctrl_mean 
 
 # Row name for the desired row in both dataframes
-row_name <- "2A5E_HUMAN"  # Replace with the actual row name
+row_name <- "2A5E_HUMAN"  # Replace with the desired row name aka protein
 
 # Select the specific row from both dataframes
 row_data_Ctrl <- Mitosis_Ctrl_mean[row_name, ]
@@ -639,12 +644,8 @@ print(y_diff)
 if(y_diff > 0) {print("Down shift")}
 if(y_diff < 0) {print("Up shift")}
 if(y_diff == 0) {print("No shift")}
-
-
-
-
 ```
-
+Copied the 'protein web- search' to directly compare and see what our results of y-shifts mean
 ```{r}
 # Step 1: Select a specific row by name
 row_name <- "2A5E_HUMAN"
@@ -677,7 +678,8 @@ points(peaks_RNase, row_data_RNase[peaks_RNase], col = "red", pch = 16)
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 
-max(Mitosis_Ctrl_mean["2A5E_HUMAN", ])
+max(Mitosis_Ctrl_mean[row_name, ])
+max(Mitosis_RNase_mean[row_name, ])
 ```
 
 
