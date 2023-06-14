@@ -619,7 +619,6 @@ The same kmeans clustering again for the 3 cluster that we expected to see. We h
 km3 <- kmeans(maximum_fraction, centers = 3, nstart = 25)
 km3
 fviz_cluster(km3, data = maximum_fraction)
-#kann man später wieder verwerfen. Das Problem hierbei ist das die cluster sozusagen in der falschen orientierung entstehen, weil wir auf links und rechts der no-shifters gehoft hatten
-#ABER ein cluster mit 3 würde ich nach verenas quotienten-sache gerne nochmal versuchen. Dann könnte es klappen
+#macht vlt aus biologischer Sicht mehr Sinn. Würde das Clustering gerne nochmal nach Verenas Quotienten-Idee durchführen
 ```
 
