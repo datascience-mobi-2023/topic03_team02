@@ -522,10 +522,10 @@ We subtract the value in Ctrl_fraction_max (Ctrl fraction where max) with the va
 ```{r Peak assigner}
 # Subtract the values and determine the shift
 shift_result <- Ctrl_fraction_max - RNase_fraction_max
-shift_result <- ifelse(shift_result == 0, "no shift", ifelse(shift_result > 0, "left shift", "right shift"))
+#shift_result <- ifelse(shift_result == 0, "no shift", ifelse(shift_result > 0, "left shift", "right shift"))
 
 # Code which would assign a shift of 1 to "no shift": *HERE THE NUMBER CAN BE CHANGED!*
-# shift_result <- ifelse((shift_result >= -1) & (shift_result <= 1), "no shift", ifelse(shift_result > 1, "left shift", "right shift"))
+shift_result <- ifelse((shift_result >= -1) & (shift_result <= 1), "no shift", ifelse(shift_result > 1, "left shift", "right shift"))
 
 
 # Create a new dataframe with the shift result and row names
@@ -585,17 +585,19 @@ MAYBE ALSO COLOR PROTEINS ACCORDING TO THEIR SHIFTING BEHAVIOUR IN A GRAPH?
 
 #### 5.1 k-means
 
-Trying to create three cluster: left-shift, right-shift (possibly RBP); no shift (no RBP)
+Trying to create three cluster: left-shift, right-shift (possibly RBP); no shift (no RBP). Here only goes for data generate from difference between the max-shifts
 
 ```{r}
 
-#generate a dataframe that holds the nummeric data of the shift
-shift_result_nummeric <- Ctrl_fraction_max - RNase_fraction_max
-show(shift_result_nummeric)
+#generate a dataframe that holds the nummeric data of the shift. Dataframe has to have 2 dimension: RNase fraction and control fraction
+maxium_fraction <- data.frame(Ctrl_fraction_max, RNase_fraction_max)
+colnames(maxium_fraction) <- c("Ctrl_fraction_max", "RNase_fraction_max")
+show(maxium_fraction)
 
-#optimale Anzahl an clustern via silhouette method or elbow method. 
+#find the optimal amount of cluster before k-means
 
-#then a k-means clustering with the optimal amount of cluter and interpretation
+#then a k-means clustering with the optimal amount of cluster and interpretation
+
 
 ```
 
