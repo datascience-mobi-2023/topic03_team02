@@ -624,7 +624,7 @@ sum(dodgy_proteins$Result)
 
 sum(shift_dataframe$Shift == "left shift") + sum(shift_dataframe$Shift == "right shift")
 ```
-Nice! Both methods seem to give the EXACT SAME PROTEINS! (Only comparing the number would not guarantee that the proteins are identical, but this is proven now.)
+Nice! Both methods seem to give the EXACT SAME PROTEINS?? Or there is a issue with the code which I do not entirely comprehend yet. (Only comparing the number would not guarantee that the proteins are identical, but I try to avoid this using this code.)
 
 
 #### 4.3 Curve quotients comparison
