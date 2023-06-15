@@ -704,8 +704,82 @@ legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd
 
 max(Mitosis_Ctrl_mean[row_name, ])
 max(Mitosis_RNase_mean[row_name, ])
+
 ```
 
+
+Reeeeaaally big overview for all proteins: their  global max in Ctrl aka in RNase and the difference of this max.
+```{r}
+# Function to calculate global maxima and difference in y-values
+calculate_maxima_diff <- function(row_name, df1, df2) {
+  # Select the specific row from both dataframes
+  row_data_Ctrl <- Mitosis_Ctrl_mean[row_name, ]
+  row_data_RNase <- Mitosis_RNase_mean[row_name, ]
+
+  # Find the global maximum from the selected row in df1
+  row_global_max_Ctrl <- max(row_data_Ctrl)
+
+  # Find the global maximum from the selected row in df2
+  row_global_max_RNase <- max(row_data_RNase)
+
+  # Calculate the difference in y-values between the global maxima
+  y_diff <- row_global_max_Ctrl - row_global_max_RNase
+
+  # Return row name, global maxima, and difference in y-values
+  return(c( GlobalMax_Ctrl = row_global_max_Ctrl, GlobalMax_RNase = row_global_max_RNase, YDiff = y_diff))
+}
+
+# Get the row names of df1
+row_names <- rownames(Mitosis_Ctrl_mean)
+
+# Apply the function to each row name and combine the results into a dataframe
+results <- mapply(calculate_maxima_diff, row_names, MoreArgs = list(df1 = df1, df2 = df2), SIMPLIFY = FALSE)
+
+# Convert the results into a dataframe
+results_yshift <- do.call(rbind, results)
+
+# Print the results
+print(results_yshift)
+
+```
+
+Calculates y-shifts and shows (only) the difference between Ctrl peaks and RNase peaks
+```{r}
+
+# Function to calculate difference in y-values between global maxima
+calculate_maxima_diff <- function(row_name, df1, df2) {
+  # Select the specific row from both dataframes
+  row_data_Ctrl <- Mitosis_Ctrl_mean[row_name, ]
+  row_data_RNase <- Mitosis_RNase_mean[row_name, ]
+
+  # Find the global maximum from the selected row in df1
+  row_global_max_Ctrl <- max(row_data_Ctrl)
+
+  # Find the global maximum from the selected row in df2
+  row_global_max_RNase <- max(row_data_RNase)
+
+  # Calculate the difference in y-values between the global maxima
+  y_diff <- row_global_max_Ctrl - row_global_max_RNase
+
+  # Return the difference in y-values
+  return(y_diff)
+}
+
+# Get the row names of df1
+row_names <- rownames(Mitosis_Ctrl_mean)
+
+# Apply the function to each row name
+results <- sapply(row_names, calculate_maxima_diff)
+
+# Create a dataframe with only the differences in y-values
+results_yshift <- data.frame(YDiff = results)
+
+# Print the results
+print(results_yshift) #results as Dataframe - columns showing protein name and the difference 
+
+as.vector(results_yshift) #results as vector - maybe better to work with afterwards, if needed
+
+```
 
 
 
