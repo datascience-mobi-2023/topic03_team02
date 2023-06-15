@@ -427,7 +427,7 @@ View a protein and its peak using the protein name
 
 ```{r}
 # Step 1: Select a specific row by name
-row_name <- "2A5E_HUMAN"
+row_name <- "2A5E_HUMAN" #'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter)
 
 # Step 2: Find the peaks for Ctrl in the row data
 row_data_Ctrl <- Mitosis_Ctrl_100[row_name, ]
@@ -504,6 +504,7 @@ row_names <- row.names(Mitosis_RNase_100)
 RNase_fraction_max_value <- data.frame(Fraction = column_indices, MaxValue = global_maxima)
 RNase_fraction_max <- data.frame(Fraction = column_indices)
 #hier kommt bei mir Fehler raus, da anscheinend unsere Daten unterschiedlich lang sind
+#Bei mir passt alles? Ist das noch aktuell? Wenn nein kommentare gern löschen - Verena
 
 # Print the results
 # Shows protein name, fraction where global maxima was found and the maximum value
@@ -522,9 +523,11 @@ We subtract the value in Ctrl_fraction_max (Ctrl fraction where max) with the va
 ```{r Peak assigner}
 # Subtract the values and determine the shift
 shift_result <- Ctrl_fraction_max - RNase_fraction_max
+
+#Code which would only assign a shift of 0 to no shift
 #shift_result <- ifelse(shift_result == 0, "no shift", ifelse(shift_result > 0, "left shift", "right shift"))
 
-# Code which would assign a shift of 1 to "no shift": *HERE THE NUMBER CAN BE CHANGED!*
+# Code which would assign a shift of 1 or less to "no shift": *HERE THE NUMBER CAN BE CHANGED!*
 shift_result <- ifelse((shift_result >= -1) & (shift_result <= 1), "no shift", ifelse(shift_result > 1, "left shift", "right shift"))
 
 
@@ -540,13 +543,18 @@ print(shift_dataframe)
 sum(shift_dataframe$Shift == "left shift")
 sum(shift_dataframe$Shift == "right shift")
 sum(shift_dataframe$Shift == "no shift")
+
+sum(shift_dataframe$Shift == "left shift") + sum(shift_dataframe$Shift == "right shift")
 ```
 
 #### 4.2 Local maxima
 
-Next step would to further analyse our left shift and right shift proteins. Sometimes, as seen in Protein 2A5E_HUMAN, the shift is only observed due to different y-Axis heights and thus result in a shift (even though this is probably wrong).
+Next step would to further analyse our left shift and right shift proteins.
 
-For our shift proteins, we now want to compare all the location of the absolute and local maxima in Control and RNase with each other. Here, I save the column indices of Mitosis_RNase_100, with all maxima, no matter local or absolute, in a new dataframe (RNase_maxima) and repeat this process with Mitosis_Ctrl_100. Then I compare if maxima AND the column indices of each row are identical. If BOTH is identical, then I would like the result TRUE to be saved in for this row specifically. If not, then false. 
+For our shift proteins, we now want to compare all the location of the absolute and local maxima in Control and RNase with each other. Here, I save the column indices of Mitosis_RNase_100, with all maxima, no matter local or absolute, in a new dataframe (RNase_maxima) and repeat this process with Mitosis_Ctrl_100. 
+
+Then I compare if the number of the maxima AND the column indices of each row are identical. If BOTH is identical, then I would like the result TRUE to be saved in for this row specifically. If not, then false. 
+
 TRUE: no shift, da alle local maxima identisch
 FALSE: shifter
 ```{r}
@@ -567,19 +575,107 @@ Ctrl_maxima <- apply(Mitosis_Ctrl_100, 1, function(row) {
 Ctrl_maxima <- data.frame(Maxima = I(Ctrl_maxima), row.names = row.names(Mitosis_Ctrl_100))
 
 # Step 4: Compare number of maxima and column indices between RNase_maxima and Ctrl_maxima
-identical_fractions <- data.frame(Result = row.names(Mitosis_RNase_100), row.names = row.names(Mitosis_RNase_100), stringsAsFactors = FALSE)
-identical_fractions$Result <- RNase_maxima$Maxima == Ctrl_maxima$Maxima & 
-                  lengths(RNase_maxima$Maxima) == lengths(Ctrl_maxima$Maxima)
+identical_fractions <- data.frame(no_shift = row.names(Mitosis_RNase_100), row.names = row.names(Mitosis_RNase_100), stringsAsFactors = FALSE)
+identical_fractions$no_shift <- RNase_maxima$Maxima == Ctrl_maxima$Maxima & 
+                             lengths(RNase_maxima$Maxima) == lengths(Ctrl_maxima$Maxima)
+
+# Count the total number of maxima in RNase_maxima dataframe
+rnase_maxima_count <- sum(lengths(RNase_maxima$Maxima))
+
+# Count the total number of maxima in Ctrl_maxima dataframe
+ctrl_maxima_count <- sum(lengths(Ctrl_maxima$Maxima))
+
+# Check if the total number of maxima and column indices are identical
+identical_fractions$no_shift <- identical_fractions$no_shift & rnase_maxima_count == ctrl_maxima_count
+#DAS & IST HIER DER ENTSCHEIDENDE!
 
 # Step 5: Print the identical_fractions dataframe
 print(identical_fractions)
 ```
 
-Of course we get true results for all no shift proteins, meaning they have identical local and absolute maxima. Now we still have to check what is the case with our right/left shift proteins, identify the ones with TRUE results and possibly deleting them. Then we would only count the proteins in which the multiple peaks are not all in the same fractions, as otherwise this would hint at measurement inaccuracies
+We get true results for all no shift proteins, meaning they have identical local and absolute maxima. To define clusters, we could convert TRUE to 0 and FALSE to 1 maybe, but how useful this is we are not sure yet. I checked a few shifting proteins, and they mostly get the right "FALSE" result.
 
 
-MAYBE ALSO COLOR PROTEINS ACCORDING TO THEIR SHIFTING BEHAVIOUR IN A GRAPH?
+#### 4.3 Comparing local with absolute maxima
 
+All rows with "left shift" or "right shift" in the shift_dataframe dataframe are compared with all "FALSE" results in the identical_fractions dataframe (aka shifters). If the rows fullfill both criteria in the respective dataframe, I want to create a new dataframe named dodgy_proteins, in which these rows have the result "TRUE". 
+(this code only works if you run the working code beforehand)
+
+```{r}
+# Create an empty dataframe to store the results
+dodgy_proteins <- data.frame(Result = logical(nrow(shift_dataframe)), row.names = row.names(shift_dataframe))
+
+# Iterate over the rows of shift_dataframe
+for (row_name in row.names(shift_dataframe)) {
+  # Check if the row meets the criteria in shift_dataframe
+  if ((shift_dataframe[row_name, ] %in% c("right shift", "left shift")) & !identical_fractions[row_name, ]) {
+    # Assign TRUE to the corresponding row in dodgy_proteins
+    dodgy_proteins[row_name, ] <- TRUE
+  } else {
+    # Assign FALSE to the corresponding row in dodgy_proteins
+    dodgy_proteins[row_name, ] <- FALSE
+  }
+}
+
+# Print the dodgy_proteins dataframe
+print(dodgy_proteins)
+
+sum(dodgy_proteins$Result)
+
+sum(shift_dataframe$Shift == "left shift") + sum(shift_dataframe$Shift == "right shift")
+```
+Nice! Both methods seem to give the EXACT SAME PROTEINS?? Or there is a issue with the code which I do not entirely comprehend yet. (Only comparing the number would not guarantee that the proteins are identical, but I try to avoid this using this code.)
+
+
+#### 4.3 Curve quotients comparison
+
+```{r}
+# Calculate the curve quotients using vectorized operations
+curve_quotients <- (Mitosis_Ctrl_100+1) / (Mitosis_RNase_100+1)
+
+# Set the row names of curve_quotients
+row.names(curve_quotients) <- row.names(Mitosis_Ctrl_100)
+
+# Print the curve_quotients dataframe
+print(curve_quotients)
+```
+Hier bedeutet ein Wert von 1 eine komplette Übereinstimmung. Je mehr richtung null, desto größer ist der RNase Wert im Vergleich zum Control wert (aka RNase peak), je näher richtung 2, 3, 4 etc, desto größer ist der Ctrl Wert (aka Ctrl peak).
+
+Eine Möglichkeit jetzt wäre zu sagen, wir gucken welche proteine im Quotienten einen Wert tiefer als 0,8 ist, also eine abweichung um 25% hat (z.B. : Ctrl=4, und RNase=4 * 1,25, also 25% größer, und 4/(4 * 1,25) =0,8). Oder eben einen Wert größer als 1,25. Dann würden wir diese Proteine als shifter definieren.
+--> Hier sind paar zu viele shifter identifiziert worden
+Alternativ: Werte weichen um 60% ab, dann Werte kleiner als 0,625 und Werte größer als 1,6. 
+--> Hier ist fast nichts mehr ein shifter.
+
+```{r}
+# Create the shifting_quotients dataframe
+shifting_quotients <- data.frame("Curve_shifters" = apply(curve_quotients, 1, function(row) {
+  if (any(row < (4/(4*1.3)) | row > 1.3)) { #Code so angepasst das direkt die Prozentzahlen eingetragen werden können. Alternatives Vorgehen: mit "signifikanter Abweichung" arbeiten. Aber wie definiert?)
+    "shifter"
+  } else {
+    "not shifter"
+  }
+}))
+
+# Print the shifting_quotients dataframe
+print(shifting_quotients)
+```
+This seems like an interesting alternative way to anaylse the proteins! For example 41_HUMAN is now identified as RBP, which was not the case in previous methods, and accoriding to RDeep it is really an RBP! So lets see what we do with this information.
+
+Additional shifter count:
+```{r}
+sum(shifting_quotients$"Curve_shifters" == "shifter")
+```
+This is A LOT OF SHIFTERS... Maybe we still have to adjust the threshold.
+
+Für Alexandra/k-means analyse: jedes Protein mit maximalen und minimalen Wert? Vllt bringt es was, nicht sicher wie die Daten aussehen müssen damit du k-means anwenden kannst.
+```{r}
+# Calculate the minimum and maximum values for each row in curve_quotients
+quotients_minmax <- data.frame("Min" = apply(curve_quotients, 1, min), "Max" = apply(curve_quotients, 1, max), row.names = row.names(curve_quotients))
+
+# Print the quotients_minmax dataframe
+print(quotients_minmax)
+```
+Interesting observation: Here we can see some proteins have 1 as the min and the max value, meaning that after normalization, the graphs are identical and the proteins most definitly not shifters.
 
 ## 5. Statistical analysis
 
@@ -588,7 +684,7 @@ MAYBE ALSO COLOR PROTEINS ACCORDING TO THEIR SHIFTING BEHAVIOUR IN A GRAPH?
 Trying to create three cluster: left-shift, right-shift (possibly RBP); no shift (no RBP). Here only goes for data generate from difference between the max-shifts
 
 ```{r}
-
+install.packages(facto.extra)
 #generate a dataframe that holds the nummeric data of the shift. Dataframe has to have 2 dimension: RNase fraction and control fraction
 maximum_fraction <- data.frame(Ctrl_fraction_max, RNase_fraction_max)
 colnames(maximum_fraction) <- c("Ctrl_fraction_max", "RNase_fraction_max")
