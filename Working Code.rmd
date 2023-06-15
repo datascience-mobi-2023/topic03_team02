@@ -598,8 +598,11 @@ plot(maximum_fraction, main = "comparison of maxima")
 
 #find the optimal amount of cluster before k-means
 #hier bin ich für die Funktion "fviz_nbclust" nicht darum gekommen das package factoextra zu installieren. Nach Alternativen suche ich noch 
+library(cluster)
+library(ggplot2)
+library(factoextra)
 fviz_nbclust(maximum_fraction, kmeans, method='silhouette') #optimal number of cluster = 2
-fviz_nbclust(maximum_fraction, kmeans, method='wss')        #optimal number of cluster = 2
+#fviz_nbclust(maximum_fraction, kmeans, method='wss')        #optimal number of cluster = 2
 #fviz_nbclust(maximum_fraction, kmeans, method='gap_stat')   #optimal number of cluster = 6 ?!
 
 
