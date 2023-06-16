@@ -667,6 +667,38 @@ sum(shifting_quotients$"Curve_shifters" == "shifter")
 ```
 This is A LOT OF SHIFTERS... Maybe we still have to adjust the threshold.
 
+Alternative method to determine shifters via statistcal test (t test doesnt work bc in some rows the values do not vary enough).
+
+```{r Wilcoxon signed rank test}
+# Create an empty vector to store the p-values
+p_values <- vector("numeric", nrow(curve_quotients))
+
+# Perform Wilcoxon signed rank test on each row
+for (i in 1:nrow(curve_quotients)) {
+  row_values <- as.numeric(curve_quotients[i, ])
+  if (any(is.na(row_values))) {
+    p_values[i] <- NA
+  } else {
+    p_values[i] <- wilcox.test(row_values, mu = 1, alternative = "two.sided", exact = FALSE, na.rm = TRUE)$p.value
+  }
+}
+
+# Create the curve_p_values dataframe
+curve_p_values <- data.frame(
+  Protein = rownames(curve_quotients),
+  p_value = p_values,
+  stringsAsFactors = FALSE
+)
+
+# Add a column for Curve_shifters based on p-value significance level
+curve_p_values$Curve_shifters <- ifelse(curve_p_values$p_value < 0.05, "shifter", "no shifter")
+
+# Print the curve_p_values dataframe
+print(curve_p_values)
+
+```
+This does not make sense yet! I am working on it though :)
+
 Für Alexandra/k-means analyse: jedes Protein mit maximalen und minimalen Wert? Vllt bringt es was, nicht sicher wie die Daten aussehen müssen damit du k-means anwenden kannst.
 ```{r}
 # Calculate the minimum and maximum values for each row in curve_quotients

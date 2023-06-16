@@ -337,3 +337,37 @@ for (row_index in 1:nrow(Mitosis_Ctrl_100)) {
 ```
 
 
+
+Old attempt at using t test for curve quotient analysis, but variance is to small for t test to work.
+```{r}
+# Create an empty dataframe for curve_p_value
+curve_p_value <- data.frame("P-value" = numeric(0), "Curve shifters" = character(0), stringsAsFactors = FALSE)
+
+# Iterate over each row in curve_quotients
+for (i in 1:nrow(curve_quotients)) {
+  # Get the row values
+  row_values <- curve_quotients[i, ]
+  
+  # Check for constant values in the row
+  if (length(unique(row_values)) == 1) {
+    # Skip the row if all values are constant
+    next
+  }
+  
+  # Perform one-sample t-test
+  t_test <- t.test(row_values, mu = 1, alternative = "two.sided", conf.level = 0.95)
+  
+  # Extract the p-value
+  p_value_row <- t_test$p.value
+  
+  # Assign shifter status based on p-value
+  shifter <- ifelse(p_value_row < 0.05, "shifter", "no shifter")
+  
+  # Add the p-value and shifter status to the dataframe
+  curve_p_value[i, "P-value"] <- p_value_row
+  curve_p_value[i, "Curve shifters"] <- shifter
+}
+
+# Print the curve_p_value dataframe
+print(curve_p_value)
+```
