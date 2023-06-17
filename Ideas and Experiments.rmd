@@ -252,8 +252,36 @@ for (row_index in 1:nrow(Mitosis_Ctrl_mean)) {
 
 # Step 5: Print the row indices with multiple peaks
 length(rows_with_multiple_peaks)
+```
+
+PROTEINS WITH A LOT OF PEAKS? AKA MORE THAN SEVEN
+```{r}
+# Step 1: Create an empty vector to store the row indices with multiple peaks
+rows_with_multiple_peaks <- c()
+
+# Step 2: Iterate over all rows in the dataframe
+for (row_index in 1:nrow(Mitosis_Ctrl_mean)) {
+  row_data <- Mitosis_Ctrl_mean[row_index, ]
+  
+  # Step 3: Find the peaks in the row data
+  peaks <- c()
+  for (i in 2:(length(row_data) - 1)) {
+    if (row_data[i] > row_data[i-1] && row_data[i] > row_data[i+1]) {
+      peaks <- c(peaks, i)
+    }
+  }
+  
+  # Step 4: Check if the row has multiple peaks
+  if (length(peaks) > 7) {
+    rows_with_multiple_peaks <- c(rows_with_multiple_peaks, row_index)
+  }
+}
+
+# Step 5: Print the row indices with multiple peaks
+length(rows_with_multiple_peaks)
 rows_with_multiple_peaks
 ```
+
 
 This code allows us to identify all rows with ONE peak each
 ```{r}
@@ -353,7 +381,7 @@ TRUE, this means all proteins without a peak have either accumulated in first or
 ## Visualization
 ```{r}
 # Step 1: Extract the row you want to find peaks in
-row_index <- 477  # Adjust the row index as needed
+row_index <- 3388     # Adjust the row index as needed
 row_name <- row.names(Mitosis_Ctrl_100)[row_index] #name of plot adapts depending on protein viewed #also works if Mitosis_RNase_100, bc both dataframes would plot the same protein
 
 # Step 2: Extrakt the data for Ctrl and RNase
@@ -376,7 +404,7 @@ for (i in 2:(length(row_data_RNase) - 1)) {
 }
 
 # Step 4: Visualize the peaks on a plot
-plot(1:25, Mitosis_Ctrl_100[row_index, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,100), main = row_name)
+plot(1:25, Mitosis_Ctrl_100[row_index, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,40), main = row_name)
 points(peaks_Ctrl, row_data_Ctrl[peaks_Ctrl], col = "blue", pch = 16)
 
 lines(1:25, Mitosis_RNase_100[row_index, ], type="l",col="red")

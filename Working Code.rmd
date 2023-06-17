@@ -537,6 +537,8 @@ colnames(shift_dataframe)[1] <- "Shift"
 
 # Print the new dataframe
 print(shift_dataframe)
+
+shift_dataframe["RBM3_HUMAN",] #RBM3 is a sure shifter, siehe graph etc. (aber auch komplex)
 ```
 ```{r}
 # Count the number of left shifts
@@ -591,6 +593,8 @@ identical_fractions$no_shift <- identical_fractions$no_shift & rnase_maxima_coun
 
 # Step 5: Print the identical_fractions dataframe
 print(identical_fractions)
+
+identical_fractions["RBM3_HUMAN",]
 ```
 
 We get true results for all no shift proteins, meaning they have identical local and absolute maxima. To define clusters, we could convert TRUE to 0 and FALSE to 1 maybe, but how useful this is we are not sure yet. I checked a few shifting proteins, and they mostly get the right "FALSE" result.
@@ -641,7 +645,7 @@ print(curve_quotients)
 ```
 Hier bedeutet ein Wert von 1 eine komplette Übereinstimmung. Je mehr richtung null, desto größer ist der RNase Wert im Vergleich zum Control wert (aka RNase peak), je näher richtung 2, 3, 4 etc, desto größer ist der Ctrl Wert (aka Ctrl peak).
 
-Eine Möglichkeit jetzt wäre zu sagen, wir gucken welche proteine im Quotienten einen Wert tiefer als 0,8 ist, also eine abweichung um 25% hat (z.B. : Ctrl=4, und RNase=4 * 1,25, also 25% größer, und 4/(4 * 1,25) =0,8). Oder eben einen Wert größer als 1,25. Dann würden wir diese Proteine als shifter definieren.
+Eine Möglichkeit jetzt wäre zu sagen, wir gucken welche proteine im Quotienten einen Wert tiefer als 0,8 haben, also eine abweichung um 25% (z.B. : Ctrl=4, und RNase=4 * 1,25, also 25% größer, und 4/(4 * 1,25) =0,8). Oder eben einen Wert größer als 1,25. Dann würden wir diese Proteine als shifter definieren.
 --> Hier sind paar zu viele shifter identifiziert worden
 Alternativ: Werte weichen um 60% ab, dann Werte kleiner als 0,625 und Werte größer als 1,6. 
 --> Hier ist fast nichts mehr ein shifter.
@@ -658,6 +662,8 @@ shifting_quotients <- data.frame("Curve_shifters" = apply(curve_quotients, 1, fu
 
 # Print the shifting_quotients dataframe
 print(shifting_quotients)
+
+shifting_quotients["RBM3_HUMAN",] #RBM3 is a sure shifter, but a bit complex
 ```
 This seems like an interesting alternative way to anaylse the proteins! For example 41_HUMAN is now identified as RBP, which was not the case in previous methods, and accoriding to RDeep it is really an RBP! So lets see what we do with this information.
 
@@ -668,36 +674,33 @@ sum(shifting_quotients$"Curve_shifters" == "shifter")
 This is A LOT OF SHIFTERS... Maybe we still have to adjust the threshold.
 
 Alternative method to determine shifters via statistcal test (t test doesnt work bc in some rows the values do not vary enough).
+If the p-value is less than 0.95 (corresponding to a significance level of 0.05), it assigns the value "shifter" to indicate a significant difference from the mean of 1; otherwise, it assigns "no shifter".
 
 ```{r Wilcoxon signed rank test}
-# Create an empty vector to store the p-values
-p_values <- vector("numeric", nrow(curve_quotients))
-
 # Perform Wilcoxon signed rank test on each row
-for (i in 1:nrow(curve_quotients)) {
-  row_values <- as.numeric(curve_quotients[i, ])
-  if (any(is.na(row_values))) {
-    p_values[i] <- NA
-  } else {
-    p_values[i] <- wilcox.test(row_values, mu = 1, alternative = "two.sided", exact = FALSE, na.rm = TRUE)$p.value
-  }
-}
+p_values <- apply(curve_quotients, 1, function(row) {
+  wilcox.test(as.numeric(row), mu = 1, alternative = "two.sided", exact = FALSE)$p.value
+})
 
 # Create the curve_p_values dataframe
 curve_p_values <- data.frame(
-  Protein = rownames(curve_quotients),
   p_value = p_values,
   stringsAsFactors = FALSE
 )
 
 # Add a column for Curve_shifters based on p-value significance level
-curve_p_values$Curve_shifters <- ifelse(curve_p_values$p_value < 0.05, "shifter", "no shifter")
+curve_p_values$Curve_shifters <- ifelse(curve_p_values$p_value < 0.95, "shifter", "no shifter")
 
 # Print the curve_p_values dataframe
 print(curve_p_values)
-
 ```
-This does not make sense yet! I am working on it though :)
+
+```{r}
+# Count the number of rows with NA values
+sum(rowSums(is.na(curve_p_values)) > 0)
+```
+This doesn't seem to completely work yet. I'll stay on it though.
+
 
 Für Alexandra/k-means analyse: jedes Protein mit maximalen und minimalen Wert? Vllt bringt es was, nicht sicher wie die Daten aussehen müssen damit du k-means anwenden kannst.
 ```{r}
@@ -708,6 +711,7 @@ quotients_minmax <- data.frame("Min" = apply(curve_quotients, 1, min), "Max" = a
 print(quotients_minmax)
 ```
 Interesting observation: Here we can see some proteins have 1 as the min and the max value, meaning that after normalization, the graphs are identical and the proteins most definitly not shifters.
+
 
 ## 5. Statistical analysis
 
