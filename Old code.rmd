@@ -371,3 +371,31 @@ for (i in 1:nrow(curve_quotients)) {
 # Print the curve_p_value dataframe
 print(curve_p_value)
 ```
+
+#### Wilcoxon attemot
+If the p-value is less than 0.95 (corresponding to a significance level of 0.05), it assigns the value "shifter" to indicate a significant difference from the mean of 1; otherwise, it assigns "no shifter".
+
+```{r Wilcoxon signed rank test}
+# Perform Wilcoxon signed rank test on each row
+p_values <- apply(curve_quotients, 1, function(row) {
+  wilcox.test(as.numeric(row), mu = 1, alternative = "two.sided", exact = FALSE)$p.value
+})
+
+# Create the curve_p_values dataframe
+curve_p_values <- data.frame(
+  p_value = p_values,
+  stringsAsFactors = FALSE
+)
+
+# Add a column for Curve_shifters based on p-value significance level
+curve_p_values$Curve_shifters <- ifelse(curve_p_values$p_value < 0.95, "shifter", "no shifter")
+
+# Print the curve_p_values dataframe
+print(curve_p_values)
+```
+
+```{r}
+# Count the number of rows with NA values
+sum(rowSums(is.na(curve_p_values)) > 0)
+```
+This doesn't seem to completely work yet. I'll stay on it though.

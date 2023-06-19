@@ -458,7 +458,7 @@ grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
 
-## 4. Shift one peak proteins
+## 4. Different shift finders
 
 #### 4.1 Peak finder (only absolute maxima)
 
@@ -540,6 +540,7 @@ print(shift_dataframe)
 
 shift_dataframe["RBM3_HUMAN",] #RBM3 is a sure shifter, siehe graph etc. (aber auch komplex)
 ```
+
 ```{r}
 # Count the number of left shifts
 sum(shift_dataframe$Shift == "left shift")
@@ -614,7 +615,7 @@ for (row_name in row.names(shift_dataframe)) {
   # Check if the row meets the criteria in shift_dataframe
   if ((shift_dataframe[row_name, ] %in% c("right shift", "left shift")) & !identical_fractions[row_name, ]) {
     # Assign TRUE to the corresponding row in dodgy_proteins
-    dodgy_proteins[row_name, ] <- TRUE
+    dodgy_proteins[row_name, ] <- TRUE #These proteins give different results in each method!!!
   } else {
     # Assign FALSE to the corresponding row in dodgy_proteins
     dodgy_proteins[row_name, ] <- FALSE
@@ -628,8 +629,12 @@ sum(dodgy_proteins$Result)
 
 sum(shift_dataframe$Shift == "left shift") + sum(shift_dataframe$Shift == "right shift")
 ```
-Nice! Both methods seem to give the EXACT SAME PROTEINS?? Or there is a issue with the code which I do not entirely comprehend yet. (Only comparing the number would not guarantee that the proteins are identical, but I try to avoid this using this code.)
-
+Nice! Both methods seem to give the EXACT SAME PROTEINS. (Only comparing the number would not guarantee that the proteins are identical, but I try to avoid this using this code.) Explanation: we have 581 TRUE results in our dataframe, meaning in 581 rows (proteins) both criteria are fulfilled. Now we count how many proteins are in total identified as shifters in the maximum peak method: also 581
+```{r}
+#Count how many have been identified using the local fraction comparison method:
+sum(!identical_fractions) #Checks all FALSE (aka shifters) results in the dataframe
+```
+This is A LOT more! Aka the maximum peak shifter only identifies about half of the proteins which the local fraction comparison identifies as shifters.
 
 #### 4.3 Curve quotients comparison
 
@@ -643,6 +648,7 @@ row.names(curve_quotients) <- row.names(Mitosis_Ctrl_100)
 # Print the curve_quotients dataframe
 print(curve_quotients)
 ```
+
 Hier bedeutet ein Wert von 1 eine komplette Übereinstimmung. Je mehr richtung null, desto größer ist der RNase Wert im Vergleich zum Control wert (aka RNase peak), je näher richtung 2, 3, 4 etc, desto größer ist der Ctrl Wert (aka Ctrl peak).
 
 Eine Möglichkeit jetzt wäre zu sagen, wir gucken welche proteine im Quotienten einen Wert tiefer als 0,8 haben, also eine abweichung um 25% (z.B. : Ctrl=4, und RNase=4 * 1,25, also 25% größer, und 4/(4 * 1,25) =0,8). Oder eben einen Wert größer als 1,25. Dann würden wir diese Proteine als shifter definieren.
@@ -671,36 +677,44 @@ Additional shifter count:
 ```{r}
 sum(shifting_quotients$"Curve_shifters" == "shifter")
 ```
-This is A LOT OF SHIFTERS... Maybe we still have to adjust the threshold.
+This is A LOT OF SHIFTERS, even more than in the local shifter! Maybe we still have to adjust the threshold.
 
-Alternative method to determine shifters via statistcal test (t test doesnt work bc in some rows the values do not vary enough).
-If the p-value is less than 0.95 (corresponding to a significance level of 0.05), it assigns the value "shifter" to indicate a significant difference from the mean of 1; otherwise, it assigns "no shifter".
+Alternative method to determine shifters via z-test (t test doesnt work bc in some rows the values do not vary enough). The z-test is a statistical test that compares a sample mean to a population mean, assuming a known standard deviation. It identifies values that significantly deviate from the expected value based on the given confidence interval.
+```{r}
+# Create a function to perform z-test for each value
+perform_z_test <- function(value) {
+  z_score <- (value - 1) / sd_value  # Calculate the z-score
+  
+  if (abs(z_score) > #1.96) {  # Assuming 95% confidence interval. If the absolute value of the z-score is greater than 1.96, it indicates that the value significantly differs from the expectation value.
+                    1.645) {  # Assuming 90% confidence interval. The bigger the confidence interval, the more proteins are identified as shifters.
+    return("shifter")
+  } else {
+    return("no shifter")
+  }
+}
 
-```{r Wilcoxon signed rank test}
-# Perform Wilcoxon signed rank test on each row
-p_values <- apply(curve_quotients, 1, function(row) {
-  wilcox.test(as.numeric(row), mu = 1, alternative = "two.sided", exact = FALSE)$p.value
+# Calculate the standard deviation across the entire dataframe
+sd_value <- sd(as.matrix(curve_quotients)) #shifter abhängig auch von der sd, hier über den gesamten Datensatz eine sd von 0.361562, je kleiner, desto näher nimmt man an sind die Werte aneinander, je größer, desto weiter entfernt.
+
+# Apply the z-test function to each value in the dataframe
+quotients_using_z <- apply(curve_quotients, 1, function(row) {
+  result <- sapply(row, perform_z_test)
+  if ("shifter" %in% result) {
+    return("shifter")
+  } else {
+    return("no shifter")
+  }
 })
 
-# Create the curve_p_values dataframe
-curve_p_values <- data.frame(
-  p_value = p_values,
-  stringsAsFactors = FALSE
-)
-
-# Add a column for Curve_shifters based on p-value significance level
-curve_p_values$Curve_shifters <- ifelse(curve_p_values$p_value < 0.95, "shifter", "no shifter")
-
-# Print the curve_p_values dataframe
-print(curve_p_values)
+quotients_using_z <- data.frame(quotients_using_z)
+colnames(quotients_using_z) <- "Result"
+quotients_using_z
 ```
-
 ```{r}
-# Count the number of rows with NA values
-sum(rowSums(is.na(curve_p_values)) > 0)
+# Print the count of "shifter" values
+table(quotients_using_z$Result)["shifter"]
 ```
-This doesn't seem to completely work yet. I'll stay on it though.
-
+Interesting. Wierdly some different shifting proteins were identified I think (need for further anaylsis or comparison with known RBPs). For example 5NT3A_HUMAN	is identified as a shifter here, but not in the first two methods. RDeep says it is a shifter though. not that bad so maybe?
 
 Für Alexandra/k-means analyse: jedes Protein mit maximalen und minimalen Wert? Vllt bringt es was, nicht sicher wie die Daten aussehen müssen damit du k-means anwenden kannst.
 ```{r}
@@ -714,8 +728,6 @@ Interesting observation: Here we can see some proteins have 1 as the min and the
 
 
 ## 5. Statistical analysis
-
-#### 5.1 k-means
 
 ##### 5.1.1 For maxima
 
@@ -734,11 +746,11 @@ plot(maximum_fraction, main = "comparison of maxima")
 library(cluster)
 library(ggplot2)
 library(factoextra)
+
 #Calculate optimal number of cluster
 fviz_nbclust(maximum_fraction, kmeans, method='silhouette') #optimal number of cluster = 2
 #fviz_nbclust(maximum_fraction, kmeans, method='wss')        #optimal number of cluster = 2
 #fviz_nbclust(maximum_fraction, kmeans, method='gap_stat')   #optimal number of cluster = 6 ?!
-
 
 
 #then a k-means clustering with the optimal amount of cluster and interpretation
@@ -752,15 +764,15 @@ fviz_cluster(km, data = maximum_fraction)
 
 
 The same kmeans clustering again for the 3 cluster that we expected to see. We hope for a cluster of no-shift, left-shift and right-shift -> not successful
+
 ```{r}
 km3 <- kmeans(maximum_fraction, centers = 3, nstart = 25)
-km3
 fviz_cluster(km3, data = maximum_fraction)
-#macht vlt aus biologischer Sicht mehr Sinn. Würde das Clustering gerne nochmal nach Verenas Quotienten-Idee durchführen
+#macht vlt aus biologischer Sicht mehr Sinn. 
 ```
 
-
 ##### 5.1.2 For quotients
+
 Since we are unsure how well kmeans worked for the maxima-clustering we now do the same clustering for quotients_minmax
 
 ```{r}
@@ -786,7 +798,7 @@ km_q <- kmeans(quotients_minmax, centers = 2, nstart = 25)
 km_q
 fviz_cluster(km_q, data = quotients_minmax)
 ```
-Das sieht auf jeden Fall schonmal anders aus. Aber besser?! -> villeicht
+Das sieht auf jeden Fall schonmal anders aus. Aber besser?! -> vielleicht
 
 Again for 3 clusters that we hoped for:
 ```{r}
@@ -795,4 +807,4 @@ km3_q
 fviz_cluster(km3_q, data = quotients_minmax)
 
 ```
-Finde ich besser als die kmeans plots für die Maxima. Aber wir sollten uns überlegen was aus "biologischer" Sicht hier logischer ist und das andere kmeans dann rausschmeissen 
+Finde ich besser als die kmeans plots für die Maxima. Aber wir sollten uns überlegen was aus "biologischer" Sicht hier logischer ist und das andere kmeans dann rausschmeissen.
