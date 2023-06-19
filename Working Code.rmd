@@ -759,7 +759,6 @@ km <- kmeans(maximum_fraction, centers = 2, nstart = 25)
 #visualizing the result of kmeans
 km
 fviz_cluster(km, data = maximum_fraction)
-
 ```
 
 
