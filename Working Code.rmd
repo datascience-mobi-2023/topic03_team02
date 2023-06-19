@@ -717,10 +717,11 @@ Interesting observation: Here we can see some proteins have 1 as the min and the
 
 #### 5.1 k-means
 
+##### 5.1.1 For maxima
+
 Trying to create three cluster: left-shift, right-shift (possibly RBP); no shift (no RBP). Here only goes for data generate from difference between the max-shifts
 
 ```{r}
-install.packages(facto.extra)
 #generate a dataframe that holds the nummeric data of the shift. Dataframe has to have 2 dimension: RNase fraction and control fraction
 maximum_fraction <- data.frame(Ctrl_fraction_max, RNase_fraction_max)
 colnames(maximum_fraction) <- c("Ctrl_fraction_max", "RNase_fraction_max")
@@ -733,6 +734,7 @@ plot(maximum_fraction, main = "comparison of maxima")
 library(cluster)
 library(ggplot2)
 library(factoextra)
+#Calculate optimal number of cluster
 fviz_nbclust(maximum_fraction, kmeans, method='silhouette') #optimal number of cluster = 2
 #fviz_nbclust(maximum_fraction, kmeans, method='wss')        #optimal number of cluster = 2
 #fviz_nbclust(maximum_fraction, kmeans, method='gap_stat')   #optimal number of cluster = 6 ?!
@@ -757,3 +759,40 @@ fviz_cluster(km3, data = maximum_fraction)
 #macht vlt aus biologischer Sicht mehr Sinn. Würde das Clustering gerne nochmal nach Verenas Quotienten-Idee durchführen
 ```
 
+
+##### 5.1.2 For quotients
+Since we are unsure how well kmeans worked for the maxima-clustering we now do the same clustering for quotients_minmax
+
+```{r}
+#here we don´t need to generate a new dataframe since we already have one we can work with
+show(quotients_minmax)
+
+#find the optimal amount of cluster before k-means
+#hier bin ich für die Funktion "fviz_nbclust" nicht darum gekommen das package factoextra zu installieren. Nach Alternativen suche ich noch 
+library(cluster)
+library(ggplot2)
+library(factoextra)
+#Calculate optimal number of cluster
+fviz_nbclust(quotients_minmax, kmeans, method='silhouette') #optimal number of cluster = 2
+#fviz_nbclust(quotients_minmax, kmeans, method='wss')        #optimal number of cluster = 2
+#fviz_nbclust(quotients_minmax, kmeans, method='gap_stat')   #optimal number of cluster = 6 ?!
+
+
+
+#then a k-means clustering with the optimal amount of cluster and interpretation
+km_q <- kmeans(quotients_minmax, centers = 2, nstart = 25)
+
+#visualizing the result of kmeans
+km_q
+fviz_cluster(km_q, data = quotients_minmax)
+```
+Das sieht auf jeden Fall schonmal anders aus. Aber besser?! -> villeicht
+
+Again for 3 clusters that we hoped for:
+```{r}
+km3_q <- kmeans(quotients_minmax, centers = 3, nstart = 25)
+km3_q
+fviz_cluster(km3_q, data = quotients_minmax)
+
+```
+Finde ich besser als die kmeans plots für die Maxima. Aber wir sollten uns überlegen was aus "biologischer" Sicht hier logischer ist und das andere kmeans dann rausschmeissen 
