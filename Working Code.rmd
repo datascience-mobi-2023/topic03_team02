@@ -116,7 +116,7 @@ Now the same for protein 8
 protein8_Ctrl_frac1 <- RDeeP_HeLa_Mitosis[8, 1:3]
 
 # Perform the t-test
-print(t.test(protein8_Ctrl_frac1))
+print(t.test(protein8_Ctrl_frac1)) 
 ```
 
 Here all three repetitions were 0, thus making our p-value not determinable. This is normal and we would have to repeat this for all fractions and then check if there are any p-values in the entire protein above 5%. If not, we can confidently confirm the reproducibility.
