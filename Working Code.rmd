@@ -762,6 +762,9 @@ fviz_cluster(km, data = maximum_fraction)
 ```
 
 
+
+
+
 The same kmeans clustering again for the 3 cluster that we expected to see. We hope for a cluster of no-shift, left-shift and right-shift -> not successful
 
 ```{r}
