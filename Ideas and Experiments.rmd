@@ -447,7 +447,7 @@ The same as above, but for a protein name based search :)
 ```{r}
 # Row name for which to find the column and value of global maximum
 #Change as necessary
-row_name <- "2A5B_HUMAN"
+row_name <- "RBM3_HUMAN"
 
 # Extract the row from the dataframe
 row <- Mitosis_Ctrl_100[row_name, ]
