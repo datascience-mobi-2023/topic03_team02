@@ -897,8 +897,51 @@ head(comparison_RBP)
 #### 4.5 Y-shift mit mit RBP2go-Vergleich
 
 
+## Liniear Regression
 
+#### 5.1.Finden von zwei Spalten in einem Dataframe die eine möglichst lineare Beziehung haben
 
+EInen passenden DF hierfür müsste noch erstellt werden
+Idee: columns nach jeder unserer Methoden (4?) und wir finden so sozusagen die beiden Methoden die in größer Übereinstimmung RBPs bestimmt haben und wenden dann auf die LR an
+Ich denke das wäre bei uns ziemlich cool, eben weil wir diese verschiedenen Methoden haben
+
+```{r}
+# Assuming you have a dataframe called 'my_data' with multiple columns
+
+# Initialize variables to store the best linear relationship found
+best_correlation <- 0
+best_fit <- NULL
+
+# Loop through all possible pairs of columns in the dataframe
+for (i in 1:(ncol(my_data) - 1)) {
+  for (j in (i + 1):ncol(my_data)) {
+    # Extract the two columns
+    col1 <- my_data[, i]
+    col2 <- my_data[, j]
+    
+    # Calculate the Pearson correlation coefficient
+    correlation <- cor(col1, col2, use = "pairwise.complete.obs")
+    
+    # Fit a linear model and calculate the residuals
+    model <- lm(col2 ~ col1)
+    residuals <- resid(model)
+    
+    # Check if the correlation is stronger than the previous best
+    if (abs(correlation) > abs(best_correlation)) {
+      best_correlation <- correlation
+      best_fit <- list(col1 = col1, col2 = col2, residuals = residuals)
+    }
+  }
+}
+
+# Print the columns with the best linear relationship found
+print(best_fit$col1)
+print(best_fit$col2)
+
+# Optionally, you can also inspect the residuals or other information
+print(best_fit$residuals)
+
+```
 
 
 
