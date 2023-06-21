@@ -714,26 +714,9 @@ as.vector(results_yshift) #results as vector - maybe better to work with afterwa
 
 
 
-#### K mean Rumporbiere von Verena
+## 3. Update LOCAL MAXIMA!
 
-```{r}
-#absolute maxima shifts
-shift_dataframe #right shift, left shift, no shift -> not usable
-#Sondern mit (wie Alexandra schon gemacht):
-data.frame(Ctrl_fraction_max, RNase_fraction_max)
-
-#local maxima amount and location comparison
-identical_fractions #TRUE: no shifter, FALSE: Shifter -> not really usable I think, directly already calculated into two categories
-
-#protein content quotiens 
-quotients_minmax #Werte umdie 1, je mehr sie abweichen, desto eher sind es shifter 
-#-> usable
-
-#y-shifts
-results_yshift #Ist glaub noch nicht fertig @Jimena
-```
-
-### Visualizer
+#### 3.1 Visualizer
 
 ```{r}
 # Step 1: Select a specific row by name
@@ -776,7 +759,7 @@ cat("Number of peaks in Control:", num_peaks_Ctrl, "\n")
 cat("Number of peaks in RNase:", num_peaks_RNase, "\n")
 ```
 
-## SQOR_HUMAN Problem
+#### 3.2 Alter code: SQOR_HUMAN Problem
 
 TRUE: no shifter
 FALSE: shifter
@@ -819,7 +802,9 @@ print(identical_fractions)
 identical_fractions["SQOR_HUMAN",]
 sum(identical_fractions$no_shift == FALSE)
 ```
+#### 3.3 NEUER LOCAL MAX CODE
 
+Alles fertig ready für working code
 ```{r}
 # Create an empty vector to store the results
 results <- vector("logical", nrow(Mitosis_Ctrl_100))
@@ -863,6 +848,57 @@ print(result_df)
 result_df["SQOR_HUMAN",]
 sum(result_df$identical_fractions == FALSE)
 ```
+
+## 4. VERGLEICH MIT RBP2GO
+
+Übersicht:
+```{r}
+#absolute maxima shifts
+shift_dataframe #right shift, left shift, no shift -> not usable
+#Sondern mit (wie Alexandra schon gemacht):
+data.frame(Ctrl_fraction_max, RNase_fraction_max)
+
+#local maxima amount and location comparison
+identical_fractions #TRUE: no shifter, FALSE: Shifter -> not really usable I think, directly already calculated into two categories
+
+#protein content quotiens 
+quotients_minmax #Werte umdie 1, je mehr sie abweichen, desto eher sind es shifter 
+#-> usable
+
+#y-shifts
+results_yshift #relativ große und relativ unterschiedliche Werte
+```
+
+#### 4.1 RBP2GO Datensatz ins Rmd Laden:
+
+```{r}
+# Load a text file into R
+comparison_RBP <- read.table("https://github.com/datascience-mobi-2023/topic03_team02/blob/5da6f789d96f1924a96e731de447dbf35b41c728/Datensatz_RBP2GO_Proteins.txt", header = TRUE)
+
+# View the loaded data
+head(comparison_RBP)
+```
+
+#### 4.2 Max shift mit RBP2go-Vergleich
+
+```{r Max shift Vergleich}
+
+# 1. max shift Daten Einteilen in RBP und non-RBP
+
+
+
+```
+
+
+#### 4.3 Local max shift mit RBP2go-Vergleich
+
+#### 4.4 Curve quotients mit RBP2go-Vergleich
+
+#### 4.5 Y-shift mit mit RBP2go-Vergleich
+
+
+
+
 
 
 
