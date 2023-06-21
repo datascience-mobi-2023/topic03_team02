@@ -554,48 +554,54 @@ sum(shift_dataframe$Shift == "left shift") + sum(shift_dataframe$Shift == "right
 
 Next step would to further analyse our left shift and right shift proteins.
 
-For our shift proteins, we now want to compare all the location of the absolute and local maxima in Control and RNase with each other. Here, I save the column indices of Mitosis_RNase_100, with all maxima, no matter local or absolute, in a new dataframe (RNase_maxima) and repeat this process with Mitosis_Ctrl_100. 
+For our shift proteins, we now want to compare all the location of the absolute and local maxima in Control and RNase with each other. Here, we save the column indices of Mitosis_RNase_100, with all maxima, no matter local or absolute, in a new dataframe (RNase_maxima) and repeat this process with Mitosis_Ctrl_100. 
 
-Then I compare if the number of the maxima AND the column indices of each row are identical. If BOTH is identical, then I would like the result TRUE to be saved in for this row specifically. If not, then false. 
+Then we compare if all peaks found in RNA are identical to all peaks found in Control (by comparing the column indices of the peaks). If they are identical, the condition results in TRUE, otherwise FALSE.
 
-TRUE: no shift, da alle local maxima identisch
-FALSE: shifter
+TRUE: no shift, because all local maxima are identical
+FALSE: shifter -> change of amount or location of maxima
 ```{r}
-# Step 1: Find column indices of local maxima in Mitosis_RNase_100
-RNase_maxima <- apply(Mitosis_RNase_100, 1, function(row) {
-  local_maxima <- which(row == max(row))
-  return(local_maxima)
-})
+# Create an empty vector to store the results
+results <- vector("logical", nrow(Mitosis_Ctrl_100))
 
-# Step 2: Create RNase_maxima dataframe with row names
-RNase_maxima <- data.frame(Maxima = I(RNase_maxima), row.names = row.names(Mitosis_RNase_100))
+# Iterate over each row
+for (i in 1:nrow(Mitosis_Ctrl_100)) {
+  # Get the row data for Ctrl and RNase
+  row_data_Ctrl <- Mitosis_Ctrl_100[i, ]
+  row_data_RNase <- Mitosis_RNase_100[i, ]
+  
+  # Find the peaks in the row data for Ctrl
+  peaks_Ctrl <- c()
+  for (j in 2:(length(row_data_Ctrl) - 1)) {
+    if (row_data_Ctrl[j] > row_data_Ctrl[j-1] && row_data_Ctrl[j] > row_data_Ctrl[j+1]) {
+      peaks_Ctrl <- c(peaks_Ctrl, j)
+    }
+  }
+  
+  # Find the peaks in the row data for RNase
+  peaks_RNase <- c()
+  for (j in 2:(length(row_data_RNase) - 1)) {
+    if (row_data_RNase[j] > row_data_RNase[j-1] && row_data_RNase[j] > row_data_RNase[j+1]) {
+      peaks_RNase <- c(peaks_RNase, j)
+    }
+  }
+  
+  # Compare the peaks between Ctrl and RNase
+  if (identical(peaks_Ctrl, peaks_RNase)) {
+    results[i] <- TRUE
+  } else {
+    results[i] <- FALSE
+  }
+}
 
-# Step 3: Repeat the same process for Mitosis_Ctrl_100
-Ctrl_maxima <- apply(Mitosis_Ctrl_100, 1, function(row) {
-  local_maxima <- which(row == max(row))
-  return(local_maxima)
-})
-Ctrl_maxima <- data.frame(Maxima = I(Ctrl_maxima), row.names = row.names(Mitosis_Ctrl_100))
+# Create a data frame with the results
+identical_fractions <- data.frame(no_shift = results, row.names = row.names(Mitosis_Ctrl_100))
 
-# Step 4: Compare number of maxima and column indices between RNase_maxima and Ctrl_maxima
-identical_fractions <- data.frame(no_shift = row.names(Mitosis_RNase_100), row.names = row.names(Mitosis_RNase_100), stringsAsFactors = FALSE)
-identical_fractions$no_shift <- RNase_maxima$Maxima == Ctrl_maxima$Maxima & 
-                             lengths(RNase_maxima$Maxima) == lengths(Ctrl_maxima$Maxima)
-
-# Count the total number of maxima in RNase_maxima dataframe
-rnase_maxima_count <- sum(lengths(RNase_maxima$Maxima))
-
-# Count the total number of maxima in Ctrl_maxima dataframe
-ctrl_maxima_count <- sum(lengths(Ctrl_maxima$Maxima))
-
-# Check if the total number of maxima and column indices are identical
-identical_fractions$no_shift <- identical_fractions$no_shift & rnase_maxima_count == ctrl_maxima_count
-#DAS & IST HIER DER ENTSCHEIDENDE!
-
-# Step 5: Print the identical_fractions dataframe
+# Print the identical_fractions dataframe
 print(identical_fractions)
 
-identical_fractions["RBM3_HUMAN",]
+identical_fractions["SQOR_HUMAN",] #-> FALSE, thus this protein is rightly identified as a shifter
+sum(identical_fractions$no_shift == FALSE) #-> 1570 proteins are identified as shifters
 ```
 
 We get true results for all no shift proteins, meaning they have identical local and absolute maxima. To define clusters, we could convert TRUE to 0 and FALSE to 1 maybe, but how useful this is we are not sure yet. I checked a few shifting proteins, and they mostly get the right "FALSE" result.
@@ -710,11 +716,12 @@ quotients_using_z <- data.frame(quotients_using_z)
 colnames(quotients_using_z) <- "Result"
 quotients_using_z
 ```
+
 ```{r}
 # Print the count of "shifter" values
 table(quotients_using_z$Result)["shifter"]
 ```
-Interesting. Wierdly some different shifting proteins were identified I think (need for further anaylsis or comparison with known RBPs). For example 5NT3A_HUMAN	is identified as a shifter here, but not in the first two methods. RDeep says it is a shifter though. not that bad so maybe?
+Interesting. Wierdly some different shifting proteins (and a lot less) were identified I think (need for further anaylsis or comparison with known RBPs). For example 5NT3A_HUMAN	is identified as a shifter here, but not in the first two methods. RDeep says it is a shifter though. not that bad so maybe?
 
 Für Alexandra/k-means analyse: jedes Protein mit maximalen und minimalen Wert? Vllt bringt es was, nicht sicher wie die Daten aussehen müssen damit du k-means anwenden kannst.
 ```{r}

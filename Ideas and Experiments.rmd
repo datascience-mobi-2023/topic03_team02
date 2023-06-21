@@ -720,7 +720,9 @@ as.vector(results_yshift) #results as vector - maybe better to work with afterwa
 
 ```{r}
 # Step 1: Select a specific row by name
-row_name <- "SQOR_HUMAN" #'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter) #UTP11_HUMAN PERCIPITATED PROTEIN??
+row_name <- "ABCA1_HUMAN" #'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter) #UTP11_HUMAN PERCIPITATED PROTEIN?? #ehemals problematisch: SQOR_HUMAN
+
+#WICHTIG: ABCA1_HUMAN... von welchem verfahren wird dies (wahrscheinlich korrekterweise) als shifter erkannt? Ist aber noch in keiner Datenbank drinnen...
 
 # Step 2: Find the peaks for Ctrl in the row data
 row_data_Ctrl <- Mitosis_Ctrl_100[row_name, ]
@@ -742,7 +744,7 @@ for (i in 2:(length(row_data_RNase) - 1)) {
 }
 
 # Step 4: Visualize the peaks on a plot
-plot(1:25, Mitosis_Ctrl_100[row_name, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,40), main = row_name)
+plot(1:25, Mitosis_Ctrl_100[row_name, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,60), main = row_name)
 points(peaks_Ctrl, row_data_Ctrl[peaks_Ctrl], col = "blue", pch = 16)
 
 lines(1:25, Mitosis_RNase_100[row_name, ], type="l",col="red")
@@ -845,9 +847,57 @@ result_df <- data.frame(identical_fractions = results, row.names = row.names(Mit
 # Print the result_df
 print(result_df)
 
-result_df["SQOR_HUMAN",]
+result_df["SQOR_HUMAN",] 
 sum(result_df$identical_fractions == FALSE)
 ```
+
+#### 3.4 LOCAL MAX CODE DER ANZAHL DES LOCAL SHIFTS IDENTIFIZIERT
+
+--> Hier wird jedoch nicht ein shift in den local maxima betrachtet, sondern nur ob mehr entstehen oder welche verschwinden zwischen Control und RNase. Dadurch werden ziemlich viele Proteine vernachlässigt, genauer gesagt 1570-900, also 670 Proteine werden dadurch nicht aufgeführt... Evt. später anpassen.
+
+```{r}
+# Create an empty vector to store the results
+results <- vector("integer", nrow(Mitosis_Ctrl_100))
+
+# Iterate over each row
+for (i in 1:nrow(Mitosis_Ctrl_100)) {
+  # Get the row data for Ctrl and RNase
+  row_data_Ctrl <- Mitosis_Ctrl_100[i, ]
+  row_data_RNase <- Mitosis_RNase_100[i, ]
+  
+  # Find the peaks in the row data for Ctrl
+  peaks_Ctrl <- c()
+  for (j in 2:(length(row_data_Ctrl) - 1)) {
+    if (row_data_Ctrl[j] > row_data_Ctrl[j-1] && row_data_Ctrl[j] > row_data_Ctrl[j+1]) {
+      peaks_Ctrl <- c(peaks_Ctrl, j)
+    }
+  }
+  
+  # Find the peaks in the row data for RNase
+  peaks_RNase <- c()
+  for (j in 2:(length(row_data_RNase) - 1)) {
+    if (row_data_RNase[j] > row_data_RNase[j-1] && row_data_RNase[j] > row_data_RNase[j+1]) {
+      peaks_RNase <- c(peaks_RNase, j)
+    }
+  }
+  
+  # Calculate the difference in peak counts
+  diff_peaks <- length(peaks_RNase) - length(peaks_Ctrl)
+  
+  # Store the difference in the results vector
+  results[i] <- diff_peaks
+}
+
+# Create a data frame with the results
+identical_fractions2 <- data.frame(local_shift = results, row.names = row.names(Mitosis_Ctrl_100))
+
+# Print the identical_fractions dataframe
+print(identical_fractions2)
+
+# Count the number of entries not equal to zero in the no_shift column
+sum(identical_fractions2$local_shift != 0)
+```
+
 
 ## 4. VERGLEICH MIT RBP2GO
 
@@ -863,7 +913,7 @@ identical_fractions #TRUE: no shifter, FALSE: Shifter -> not really usable I thi
 
 #protein content quotiens 
 quotients_minmax #Werte umdie 1, je mehr sie abweichen, desto eher sind es shifter 
-#-> usable
+#-> usable? GGF hier einfach NUR DEN WERT NEHMEN, DER AM MEISTEN ABWEICHT!
 
 #y-shifts
 results_yshift #relativ große und relativ unterschiedliche Werte
@@ -904,6 +954,32 @@ head(comparison_RBP)
 EInen passenden DF hierfür müsste noch erstellt werden
 Idee: columns nach jeder unserer Methoden (4?) und wir finden so sozusagen die beiden Methoden die in größer Übereinstimmung RBPs bestimmt haben und wenden dann auf die LR an
 Ich denke das wäre bei uns ziemlich cool, eben weil wir diese verschiedenen Methoden haben
+
+Versuch den oben beschriebenen Datensatz zu erstellen:
+```{r}
+#1. Größe des x-shift: max_shift <- Ctrl_fraction_max - RNase_fraction_max
+#2. Unterschied in Anzahl local maxima: identical_fractions2$local_shift (ggf problematisch da hier eine verschiebung der local maxima ignoriert wird)
+#3. Ausmaß des y-shift: results_yshift$YDiff
+
+#ggf. 4. column: maximaler/minimaler Kurven quotient?? Vereinfachend den max wert genommen, da dieser in erster Linie größer und somit ggf aussagekräftiger ist.
+
+max_shift <- Ctrl_fraction_max - RNase_fraction_max
+```
+
+```{r}
+# Create shift_comparison dataframe
+shift_comparison <- data.frame(max_shift = max_shift,
+                               local_shift = identical_fractions2$local_shift,
+                               YDiff = results_yshift$YDiff,
+                               curve_shift = quotients_minmax$Max,
+                               row.names = row.names(max_shift))
+colnames(shift_comparison)[1] <- "max_shift"
+
+# Print the shift_comparison dataframe
+print(shift_comparison)
+
+```
+
 
 ```{r}
 # Assuming you have a dataframe called 'my_data' with multiple columns
