@@ -399,3 +399,98 @@ print(curve_p_values)
 sum(rowSums(is.na(curve_p_values)) > 0)
 ```
 This doesn't seem to completely work yet. I'll stay on it though.
+
+Kmeans lost attempt
+
+```{r}
+#Versuch einen kmeans mit Max shift und Protein quotients zu machen
+maximum_fraction <- data.frame(Ctrl_fraction_max, RNase_fraction_max)
+colnames(maximum_fraction) <- c("Ctrl_fraction_max", "RNase_fraction_max")
+```
+
+#### Parameters
+
+We want kmeans to consider different parameters for this we put them in a matrix. Here we create and normalize/scale the matrix:
+
+```{r}
+parameters <- cbind(maximum_fraction, quotients_minmax)
+
+rownames(parameters) <- rownames(maximum_fraction)
+```
+
+#### 8.1.2. kmeans - clustering
+
+Now we cluster the proteins depending on their parameters:
+
+```{r}
+# n = Number of clusters
+n <- 3
+km.maxquo <- kmeans(parameters, centers = n, nstart = 100)
+```
+
+#### 8.1.3. Plot
+
+Let's plot the peaks against each other:
+
+```{r}
+cluster <- km.maxquo$cluster
+
+#abhängig davon ob es drei oder vier cluster gibt werden unterschiedliche Vektoren verwendet:
+
+if (n == 3){
+  col <- c("springgreen", "violetred1", "cyan")
+  vjust <- c(1, -0.5, -0.5)
+  labels <- c("no shift", "left shift", "right shift")
+}
+if (n == 4){
+  col <- c("springgreen", "violetred1", "cyan", "orange")
+  vjust <- c(-0.5, -0.5, -0.5, -0.5)
+  labels <- c("left shift", "right shift", "no shift", "precipitated")
+}
+
+library("ggplot2")
+
+#hier wird ein Datframe mit allen für den dotplot relevanten daten erstellt
+peaks <- data.frame(Ctrl_fraction_max, RNase_fraction_max, cluster)
+
+
+#für den barplot muss der auch die Ergebnisse des Clusterings als Dataframe dargestellt werden
+number.of.clusters <- data.frame(value = cluster)
+
+#das cluster muss als factor dargestellt sein, vector geht nicht
+peaks$cluster <- factor(peaks$cluster)
+
+#hier wird der dotplot erstellt der die peaks gegeneinander aufträgt. Die Punkte werden abhängig von ihrer shiftart eingefärbt
+dot.plot <- ggplot(peaks, aes(Ctrl_fraction_max,RNase_fraction_max)) + 
+  geom_point(aes(colour = cluster), shape = 19, alpha = 0.5, size = 2)+
+  labs(x = "Fraction of Control Peak", y = "Fraction of RNase Peak", title = "Peak distribution")+
+  coord_equal()+
+  scale_colour_manual(values = col,labels = labels)+
+  theme_light()
+
+
+# hier wird ein Barplot erstellt der anzeigt, wie oft die shifttypes jeweils vorkommen
+bar.plot <- ggplot(number.of.clusters, aes(factor(value)))+
+  geom_bar(fill = col
+           , width = 0.5)+
+  theme_minimal()+
+  theme(axis.text.x = element_blank(), 
+        axis.text.y = element_blank(),
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_rect(color = "grey", fill = NA),
+        panel.background = element_rect(fill = "white", colour = NA))+
+  geom_text(stat = 'count', 
+            aes(label = after_stat(count)), 
+            vjust = vjust, 
+            size = 2.5)
+
+#hier werden die beiden plots zusammengefügt. Der barplot wird unten rechts klein angezeigt
+dot.plot +
+  annotation_custom(grob = ggplotGrob(bar.plot), 
+                    xmin = 15, 
+                    xmax = 27, 
+                    ymin = -1, 
+                    ymax = 8)
+```
