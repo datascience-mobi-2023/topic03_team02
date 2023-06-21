@@ -727,8 +727,57 @@ print(quotients_minmax)
 Interesting observation: Here we can see some proteins have 1 as the min and the max value, meaning that after normalization, the graphs are identical and the proteins most definitly not shifters.
 
 
-## 5. Statistical analysis
+#### 4.4 y-shift
+Reeeeaaally big overview for all proteins: their  global max in Ctrl aka in RNase and the difference of this max.
+```{r}
+# Function to calculate global maxima and difference in y-values
+calculate_maxima_diff <- function(row_name, df1, df2) {           #was sind df1 und df2
+  # Select the specific row from both dataframes
+  row_data_Ctrl <- Mitosis_Ctrl_100[row_name, ]
+  row_data_RNase <- Mitosis_RNase_100[row_name, ]
 
+  # Find the global maximum from the selected row in df1
+  row_global_max_Ctrl <- max(row_data_Ctrl)
+
+  # Find the global maximum from the selected row in df2
+  row_global_max_RNase <- max(row_data_RNase)
+
+  # Calculate the difference in y-values between the global maxima
+  y_diff <- row_global_max_Ctrl - row_global_max_RNase
+
+  # Return row name, global maxima, and difference in y-values
+  return(c( GlobalMax_Ctrl = row_global_max_Ctrl, GlobalMax_RNase = row_global_max_RNase, YDiff = y_diff))
+}
+
+# Get the row names of df1
+row_names <- rownames(Mitosis_Ctrl_mean)
+
+# Apply the function to each row name and combine the results into a dataframe
+results <- mapply(calculate_maxima_diff, row_names, MoreArgs = list(df1 = df1, df2 = df2), SIMPLIFY = FALSE)
+
+# Convert the results into a dataframe
+results_yshift <- do.call(rbind, results)
+
+# Print the results
+head(results_yshift)
+
+##Here we go from vector to matrix to dataframe
+# Convert the vector to a matrix with desired number of columns
+num_cols <- 3  # Number of columns in the matrix
+my_matrix <- matrix(results_yshift, ncol = num_cols)
+
+# Extract two columns from the matrix
+column1 <- my_matrix[, 1]
+column2 <- my_matrix[, 2]
+
+#Convert the first two columns of the matrix into a dataframe that we can use in kmeans
+df_results_yshift <- data.frame(GlobalMax_Ctrl  = column1, GlobalMax_RNase  = column2)
+show(df_results_yshift)
+```
+
+
+## 5. Statistical analysis
+### 5.1 kmeans
 ##### 5.1.1 For maxima
 
 Trying to create three cluster: left-shift, right-shift (possibly RBP); no shift (no RBP). Here only goes for data generate from difference between the max-shifts
@@ -742,7 +791,6 @@ plot(maximum_fraction, main = "comparison of maxima")
 
 
 #find the optimal amount of cluster before k-means
-#hier bin ich für die Funktion "fviz_nbclust" nicht darum gekommen das package factoextra zu installieren. Nach Alternativen suche ich noch 
 library(cluster)
 library(ggplot2)
 library(factoextra)
@@ -750,7 +798,7 @@ library(factoextra)
 #Calculate optimal number of cluster
 fviz_nbclust(maximum_fraction, kmeans, method='silhouette') #optimal number of cluster = 2
 #fviz_nbclust(maximum_fraction, kmeans, method='wss')        #optimal number of cluster = 2
-#fviz_nbclust(maximum_fraction, kmeans, method='gap_stat')   #optimal number of cluster = 6 ?!
+#fviz_nbclust(maximum_fraction, kmeans, method='gap_stat')   #optimal number of cluster = 6 
 
 
 #then a k-means clustering with the optimal amount of cluster and interpretation
@@ -759,18 +807,42 @@ km <- kmeans(maximum_fraction, centers = 2, nstart = 25)
 #visualizing the result of kmeans
 km
 fviz_cluster(km, data = maximum_fraction)
+
+# Create a data frame with clustered data and cluster labels
+clustered_data1 <- data.frame(maximum_fraction, cluster = as.factor(km$cluster))
+show(clustered_data1)
+
+# Create a scatter plot using ggplot
+dotplot1 <- ggplot(clustered_data, aes(x = Ctrl_fraction_max, y = RNase_fraction_max, color = cluster)) +
+  geom_point() +
+  labs(title = "K-means Clustering for maxima",
+       x = "Ctrl_fraction_max",
+       y = "RNase_fraction_max",
+       color = "Cluster")
+
+plot(dotplot1)
 ```
-
-
-
-
 
 The same kmeans clustering again for the 3 cluster that we expected to see. We hope for a cluster of no-shift, left-shift and right-shift -> not successful
 
 ```{r}
+#kmeans with same data but 3 cluster
 km3 <- kmeans(maximum_fraction, centers = 3, nstart = 25)
-fviz_cluster(km3, data = maximum_fraction)
-#macht vlt aus biologischer Sicht mehr Sinn. 
+#fviz_cluster(km3, data = maximum_fraction)
+
+# Create a data frame with clustered data and cluster labels
+clustered_data2 <- data.frame(maximum_fraction, cluster = as.factor(km3$cluster))
+show(clustered_data2)
+
+# Create a scatter plot using ggplot
+dotplot2 <- ggplot(clustered_data2, aes(x = Ctrl_fraction_max, y = RNase_fraction_max, color = cluster)) +
+  geom_point() +
+  labs(title = "K-means Clustering for maxima",
+       x = "Ctrl_fraction_max",
+       y = "RNase_fraction_max",
+       color = "Cluster")
+
+plot(dotplot2)
 ```
 
 ##### 5.1.2 For quotients
@@ -781,32 +853,151 @@ Since we are unsure how well kmeans worked for the maxima-clustering we now do t
 #here we don´t need to generate a new dataframe since we already have one we can work with
 show(quotients_minmax)
 
-#find the optimal amount of cluster before k-means
-#hier bin ich für die Funktion "fviz_nbclust" nicht darum gekommen das package factoextra zu installieren. Nach Alternativen suche ich noch 
-library(cluster)
-library(ggplot2)
-library(factoextra)
 #Calculate optimal number of cluster
 fviz_nbclust(quotients_minmax, kmeans, method='silhouette') #optimal number of cluster = 2
-#fviz_nbclust(quotients_minmax, kmeans, method='wss')        #optimal number of cluster = 2
-#fviz_nbclust(quotients_minmax, kmeans, method='gap_stat')   #optimal number of cluster = 6 ?!
-
-
 
 #then a k-means clustering with the optimal amount of cluster and interpretation
-km_q <- kmeans(quotients_minmax, centers = 2, nstart = 25)
+km_q <- kmeans(quotients_minmax, centers = 2, nstart = 25, algorithm = "MacQueen")
 
 #visualizing the result of kmeans
 km_q
-fviz_cluster(km_q, data = quotients_minmax)
+#fviz_cluster(km_q, data = quotients_minmax)
+
+# Create a data frame with clustered data and cluster labels
+clustered_data3 <- data.frame(quotients_minmax, cluster = as.factor(km_q$cluster))
+show(clustered_data3)
+
+# Create a scatter plot using ggplot
+dotplot3 <- ggplot(clustered_data3, aes(x = Min, y = Max, color = cluster)) +
+  geom_point() +
+  labs(title = "K-means Clustering for quotients",
+       x = "Min",
+       y = "Max",
+       color = "Cluster")
+
+plot(dotplot3)
 ```
 Das sieht auf jeden Fall schonmal anders aus. Aber besser?! -> vielleicht
 
 Again for 3 clusters that we hoped for:
 ```{r}
 km3_q <- kmeans(quotients_minmax, centers = 3, nstart = 25)
-km3_q
-fviz_cluster(km3_q, data = quotients_minmax)
+#fviz_cluster(km3_q, data = quotients_minmax)
 
+# Create a data frame with clustered data and cluster labels
+clustered_data4 <- data.frame(quotients_minmax, cluster = as.factor(km3_q$cluster))
+show(clustered_data4)
+
+# Create a scatter plot using ggplot
+dotplot4 <- ggplot(clustered_data4, aes(x = Min, y = Max, color = cluster)) +
+  geom_point() +
+  labs(title = "K-means Clustering for quotients",
+       x = "Min",
+       y = "Max",
+       color = "Cluster")
+
+plot(dotplot4)
 ```
 Finde ich besser als die kmeans plots für die Maxima. Aber wir sollten uns überlegen was aus "biologischer" Sicht hier logischer ist und das andere kmeans dann rausschmeissen.
+
+#### 5.1.3. For y-shift
+```{r}
+#here we don´t need to generate a new dataframe since we already have one we can work with
+show(df_results_yshift)
+
+fviz_nbclust(df_results_yshift, kmeans, method='silhouette') #optimal number of cluster = 2
+
+#then a k-means clustering with the optimal amount of cluster and interpretation
+#visualizing the result of kmeans
+km_y <- kmeans(df_results_yshift, centers = 2, nstart = 25)
+#fviz_cluster(km_y, data = df_results_yshift)
+
+# Create a data frame with clustered data and cluster labels
+clustered_data5 <- data.frame(df_results_yshift, cluster = as.factor(km_y$cluster))
+show(clustered_data5)
+
+# Create a scatter plot using ggplot
+dotplot5 <- ggplot(clustered_data5, aes(x = GlobalMax_Ctrl, y = GlobalMax_RNase, color = cluster)) +
+  geom_point() +
+  labs(title = "K-means Clustering for y-shift",
+       x = "GlobalMax_Ctrl",
+       y = "GlobalMax_RNase",
+       color = "Cluster")
+
+plot(dotplot5)
+```
+For 3 cluster
+```{r}
+#then a k-means clustering with the optimal amount of cluster and interpretation
+#visualizing the result of kmeans
+km3_y <- kmeans(df_results_yshift, centers = 3, nstart = 25)
+#fviz_cluster(km_y, data = df_results_yshift)
+
+# Create a data frame with clustered data and cluster labels
+clustered_data6 <- data.frame(df_results_yshift, cluster = as.factor(km3_y$cluster))
+show(clustered_data6)
+
+# Create a scatter plot using ggplot
+dotplot6 <- ggplot(clustered_data6, aes(x = GlobalMax_Ctrl, y = GlobalMax_RNase, color = cluster)) +
+  geom_point() +
+  labs(title = "K-means Clustering for y-shift",
+       x = "GlobalMax_Ctrl",
+       y = "GlobalMax_RNase",
+       color = "Cluster")
+
+plot(dotplot6)
+```
+###### 5.1.3.1 Description of cluster 2
+
+Lets take a closter look at cluster 3, as those proteins seem to be "extrem y-shifters"
+```{r}
+# Extract the cluster assignments from the kmeans_result object
+cluster_assignments <- km3_y$cluster
+
+# Filter the dataframe based on the cluster assignment
+cluster2_values <- df_results_yshift[cluster_assignments == 2, ]
+
+# Print the values in Cluster 2
+print(cluster2_values)
+
+# Count the number of values in Cluster 2
+num_cluster2_values <- nrow(cluster2_values)
+
+# Print the count
+print(num_cluster2_values)
+```
+So we have 73 "extrem y-shifters". Lets take a look at them
+
+```{r}
+# Step 1: Extract the row you want to find peaks in
+row_index <- 4269     # Adjust the row index as needed
+row_name <- row.names(Mitosis_Ctrl_100)[row_index] #name of plot adapts depending on protein viewed #also works if Mitosis_RNase_100, bc both dataframes would plot the same protein
+
+# Step 2: Extrakt the data for Ctrl and RNase
+row_data_Ctrl <- Mitosis_Ctrl_100[row_index, ]
+row_data_RNase <- Mitosis_RNase_100[row_index, ]
+
+# Step 3: Find the peaks in the row data
+peaks_Ctrl <- c()
+for (i in 2:(length(row_data_Ctrl) - 1)) {
+  if (row_data_Ctrl[i] > row_data_Ctrl[i-1] && row_data_Ctrl[i] > row_data_Ctrl[i+1]) {
+    peaks_Ctrl <- c(peaks_Ctrl, i)
+  }
+}
+
+peaks_RNase <- c()
+for (i in 2:(length(row_data_RNase) - 1)) {
+  if (row_data_RNase[i] > row_data_RNase[i-1] && row_data_RNase[i] > row_data_RNase[i+1]) {
+    peaks_RNase <- c(peaks_RNase, i)
+  }
+}
+
+# Step 4: Visualize the peaks on a plot
+plot(1:25, Mitosis_Ctrl_100[row_index, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,40), main = row_name)
+points(peaks_Ctrl, row_data_Ctrl[peaks_Ctrl], col = "blue", pch = 16)
+
+lines(1:25, Mitosis_RNase_100[row_index, ], type="l",col="red")
+points(peaks_RNase, row_data_RNase[peaks_RNase], col = "red", pch = 16)
+grid()
+legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
+```
