@@ -399,3 +399,138 @@ print(curve_p_values)
 sum(rowSums(is.na(curve_p_values)) > 0)
 ```
 This doesn't seem to completely work yet. I'll stay on it though.
+
+Kmeans lost attempt
+
+```{r}
+#Versuch einen kmeans mit Max shift und Protein quotients zu machen
+maximum_fraction <- data.frame(Ctrl_fraction_max, RNase_fraction_max)
+colnames(maximum_fraction) <- c("Ctrl_fraction_max", "RNase_fraction_max")
+```
+
+#### Parameters
+
+We want kmeans to consider different parameters for this we put them in a matrix. Here we create and normalize/scale the matrix:
+
+```{r}
+parameters <- cbind(maximum_fraction, quotients_minmax)
+
+rownames(parameters) <- rownames(maximum_fraction)
+```
+
+#### 8.1.2. kmeans - clustering
+
+Now we cluster the proteins depending on their parameters:
+
+```{r}
+# n = Number of clusters
+n <- 3
+km.maxquo <- kmeans(parameters, centers = n, nstart = 100)
+```
+
+#### 8.1.3. Plot
+
+Let's plot the peaks against each other:
+
+```{r}
+cluster <- km.maxquo$cluster
+
+#abhängig davon ob es drei oder vier cluster gibt werden unterschiedliche Vektoren verwendet:
+
+if (n == 3){
+  col <- c("springgreen", "violetred1", "cyan")
+  vjust <- c(1, -0.5, -0.5)
+  labels <- c("no shift", "left shift", "right shift")
+}
+if (n == 4){
+  col <- c("springgreen", "violetred1", "cyan", "orange")
+  vjust <- c(-0.5, -0.5, -0.5, -0.5)
+  labels <- c("left shift", "right shift", "no shift", "precipitated")
+}
+
+library("ggplot2")
+
+#hier wird ein Datframe mit allen für den dotplot relevanten daten erstellt
+peaks <- data.frame(Ctrl_fraction_max, RNase_fraction_max, cluster)
+
+
+#für den barplot muss der auch die Ergebnisse des Clusterings als Dataframe dargestellt werden
+number.of.clusters <- data.frame(value = cluster)
+
+#das cluster muss als factor dargestellt sein, vector geht nicht
+peaks$cluster <- factor(peaks$cluster)
+
+#hier wird der dotplot erstellt der die peaks gegeneinander aufträgt. Die Punkte werden abhängig von ihrer shiftart eingefärbt
+dot.plot <- ggplot(peaks, aes(Ctrl_fraction_max,RNase_fraction_max)) + 
+  geom_point(aes(colour = cluster), shape = 19, alpha = 0.5, size = 2)+
+  labs(x = "Fraction of Control Peak", y = "Fraction of RNase Peak", title = "Peak distribution")+
+  coord_equal()+
+  scale_colour_manual(values = col,labels = labels)+
+  theme_light()
+
+
+# hier wird ein Barplot erstellt der anzeigt, wie oft die shifttypes jeweils vorkommen
+bar.plot <- ggplot(number.of.clusters, aes(factor(value)))+
+  geom_bar(fill = col
+           , width = 0.5)+
+  theme_minimal()+
+  theme(axis.text.x = element_blank(), 
+        axis.text.y = element_blank(),
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank(),
+        panel.grid = element_blank(),
+        panel.border = element_rect(color = "grey", fill = NA),
+        panel.background = element_rect(fill = "white", colour = NA))+
+  geom_text(stat = 'count', 
+            aes(label = after_stat(count)), 
+            vjust = vjust, 
+            size = 2.5)
+
+#hier werden die beiden plots zusammengefügt. Der barplot wird unten rechts klein angezeigt
+dot.plot +
+  annotation_custom(grob = ggplotGrob(bar.plot), 
+                    xmin = 15, 
+                    xmax = 27, 
+                    ymin = -1, 
+                    ymax = 8)
+```
+
+
+Saving space for the old, inefficient t-test code:
+
+```{r}
+# Create an empty dataframe to store the p-values
+p_values_Ctrl <- data.frame(matrix(ncol = ncol(RDeeP_HeLa_Mitosis_Ctrl)/3, nrow = nrow(RDeeP_HeLa_Mitosis_Ctrl)))
+
+# Iterate over every row (protein) in the original table
+for (i in 1:nrow(RDeeP_HeLa_Mitosis_Ctrl)) {
+  # Extract the values for the current row (protein)
+  row_values <- RDeeP_HeLa_Mitosis_Ctrl[i, ]
+  
+  # Create an empty vector to store the p-values for the current row (protein)
+  p_values_row <- c()
+  
+  # Iterate over every three columns in the current row (protein)
+  for (j in seq(1, ncol(RDeeP_HeLa_Mitosis_Ctrl), by = 3)) {
+    # Extract the values for the current set of three columns
+    column_values <- row_values[j:(j + 2)]
+    
+    # Calculate the p-value for the set of three columns using t-test
+    t_result <- t.test(column_values)
+    p_value <- t_result$p.value
+    
+    # Append the p-value to the vector for the current row (protein)
+    p_values_row <- c(p_values_row, p_value)
+  }
+  
+  # Assign the p-values for the current row (protein) to the corresponding row in the new dataframe
+  p_values_Ctrl[i, ] <- p_values_row
+}
+
+# Optional: Rename the columns
+colnames(p_values_Ctrl) <- paste("P-Values", 1:(ncol(p_values_Ctrl)))
+
+# Print the new dataframe
+print(p_values_Ctrl)
+```
+

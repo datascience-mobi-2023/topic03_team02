@@ -44,45 +44,6 @@ RDeeP_HeLa_Mitosis_RNase=RDeeP_HeLa_Mitosis[,-which(names(RDeeP_HeLa_Mitosis) %i
 head(RDeeP_HeLa_Mitosis_RNase)
 ```
 
-Saving space for the old, inefficient t-test code:
-
-```{r}
-# Create an empty dataframe to store the p-values
-p_values_Ctrl <- data.frame(matrix(ncol = ncol(RDeeP_HeLa_Mitosis_Ctrl)/3, nrow = nrow(RDeeP_HeLa_Mitosis_Ctrl)))
-
-# Iterate over every row (protein) in the original table
-for (i in 1:nrow(RDeeP_HeLa_Mitosis_Ctrl)) {
-  # Extract the values for the current row (protein)
-  row_values <- RDeeP_HeLa_Mitosis_Ctrl[i, ]
-  
-  # Create an empty vector to store the p-values for the current row (protein)
-  p_values_row <- c()
-  
-  # Iterate over every three columns in the current row (protein)
-  for (j in seq(1, ncol(RDeeP_HeLa_Mitosis_Ctrl), by = 3)) {
-    # Extract the values for the current set of three columns
-    column_values <- row_values[j:(j + 2)]
-    
-    # Calculate the p-value for the set of three columns using t-test
-    t_result <- t.test(column_values)
-    p_value <- t_result$p.value
-    
-    # Append the p-value to the vector for the current row (protein)
-    p_values_row <- c(p_values_row, p_value)
-  }
-  
-  # Assign the p-values for the current row (protein) to the corresponding row in the new dataframe
-  p_values_Ctrl[i, ] <- p_values_row
-}
-
-# Optional: Rename the columns
-colnames(p_values_Ctrl) <- paste("P-Values", 1:(ncol(p_values_Ctrl)))
-
-# Print the new dataframe
-print(p_values_Ctrl)
-```
-
-
 
 ## 2. Scale and Reduce Dataset
 
@@ -272,7 +233,7 @@ for (row_index in 1:nrow(Mitosis_Ctrl_mean)) {
   }
   
   # Step 4: Check if the row has multiple peaks
-  if (length(peaks) > 7) {
+  if (length(peaks) > 7) {  #More than 7 peaks!
     rows_with_multiple_peaks <- c(rows_with_multiple_peaks, row_index)
   }
 }
@@ -369,12 +330,8 @@ has_max_in_first_col <- apply(Mitosis_Ctrl_100[rows_with_no_peak, ], 1, function
 # Check if has_max_in_last_col and has_max_in_first_col are complementary
 are_complementary <- all(has_max_in_last_col != has_max_in_first_col)
 are_complementary
-
-plot(seq_along(row_data), row_data, type = "l", xlab = "Index", ylab = "Value", main = row_name)
-points(peaks, row_data[peaks], col = "red", pch = 16)
-legend("topright",legend=c("Control mean"),col=c("black"),bg="white",lwd=2)
-
 ```
+
 TRUE, this means all proteins without a peak have either accumulated in first or last fraction.
 -> does it mean error? or normalization side effect? No.
 
@@ -447,7 +404,7 @@ The same as above, but for a protein name based search :)
 ```{r}
 # Row name for which to find the column and value of global maximum
 #Change as necessary
-row_name <- "2A5B_HUMAN"
+row_name <- "RBM3_HUMAN"
 
 # Extract the row from the dataframe
 row <- Mitosis_Ctrl_100[row_name, ]
@@ -830,123 +787,86 @@ quotients_minmax #Werte umdie 1, je mehr sie abweichen, desto eher sind es shift
 results_yshift #Ist glaub noch nicht fertig @Jimena
 ```
 
+### Visualizer
 
 ```{r}
-#Versuch einen kmeans mit Max shift und Protein quotients zu machen
-maximum_fraction <- data.frame(Ctrl_fraction_max, RNase_fraction_max)
-colnames(maximum_fraction) <- c("Ctrl_fraction_max", "RNase_fraction_max")
+# Step 1: Select a specific row by name
+row_name <- "SQOR_HUMAN" #'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter)
+
+# Step 2: Find the peaks for Ctrl in the row data
+row_data_Ctrl <- Mitosis_Ctrl_100[row_name, ]
+row_data_RNase <- Mitosis_RNase_100[row_name, ]
+
+# Step 3: Find the peaks in the row data
+peaks_Ctrl <- c()
+for (i in 2:(length(row_data_Ctrl) - 1)) {
+  if (row_data_Ctrl[i] > row_data_Ctrl[i-1] && row_data_Ctrl[i] > row_data_Ctrl[i+1]) {
+    peaks_Ctrl <- c(peaks_Ctrl, i)
+  }
+}
+
+peaks_RNase <- c()
+for (i in 2:(length(row_data_RNase) - 1)) {
+  if (row_data_RNase[i] > row_data_RNase[i-1] && row_data_RNase[i] > row_data_RNase[i+1]) {
+    peaks_RNase <- c(peaks_RNase, i)
+  }
+}
+
+# Step 4: Visualize the peaks on a plot
+plot(1:25, Mitosis_Ctrl_100[row_name, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,40), main = row_name)
+points(peaks_Ctrl, row_data_Ctrl[peaks_Ctrl], col = "blue", pch = 16)
+
+lines(1:25, Mitosis_RNase_100[row_name, ], type="l",col="red")
+points(peaks_RNase, row_data_RNase[peaks_RNase], col = "red", pch = 16)
+grid()
+legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
 
-#### 8.1.1. Parameters
+## SQOR_HUMAN Problem
 
-We want kmeans to consider different parameters for this we put them in a matrix. Here we create and normalize/scale the matrix:
+TRUE: no shifter
+FALSE: shifter
 
 ```{r}
-parameters <- cbind(maximum_fraction, quotients_minmax)
-
-rownames(parameters) <- rownames(maximum_fraction)
-
-#hier erst mal MMS, welche wir nehmen können wir noch entscheiden. 
-parameters.scaled <- apply(parameters, 2, function(x) {
-  normalized <- (x-min(x))/(max(x)-min(x))
+# Step 1: Find column indices of local maxima in Mitosis_RNase_100
+RNase_maxima <- apply(Mitosis_RNase_100, 1, function(row) {
+  local_maxima <- which(row == max(row))
+  return(local_maxima)
 })
 
-```
+# Step 2: Create RNase_maxima dataframe with row names
+RNase_maxima <- data.frame(Maxima = I(RNase_maxima), row.names = row.names(Mitosis_RNase_100))
 
-Not every variable has the same importance. We can weigh the
+# Step 3: Repeat the same process for Mitosis_Ctrl_100
+Ctrl_maxima <- apply(Mitosis_Ctrl_100, 1, function(row) {
+  local_maxima <- which(row == max(row))
+  return(local_maxima)
+})
+Ctrl_maxima <- data.frame(Maxima = I(Ctrl_maxima), row.names = row.names(Mitosis_Ctrl_100))
+
+# Step 4: Compare number of maxima and column indices between RNase_maxima and Ctrl_maxima
+identical_fractions <- data.frame(no_shift = row.names(Mitosis_RNase_100), row.names = row.names(Mitosis_RNase_100), stringsAsFactors = FALSE)
+identical_fractions$no_shift <- RNase_maxima$Maxima == Ctrl_maxima$Maxima & 
+                             lengths(RNase_maxima$Maxima) == lengths(Ctrl_maxima$Maxima)
+
+# Count the total number of maxima in RNase_maxima dataframe
+rnase_maxima_count <- sum(lengths(RNase_maxima$Maxima))
+
+# Count the total number of maxima in Ctrl_maxima dataframe
+ctrl_maxima_count <- sum(lengths(Ctrl_maxima$Maxima))
+
+# Check if the total number of maxima and column indices are identical
+identical_fractions$no_shift <- identical_fractions$no_shift & rnase_maxima_count == ctrl_maxima_count
+#DAS & IST HIER DER ENTSCHEIDENDE!
+
+# Step 5: Print the identical_fractions dataframe
+print(identical_fractions)
+
+identical_fractions["SQOR_HUMAN",]
+```
 
 ```{r}
-
-weight <- c(1, 2) #Hier quotients doppelt so viel wie maximum_fraction gewichtet
-
-for (i in seq_along(weight)){
-  parameters.scaled[,i] <- parameters.scaled[,i]*weight[i]
-}
-
-parameters <- parameters.scaled
-
+Ctrl_maxima["SQOR_HUMAN",]
+RNase_maxima["SQOR_HUMAN",]
 ```
-
-#### 8.1.2. kmeans - clustering
-
-Now we cluster the proteins depending on their parameters:
-
-```{r}
-# n = Number of clusters
-n <- 3
-km.maxquo <- kmeans(parameters, centers = n, nstart = 100)
-fviz_cluster(km.maxquo, data = maximum_fraction)
-```
-
-#### 8.1.3. Plot
-
-Let's plot the peaks against each other:
-
-```{r}
-
-cluster <- km.maxquo$cluster
-
-#abhängig davon ob es drei oder vier cluster gibt werden unterschiedliche Vektoren verwendet:
-
-if (n == 3){
-  col <- c("springgreen", "violetred1", "cyan")
-  vjust <- c(1, -0.5, -0.5)
-  labels <- c("no shift", "left shift", "right shift")
-}
-if (n == 4){
-  col <- c("springgreen", "violetred1", "cyan", "orange")
-  vjust <- c(-0.5, -0.5, -0.5, -0.5)
-  labels <- c("left shift", "right shift", "no shift", "precipitated")
-}
-
-library("ggplot2")
-
-#hier wird ein Datframe mit allen für den dotplot relevanten daten erstellt
-peaks <- data.frame(Ctrl_fraction_max, RNase_fraction_max, cluster)
-
-
-#für den barplot muss der auch die Ergebnisse des Clusterings als Dataframe dargestellt werden
-number.of.clusters <- data.frame(value = cluster)
-
-# Convert 'cluster' to a factor
-peaks$cluster <- factor(peaks$cluster)
-
-#hier wird der dotplot erstellt der die peaks gegeneinander aufträgt. Die Punkte werden abhängig von ihrer shiftart eingefärbt
-dot.plot <- ggplot(peaks, aes(Ctrl_fraction_max, RNase_fraction_max)) + 
-  geom_point(aes(colour = cluster), shape = 19, alpha = 0.5, size = 2)+
-  labs(x = "Fraction of Control Peak", y = "Fraction of RNase Peak", title = "Peak distribution")+
-  coord_equal()+
-  scale_colour_manual(values = col, labels = labels)+
-  theme_light()
-
-# Convert 'cluster' to a factor
-peaks$cluster <- factor(peaks$cluster)
-
-# hier wird ein Barplot erstellt der anzeigt, wie oft die shifttypes jeweils vorkommen
-bar.plot <- ggplot(number.of.clusters, aes(factor(value)))+
-  geom_bar(fill = col
-           , width = 0.5)+
-  theme_minimal()+
-  theme(axis.text.x = element_blank(), 
-        axis.text.y = element_blank(),
-        axis.title.x = element_blank(), 
-        axis.title.y = element_blank(),
-        panel.grid = element_blank(),
-        panel.border = element_rect(color = "grey", fill = NA),
-        panel.background = element_rect(fill = "white", colour = NA))+
-  geom_text(stat = 'count', 
-            aes(label = after_stat(count)), 
-            vjust = vjust, 
-            size = 2.5)
-
-#hier werden die beiden plots zusammengefügt. Der barplot wird unten rechts klein angezeigt
-dot.plot +
-  annotation_custom(grob = ggplotGrob(bar.plot), 
-                    xmin = 15, 
-                    xmax = 27, 
-                    ymin = -1, 
-                    ymax = 8)
-```
-
-
 
