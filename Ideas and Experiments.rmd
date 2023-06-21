@@ -233,14 +233,14 @@ for (row_index in 1:nrow(Mitosis_Ctrl_mean)) {
   }
   
   # Step 4: Check if the row has multiple peaks
-  if (length(peaks) > 7) {  #More than 7 peaks!
+  if (length(peaks) > 1) {  #More than 1 peak, can be adjusted to different thresholds!
     rows_with_multiple_peaks <- c(rows_with_multiple_peaks, row_index)
   }
 }
 
 # Step 5: Print the row indices with multiple peaks
 length(rows_with_multiple_peaks)
-rows_with_multiple_peaks
+#rows_with_multiple_peaks
 ```
 
 
@@ -269,13 +269,13 @@ for (row_index in 1:nrow(Mitosis_Ctrl_100)) {   #why here with MitosisCtrl100 an
 
 # Step 5: Print the row indices with only one peak
 length(rows_with_one_peak)  # Number of rows with one peak
-rows_with_one_peak  # Row indices with one peak
-head(rows_with_one_peak)
+#rows_with_one_peak  # Row indices with one peak
+#head(rows_with_one_peak)
 
 # COMPARISON
-length(rows_with_multiple_peaks) + length(rows_with_one_peak) == nrow(Mitosis_Ctrl_100)
-length(rows_with_multiple_peaks) + length(rows_with_one_peak) #7074 rows
-nrow(Mitosis_Ctrl_100) #7158 rows
+length(rows_with_multiple_peaks) + length(rows_with_one_peak) == nrow(Mitosis_Ctrl_100) #FALSE, not all proteins have one peak or mulitple peaks
+length(rows_with_multiple_peaks) + length(rows_with_one_peak)
+nrow(Mitosis_Ctrl_100) #some proteins have not yet been identified
 
 ```
 Mhmm, it is FALSE, so maybe:
@@ -329,7 +329,7 @@ has_max_in_first_col <- apply(Mitosis_Ctrl_100[rows_with_no_peak, ], 1, function
 
 # Check if has_max_in_last_col and has_max_in_first_col are complementary
 are_complementary <- all(has_max_in_last_col != has_max_in_first_col)
-are_complementary
+are_complementary #TRUE means the protein has accumulated in the last column
 ```
 
 TRUE, this means all proteins without a peak have either accumulated in first or last fraction.
@@ -504,11 +504,9 @@ print(Ctrl_fraction_max)
 as.vector(Ctrl_fraction_max) #just numbers (aka fractions where max) 
 
 ```
-Overview RNase Dataframe.
--> error in function: I don't know why, its the same code as above :'l
-```{r}
-# ERROR because we had RNAse rows with only zeros. I fixed that, for this code to run simply run the working code again. 
 
+Overview RNase Dataframe.
+```{r}
 # Find the column index of the global maximum for each row
 column_indices <- apply(Mitosis_RNase_100, 1, which.max)
 
@@ -562,58 +560,6 @@ sum(shift_dataframe$Shift == "right shift")
 sum(shift_dataframe$Shift == "no shift")
 ```
 Nice :)
-
-## COMPARISON TO OTHER DATA
-
-Furthermore, we added data on previously found RBPs and non-RBPs.
-
-```{r Load extra data for comparison of results}
-HS_RBPs <- read.csv("https://raw.githubusercontent.com/datascience-mobi-2022/2022-topic-03-team-03/main/1_HS_RBPs.csv", header=TRUE, sep = ",")
-
-HS_non_RBPs <- read.csv("https://raw.githubusercontent.com/datascience-mobi-2022/2022-topic-03-team-03/main/2_HS_non_RBPs.csv", header=TRUE, sep = ",")
-```
-
-```{r Quantification of results functions}
-# Function to identify True RBP
-Find_true_RBP <- function(potential_RBP) {
-  Match_RBP <- HS_RBPs$Entry_Name.x %in% potential_RBP    # Compare potential RBP with RBP from other publications
-  True_RBP_pos <- which(Match_RBP == TRUE)                # Find the positions of true RBP
-  True_RBP_names <- HS_RBPs$Entry_Name.x[True_RBP_pos]    # Find names of true RBP
-  return(True_RBP_names)
-}
-
-# Function to identify False RBP
-Find_false_RBP <- function(potential_RBP) {                    
-  Match_RBP <- HS_non_RBPs$Entry_Name.x %in% potential_RBP      # Compare potential RBP with RBP from other publications
-  False_RBP_pos <- which(Match_RBP == TRUE)                     # Find the positions of false RBP
-  False_RBP_names <- HS_non_RBPs$Entry_Name.x[False_RBP_pos]    # Find names of false RBP
-  return(False_RBP_names)
-}
-
-# Function to identify true non-RBP
-Find_true_non_RBP <- function(potential_non_RBP) {
-  Match_non_RBP <- HS_non_RBPs$Entry_Name.x %in% potential_non_RBP    # Compare potential non-RBP with non-RBP from other publications
-  True_non_RBP_pos <- which(Match_non_RBP == TRUE)                    # Find the positions of true non-RBP
-  True_non_RBP_names <- HS_non_RBPs$Entry_Name.x[True_non_RBP_pos]    # Find names of true non-RBP
-  return(True_non_RBP_names)
-}
-
-# Function to identify false non-RBP
-Find_false_non_RBP <- function(potential_non_RBP) {
-  Match_non_RBP <- HS_RBPs$Entry_Name.x %in% potential_non_RBP    # Compare potential non-RBP with non-RBP from other publications
-  False_non_RBP_pos <- which(Match_non_RBP == TRUE)               # Find the positions of false non-RBP
-  False_non_RBP_names <- HS_RBPs$Entry_Name.x[False_non_RBP_pos]   # Find names of false non-RBP
-  return(False_non_RBP_names)
-}
-# Function to show RBDs
-Find_RBD <- function(potential_RBD) {
-  RBD_stat <- RBD_stat_non_RBP[rownames(RBD_stat_non_RBP) %in% potential_RBD, ]
-  RBD_true_prot_df <- RBD_stat[RBD_stat$RBD_status == "RBD", ]
-  RBD_true_prot_names <- rownames(RBD_true_prot_df)
-  return(RBD_true_prot_names)
-}
-```
-
 
 ## Statistical analysis
 
@@ -791,7 +737,7 @@ results_yshift #Ist glaub noch nicht fertig @Jimena
 
 ```{r}
 # Step 1: Select a specific row by name
-row_name <- "SQOR_HUMAN" #'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter)
+row_name <- "SQOR_HUMAN" #'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter) #UTP11_HUMAN PERCIPITATED PROTEIN??
 
 # Step 2: Find the peaks for Ctrl in the row data
 row_data_Ctrl <- Mitosis_Ctrl_100[row_name, ]
@@ -820,6 +766,14 @@ lines(1:25, Mitosis_RNase_100[row_name, ], type="l",col="red")
 points(peaks_RNase, row_data_RNase[peaks_RNase], col = "red", pch = 16)
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
+
+# Step 5: Count the number of peaks
+num_peaks_Ctrl <- length(peaks_Ctrl)
+num_peaks_RNase <- length(peaks_RNase)
+
+# Print the number of peaks
+cat("Number of peaks in Control:", num_peaks_Ctrl, "\n")
+cat("Number of peaks in RNase:", num_peaks_RNase, "\n")
 ```
 
 ## SQOR_HUMAN Problem
@@ -863,10 +817,52 @@ identical_fractions$no_shift <- identical_fractions$no_shift & rnase_maxima_coun
 print(identical_fractions)
 
 identical_fractions["SQOR_HUMAN",]
+sum(identical_fractions$no_shift == FALSE)
 ```
 
 ```{r}
-Ctrl_maxima["SQOR_HUMAN",]
-RNase_maxima["SQOR_HUMAN",]
+# Create an empty vector to store the results
+results <- vector("logical", nrow(Mitosis_Ctrl_100))
+
+# Iterate over each row
+for (i in 1:nrow(Mitosis_Ctrl_100)) {
+  # Get the row data for Ctrl and RNase
+  row_data_Ctrl <- Mitosis_Ctrl_100[i, ]
+  row_data_RNase <- Mitosis_RNase_100[i, ]
+  
+  # Find the peaks in the row data for Ctrl
+  peaks_Ctrl <- c()
+  for (j in 2:(length(row_data_Ctrl) - 1)) {
+    if (row_data_Ctrl[j] > row_data_Ctrl[j-1] && row_data_Ctrl[j] > row_data_Ctrl[j+1]) {
+      peaks_Ctrl <- c(peaks_Ctrl, j)
+    }
+  }
+  
+  # Find the peaks in the row data for RNase
+  peaks_RNase <- c()
+  for (j in 2:(length(row_data_RNase) - 1)) {
+    if (row_data_RNase[j] > row_data_RNase[j-1] && row_data_RNase[j] > row_data_RNase[j+1]) {
+      peaks_RNase <- c(peaks_RNase, j)
+    }
+  }
+  
+  # Compare the peaks between Ctrl and RNase
+  if (identical(peaks_Ctrl, peaks_RNase)) {
+    results[i] <- TRUE
+  } else {
+    results[i] <- FALSE
+  }
+}
+
+# Create a data frame with the results
+result_df <- data.frame(identical_fractions = results, row.names = row.names(Mitosis_Ctrl_100))
+
+# Print the result_df
+print(result_df)
+
+result_df["SQOR_HUMAN",]
+sum(result_df$identical_fractions == FALSE)
 ```
+
+
 
