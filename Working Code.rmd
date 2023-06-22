@@ -1073,11 +1073,13 @@ head(df_diff_yshift)
   #column1 <- my_matrix[, 3]
   #df_results_yshift2 <- data.frame(Y_DiffLR  = column1)
   #head(df_results_yshift2)
+#code das das hier zahlen gibt im Ideas
 
 #for curve shift
 Diff_quotient <- quotients_minmax$Max - quotients_minmax$Min
 Diff_quotient <- data.frame(Diff_quotient)
 head(Diff_quotient)
+#SINN?!
 ```
 Eine Sache die wir uns unbedingt noch überlegen müssen ist das am Ende alle diese Methoden ein RBP implizieren wenn die values hoch sind (bzw möglichst stark von 0 abweichen) und das value = 0 immer non-shifter impliziert. Aber das müsste passen
 
