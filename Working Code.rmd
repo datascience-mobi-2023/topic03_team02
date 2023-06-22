@@ -1008,3 +1008,55 @@ points(peaks_RNase, row_data_RNase[peaks_RNase], col = "red", pch = 16)
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
+
+
+
+## 6. Linear Regression
+Idee: columns nach jeder unserer Methoden (4?) und wir finden so sozusagen die beiden Methoden die in größer Übereinstimmung RBPs bestimmt haben und wenden dann auf die LR an
+Ich denke das wäre bei uns ziemlich cool, eben weil wir diese verschiedenen Methoden haben
+
+#### 6.1 generate Dataframe
+
+##### 6.1.1 prepare data
+
+#####  6.1.2 generate die actual Dataframe
+```{r}
+#1. Größe des x-shift: max_shift <- Ctrl_fraction_max - RNase_fraction_max
+#2. Unterschied in Anzahl local maxima: identical_fractions2$local_shift (ggf problematisch da hier eine verschiebung der local maxima ignoriert wird)
+#3. Ausmaß des y-shift: results_yshift$YDiff
+
+#ggf. 4. column: maximaler/minimaler Kurven quotient?? Vereinfachend den max wert genommen, da dieser in erster Linie größer und somit ggf aussagekräftiger ist.
+
+max_shift <- Ctrl_fraction_max - RNase_fraction_max
+```
+
+To put all these values in a new DF we first need to make sure they have the right format:
+```{r}
+#str(max_shift)
+#str(identical_fractions)
+#str(results_yshift)
+#str(quotients_minmax)
+
+print(class(max_shift))
+print(class(identical_fractions))
+print(class(results_yshift))
+print(class(df_results_yshift))
+print(class(quotients_minmax))
+```
+
+```{r}
+# Create shift_comparison dataframe
+shift_comparison <- data.frame(max_shift = max_shift,
+                               local_shift = identical_fractions$local_shift,
+                               YDiff = df_results_yshift$YDiff,
+                               curve_shift = quotients_minmax$Max,
+                               row.names = row.names(max_shift))
+colnames(shift_comparison)[1] <- "max_shift"
+
+# Print the shift_comparison dataframe
+print(shift_comparison)
+
+```
+#### 6.2 identify two columns with a linear relationship
+
+#### 6.3 perform a linear regression

@@ -969,8 +969,8 @@ max_shift <- Ctrl_fraction_max - RNase_fraction_max
 ```{r}
 # Create shift_comparison dataframe
 shift_comparison <- data.frame(max_shift = max_shift,
-                               local_shift = identical_fractions2$local_shift,
-                               YDiff = results_yshift$YDiff,
+                               local_shift = identical_fractions$local_shift,
+                               YDiff = df_results_yshift$YDiff,
                                curve_shift = quotients_minmax$Max,
                                row.names = row.names(max_shift))
 colnames(shift_comparison)[1] <- "max_shift"
