@@ -1018,8 +1018,7 @@ Ich denke das wäre bei uns ziemlich cool, eben weil wir diese verschiedenen Met
 #### 6.1 generate Dataframe
 
 ##### 6.1.1 prepare data
-
-#####  6.1.2 generate die actual Dataframe
+In order to generate one big dataframe that sums up the values that we gained in our 4(?) methodes of RBP identification this data has to be brought into the right format
 ```{r}
 #1. Größe des x-shift: max_shift <- Ctrl_fraction_max - RNase_fraction_max
 #2. Unterschied in Anzahl local maxima: identical_fractions2$local_shift (ggf problematisch da hier eine verschiebung der local maxima ignoriert wird)
@@ -1042,14 +1041,53 @@ print(class(identical_fractions))
 print(class(results_yshift))
 print(class(df_results_yshift))
 print(class(quotients_minmax))
+#kann man später wieder löschen. Hab ich zum Verständnis gebraucht
 ```
+```{r}
+#to put everything into one big dataframe the seperate dataframes need to have the same amount of rows
 
+print(nrow(max_shift))
+print(nrow(identical_fractions))
+print(nrow(df_results_yshift))
+print(nrow(quotients_minmax))
+#kann man später wieder löschen. Hab ich zum Verständnis gebraucht
+```
+Das hab ich gemacht weil beim zusammenführen er mir einen Error bringt der besagt das ich unterschiedlich viele rows habe. Plot twist: habe ich nicht
+wtf?!
+=> okay jetzt hab ich es: die Values müssen Zahlen sein und ein wenig anders angeordnet 
+Ich guck mal oben im Code was wir alles für variablen und DF haben und welche jeweils am besten passen
+
+```{r}
+#for max shift
+head(max_shift) #should be fine
+colnames(max_shift) <- c("Diff_Max")
+
+#for local shift
+head(identical_fractions) #ich will einen DF mit Zahlenwerten
+
+#for y shift
+Diff_yshift <- df_results_yshift$GlobalMax_Ctrl - df_results_yshift$GlobalMax_RNase
+df_diff_yshift <- data.frame(Diff_yshift)
+head(df_diff_yshift)
+  #oder ich nehme die Maxtrix in der schon ein y-diff berechnet wurde, wandle sie in einen DF um und extrahiere die Spalte -> kommt auf das gleiche raus
+  #column1 <- my_matrix[, 3]
+  #df_results_yshift2 <- data.frame(Y_DiffLR  = column1)
+  #head(df_results_yshift2)
+
+#for curve shift
+Diff_quotient <- quotients_minmax$Max - quotients_minmax$Min
+Diff_quotient <- data.frame(Diff_quotient)
+head(Diff_quotient)
+```
+Eine Sache die wir uns unbedingt noch überlegen müssen ist das am Ende alle diese Methoden ein RBP implizieren wenn die values hoch sind (bzw möglichst stark von 0 abweichen) und das value = 0 immer non-shifter impliziert. Aber das müsste passen
+
+#####  6.1.2 generate die actual Dataframe
 ```{r}
 # Create shift_comparison dataframe
 shift_comparison <- data.frame(max_shift = max_shift,
-                               local_shift = identical_fractions$local_shift,
-                               YDiff = df_results_yshift$YDiff,
-                               curve_shift = quotients_minmax$Max,
+                               local_shift = identical_fractions,
+                               YDiff = df_diff_yshift,
+                               curve_shift = Diff_quotient,
                                row.names = row.names(max_shift))
 colnames(shift_comparison)[1] <- "max_shift"
 
