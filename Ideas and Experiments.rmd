@@ -923,7 +923,7 @@ results_yshift #relativ große und relativ unterschiedliche Werte
 
 ```{r}
 # Load a text file into R
-comparison_RBP <- read.table("https://github.com/datascience-mobi-2023/topic03_team02/blob/5da6f789d96f1924a96e731de447dbf35b41c728/Datensatz_RBP2GO_Proteins.txt", header = TRUE)
+comparison_RBP <- read.csv("https://github.com/datascience-mobi-2023/topic03_team02/blob/aef6375032fae096707bb8fe49311af835eb6cad/Datensatz_RBP2GO_Proteins.txt", header = TRUE, sep = " ")
 
 # View the loaded data
 head(comparison_RBP)
