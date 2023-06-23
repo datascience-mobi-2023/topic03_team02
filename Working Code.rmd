@@ -1120,6 +1120,9 @@ model <- lm(shift_comparison[[best_col2_name]] ~ shift_comparison[[best_col1_nam
 # Print the regression summary
 summary(model)
 
+summary(model)$r.squared #ist bei 0.2482234, sehrrr gering...
+#habe das gleiche mit dem Min wert beim Curve shift durchgeführt, da ist der wert genauso auch bei 0.2482234
+
 library(ggplot2)
 
 # Create a data frame with the two columns
