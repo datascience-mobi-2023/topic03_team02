@@ -642,10 +642,10 @@ max(Mitosis_RNase_mean[row_name, ])
 Reeeeaaally big overview for all proteins: their  global max in Ctrl aka in RNase and the difference of this max.
 ```{r}
 # Function to calculate global maxima and difference in y-values
-calculate_maxima_diff <- function(row_name, df1, df2) {
+calculate_maxima_diff <- function(row_name, df1, df2) {           #was sind df1 und df2
   # Select the specific row from both dataframes
-  row_data_Ctrl <- Mitosis_Ctrl_mean[row_name, ]
-  row_data_RNase <- Mitosis_RNase_mean[row_name, ]
+  row_data_Ctrl <- Mitosis_Ctrl_100[row_name, ]
+  row_data_RNase <- Mitosis_RNase_100[row_name, ]
 
   # Find the global maximum from the selected row in df1
   row_global_max_Ctrl <- max(row_data_Ctrl)
@@ -670,8 +670,20 @@ results <- mapply(calculate_maxima_diff, row_names, MoreArgs = list(df1 = df1, d
 results_yshift <- do.call(rbind, results)
 
 # Print the results
-print(results_yshift)
+head(results_yshift)
 
+##Here we go from vector to matrix to dataframe
+# Convert the vector to a matrix with desired number of columns
+num_cols <- 3  # Number of columns in the matrix
+my_matrix <- matrix(results_yshift, ncol = num_cols)
+
+# Extract two columns from the matrix
+column1 <- my_matrix[, 1]
+column2 <- my_matrix[, 2]
+
+#Convert the first two columns of the matrix into a dataframe that we can use in kmeans
+df_results_yshift <- data.frame(GlobalMax_Ctrl  = column1, GlobalMax_RNase  = column2)
+show(df_results_yshift)
 ```
 
 Calculates y-shifts and shows (only) the difference between Ctrl peaks and RNase peaks
@@ -804,7 +816,7 @@ print(identical_fractions)
 identical_fractions["SQOR_HUMAN",]
 sum(identical_fractions$no_shift == FALSE)
 ```
-#### 3.3 NEUER LOCAL MAX CODE
+#### 3.3 NEUER LOCAL MAX CODE -> schon rüberkopiert
 
 Alles fertig ready für working code
 ```{r}
@@ -851,7 +863,7 @@ result_df["SQOR_HUMAN",]
 sum(result_df$identical_fractions == FALSE)
 ```
 
-#### 3.4 LOCAL MAX CODE DER ANZAHL DES LOCAL SHIFTS IDENTIFIZIERT
+#### 3.4 LOCAL MAX CODE DER ANZAHL DES LOCAL SHIFTS IDENTIFIZIERT -> schon rüberkopiert
 
 --> Hier wird jedoch nicht ein shift in den local maxima betrachtet, sondern nur ob mehr entstehen oder welche verschwinden zwischen Control und RNase. Dadurch werden ziemlich viele Proteine vernachlässigt, genauer gesagt 1570-900, also 670 Proteine werden dadurch nicht aufgeführt... Evt. später anpassen.
 
@@ -902,51 +914,78 @@ sum(identical_fractions2$local_shift != 0)
 ## 4. VERGLEICH MIT RBP2GO
 
 Übersicht:
-```{r}
-#absolute maxima shifts
+##### absolute maxima shifts
 shift_dataframe #right shift, left shift, no shift -> not usable
-#Sondern mit (wie Alexandra schon gemacht):
+Sondern mit (wie Alexandra schon gemacht):
 data.frame(Ctrl_fraction_max, RNase_fraction_max)
 
-#local maxima amount and location comparison
+##### local maxima amount and location comparison
 identical_fractions #TRUE: no shifter, FALSE: Shifter -> not really usable I think, directly already calculated into two categories
 
-#protein content quotiens 
-quotients_minmax #Werte umdie 1, je mehr sie abweichen, desto eher sind es shifter 
-#-> usable? GGF hier einfach NUR DEN WERT NEHMEN, DER AM MEISTEN ABWEICHT!
+##### protein content quotiens 
+quotients_minmax #Werte umdie 1, je mehr sie abweichen, desto eher sind es shifter -> usable? GGF hier einfach NUR DEN WERT NEHMEN, DER AM MEISTEN ABWEICHT!
 
-#y-shifts
+##### y-shifts
 results_yshift #relativ große und relativ unterschiedliche Werte
-```
 
 #### 4.1 RBP2GO Datensatz ins Rmd Laden:
 
 ```{r}
 # Load a text file into R
-comparison_RBP <- read.csv("https://www.dropbox.com/s/xpjob8g8flxl3ik/Table_HS_RBP.txt?dl=1", header = TRUE, sep = "", row.names = 1)
-
-comparison_RBP1 <- read.delim("~/GitHub/topic03_team02/Datensatz_RBP2GO_Proteins.txt", row.names=1, comment.char="#")
+#comparison_RBP = read.csv("https://www.dropbox.com/s/xpjob8g8flxl3ik/Table_HS_RBP.txt?dl=1", sep = "", header = T, row.names = 1)
 
 # View the loaded data
-head(comparison_RBP1)
+#head(comparison_RBP)
+
+#comparison_RBP1 <- read.delim("~/GitHub/topic03_team02/Datensatz_RBP2GO_Proteins.txt", row.names=1, comment.char="#") #-> nur local
 ```
 
-#### 4.2 Max shift mit RBP2go-Vergleich
+Neue Tabellen laden: RBP und non_RBP aus verschiedenen Datenssätzen.
+Vorsicht code braucht seeeehr lange...
+```{r}
+comparison_RBP = read.csv("https://www.dropbox.com/s/xpjob8g8flxl3ik/Table_HS_RBP.txt?dl=1", sep = "", header = T, row.names = 1)
 
-```{r Max shift Vergleich}
+comparison_RBP = comparison_RBP[order(row.names(comparison_RBP)),]
 
-# 1. max shift Daten Einteilen in RBP und non-RBP
+comparison_non_RBP = read.csv("https://www.dropbox.com/s/cgbrvponhw7arpt/Table_HS_Non_RBP.txt?dl=1", sep = "", header = T, row.names = 1)
 
+comparison_non_RBP = comparison_non_RBP[order(row.names(comparison_non_RBP)),]
 
-
+# View the loaded data
+head(comparison_RBP)
 ```
 
+Werte des aus den geladenen Tabellen nun in unseren shift_comparison datensatz laden (um Überschneidungen zu vermeiden habe ich einen neuen, namenähnlichen Datensatz erstellt.)
+```{r}
+shift_comparison_RBP2go <- shift_comparison
+shift_comparison_RBP2go[, 5] = NA
+colnames(shift_comparison_RBP2go) = c(colnames(shift_comparison_RBP2go)[-5], "RBP2GO_Score")
 
-#### 4.3 Local max shift mit RBP2go-Vergleich
+shift_comparison_RBP2go[which(rownames(shift_comparison_RBP2go) %in% rownames(comparison_RBP)), 5] = comparison_RBP[which(rownames(comparison_RBP) %in% rownames(shift_comparison_RBP2go)), 3]
 
-#### 4.4 Curve quotients mit RBP2go-Vergleich
+shift_comparison_RBP2go[which(rownames(shift_comparison_RBP2go) %in% rownames(comparison_non_RBP)), 5] = comparison_non_RBP[which(rownames(comparison_non_RBP) %in% rownames(shift_comparison_RBP2go)), 3]
 
-#### 4.5 Y-shift mit mit RBP2go-Vergleich
+head(shift_comparison_RBP2go) #nice, klappt alles!
+```
+
+Frage ist jetzt, was wir damit sagen. dieser RBP2Go score gibt uns an, mit welcher Sicherheit die jeweiligen Proteine RBPs sind. 
+-> Random Idee: Summe der RBP2Go scores von den von uns als RBP identifizierten Proteinen zusammenaddieren und die mit der der Summe der non-RBPs vergleichen... Idealerweise wäre die erste Summe deutlich größer. GGf je nach Methode einzeln? Dafür müsste man nochmal den Datenframe bei paar Methoden verändern though.
+-> oder irgendetwas wie Marcel mit diesen True positive und false negative erstellen. Bin aber gerade etwas zu müde um zu verstehen wie ich das mit dem RBP2go score machen würde. ggf im Tutorium nachfragen.
+
+Vergleich RBP2go scores im max-shift.
+
+```{r}
+# Initialize variables to store the sums
+non_zero_sum <- sum(shift_comparison_RBP2go[, 5][shift_comparison_RBP2go[, 1] != 0], na.rm = TRUE)
+zero_sum <- sum(shift_comparison_RBP2go[, 5][shift_comparison_RBP2go[, 1] == 0], na.rm = TRUE)
+
+# Print the sums
+cat("Sum of fifth column values when first column is not equal to zero:", non_zero_sum, "\n")
+cat("Sum of fifth column values when first column is equal to zero:", zero_sum, "\n")
+
+sum(is.na(shift_comparison_RBP2go[, 5]))
+```
+Mist. der Wert bei non-shifters (max_shift = 0) ist höher als bei den shifters. Scheint irgendwie doch nicht ganz so einfach zu funktionieren
 
 
 ## Liniear Regression
@@ -958,17 +997,17 @@ Idee: columns nach jeder unserer Methoden (4?) und wir finden so sozusagen die b
 Ich denke das wäre bei uns ziemlich cool, eben weil wir diese verschiedenen Methoden haben
 
 Versuch den oben beschriebenen Datensatz zu erstellen:
+
+1. Größe des x-shift: max_shift <- Ctrl_fraction_max - RNase_fraction_max
+2. Unterschied in Anzahl local maxima: identical_fractions2$local_shift (ggf problematisch da hier eine verschiebung der local maxima ignoriert wird)
+3. Ausmaß des y-shift: results_yshift$YDiff
+
+ggf. 4. column: maximaler/minimaler Kurven quotient?? Vereinfachend den max wert genommen, da dieser in erster Linie größer und somit ggf aussagekräftiger ist.
+
+
 ```{r}
-#1. Größe des x-shift: max_shift <- Ctrl_fraction_max - RNase_fraction_max
-#2. Unterschied in Anzahl local maxima: identical_fractions2$local_shift (ggf problematisch da hier eine verschiebung der local maxima ignoriert wird)
-#3. Ausmaß des y-shift: results_yshift$YDiff
-
-#ggf. 4. column: maximaler/minimaler Kurven quotient?? Vereinfachend den max wert genommen, da dieser in erster Linie größer und somit ggf aussagekräftiger ist.
-
 max_shift <- Ctrl_fraction_max - RNase_fraction_max
-```
 
-```{r}
 # Create shift_comparison dataframe
 shift_comparison <- data.frame(max_shift = max_shift,
                                local_shift = identical_fractions2$local_shift,
@@ -983,6 +1022,8 @@ print(shift_comparison)
 ```
 
 
+## Alexandras Code
+
 ```{r}
 # Assuming you have a dataframe called 'my_data' with multiple columns
 
@@ -991,11 +1032,11 @@ best_correlation <- 0
 best_fit <- NULL
 
 # Loop through all possible pairs of columns in the dataframe
-for (i in 1:(ncol(my_data) - 1)) {
-  for (j in (i + 1):ncol(my_data)) {
+for (i in 1:(ncol(shift_comparison) - 1)) {
+  for (j in (i + 1):ncol(shift_comparison)) {
     # Extract the two columns
-    col1 <- my_data[, i]
-    col2 <- my_data[, j]
+    col1 <- shift_comparison[, i]
+    col2 <- shift_comparison[, j]
     
     # Calculate the Pearson correlation coefficient
     correlation <- cor(col1, col2, use = "pairwise.complete.obs")
@@ -1021,5 +1062,111 @@ print(best_fit$residuals)
 
 ```
 
+Verenas modifizierung des coolen codes!
 
+```{r}
+# Initialize variables to store the best linear relationship found
+best_correlation <- 0
+best_fit <- NULL
+best_col1_name <- ""
+best_col2_name <- ""
+
+# Loop through all possible pairs of columns in the dataframe
+for (i in 1:(ncol(shift_comparison) - 1)) {
+  for (j in (i + 1):ncol(shift_comparison)) {
+    # Extract the two columns
+    col1 <- shift_comparison[, i]
+    col2 <- shift_comparison[, j]
+    
+    # Calculate the Pearson correlation coefficient
+    correlation <- cor(col1, col2, use = "pairwise.complete.obs")
+    
+    # Check if the correlation is stronger than the previous best
+    if (abs(correlation) > abs(best_correlation)) {
+      best_correlation <- correlation
+      best_col1_name <- names(shift_comparison)[i]
+      best_col2_name <- names(shift_comparison)[j]
+    }
+  }
+}
+
+# Print the columns with the best linear relationship found
+cat("Columns with the highest correlation were:", best_col1_name, "and", best_col2_name, "\n")
+```
+Lustigerweise egal ob ich den Maximalen wert des Kurven Quotienten Codes nehme oder den minimalen, in beiden Fällen wird die höchste Korrelation zwischen dem curve_shift daten und den max_shift daten gefunden! Eigentlich sehr cool, nächster Schritt wäre dann die lineare Regression durchführen. (und aufräumen kann man immer, aber lieber nichts löschen, sondern vllt mit kurzer überschrift in den old code oder so.)
+
+
+
+
+## Speicherung Alexandras Code zur Erstellung des result dataframes, aus Working code rüberkopiert:
+
+
+To put all these values in a new DF we first need to make sure they have the right format:
+```{r}
+#str(max_shift)
+#str(identical_fractions)
+#str(results_yshift)
+#str(quotients_minmax)
+
+print(class(max_shift))
+print(class(identical_fractions))
+print(class(results_yshift))
+print(class(df_results_yshift))
+print(class(quotients_minmax))
+#kann man später wieder löschen. Hab ich zum Verständnis gebraucht
+```
+```{r}
+#to put everything into one big dataframe the seperate dataframes need to have the same amount of rows
+
+print(nrow(max_shift))
+print(nrow(identical_fractions))
+print(nrow(df_results_yshift))
+print(nrow(quotients_minmax))
+#kann man später wieder löschen. Hab ich zum Verständnis gebraucht
+```
+Das hab ich gemacht weil beim zusammenführen er mir einen Error bringt der besagt das ich unterschiedlich viele rows habe. Plot twist: habe ich nicht
+wtf?!
+=> okay jetzt hab ich es: die Values müssen Zahlen sein und ein wenig anders angeordnet 
+Ich guck mal oben im Code was wir alles für variablen und DF haben und welche jeweils am besten passen
+
+```{r}
+#for max shift
+head(max_shift) #should be fine
+colnames(max_shift) <- c("Diff_Max")
+
+#for local shift
+head(identical_fractions) #ich will einen DF mit Zahlenwerten
+
+#for y shift
+Diff_yshift <- df_results_yshift$GlobalMax_Ctrl - df_results_yshift$GlobalMax_RNase
+df_diff_yshift <- data.frame(Diff_yshift)
+head(df_diff_yshift)
+  #oder ich nehme die Maxtrix in der schon ein y-diff berechnet wurde, wandle sie in einen DF um und extrahiere die Spalte -> kommt auf das gleiche raus
+  #column1 <- my_matrix[, 3]
+  #df_results_yshift2 <- data.frame(Y_DiffLR  = column1)
+  #head(df_results_yshift2)
+#code das das hier zahlen gibt im Ideas
+
+#for curve shift
+Diff_quotient <- quotients_minmax$Max - quotients_minmax$Min
+Diff_quotient <- data.frame(Diff_quotient)
+head(Diff_quotient)
+#SINN?!
+```
+Eine Sache die wir uns unbedingt noch überlegen müssen ist das am Ende alle diese Methoden ein RBP implizieren wenn die values hoch sind (bzw möglichst stark von 0 abweichen) und das value = 0 immer non-shifter impliziert. Aber das müsste passen
+
+#####  6.1.2 generate die actual Dataframe
+```{r}
+# Create shift_comparison dataframe
+shift_comparison <- data.frame(max_shift = max_shift,
+                               local_shift = identical_fractions,
+                               YDiff = df_diff_yshift,
+                               curve_shift = Diff_quotient,
+                               row.names = row.names(max_shift))
+colnames(shift_comparison)[1] <- "max_shift"
+
+# Print the shift_comparison dataframe
+print(shift_comparison)
+
+```
 
