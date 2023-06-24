@@ -786,7 +786,7 @@ Verkürzter y-shift code (Update: wurde jetzt korrigiert, sollte funktionieren)
 
 # Function to calculate difference in y-values between global maxima
 calculate_maxima_diff <- function(row_name, Mitosis_Ctrl_100, Mitosis_RNase_100) {
-  # Select the specific row from both dataframes
+  # Select the specific row from both dataframes #which one?!
   row_data_Ctrl <- Mitosis_Ctrl_mean[row_name, ]
   row_data_RNase <- Mitosis_RNase_mean[row_name, ]
 
@@ -944,22 +944,25 @@ Finde ich besser als die kmeans plots für die Maxima. Aber wir sollten uns übe
 #### 5.1.3. For y-shift
 ```{r}
 #need to generate new dataframe
-results_yshift2 <- data.frame(row_global_max_Ctrl, row_global_max_RNase)
+  row_global_max_Ctrl2 <- apply(Mitosis_Ctrl_100, 1, max)
+  row_global_max_RNase2 <- apply(Mitosis_RNase_100, 1, max)
+  
+results_yshift2 <- data.frame(row_global_max_Ctrl2, row_global_max_RNase2)
 show(results_yshift2) 
 
-fviz_nbclust(results_yshift, kmeans, method='silhouette') #optimal number of cluster = 2
+fviz_nbclust(results_yshift2, kmeans, method='silhouette') #optimal number of cluster = 2
 
 #then a k-means clustering with the optimal amount of cluster and interpretation
 #visualizing the result of kmeans
-km_y <- kmeans(results_yshift, centers = 2, nstart = 25)
-#fviz_cluster(km_y, data = results_yshift)
+km_y <- kmeans(results_yshift2, centers = 2, nstart = 25)
+#fviz_cluster(km_y, data = results_yshift2)
 
 # Create a data frame with clustered data and cluster labels
-clustered_data5 <- data.frame(results_yshift, cluster = as.factor(km_y$cluster))
+clustered_data5 <- data.frame(results_yshift2, cluster = as.factor(km_y$cluster))
 show(clustered_data5)
 
 # Create a scatter plot using ggplot
-dotplot5 <- ggplot(clustered_data5, aes(x = row_global_max_Ctrl, y = row_global_max_RNase, color = cluster)) +
+dotplot5 <- ggplot(clustered_data5, aes(x = row_global_max_Ctrl2, y = row_global_max_RNase2, color = cluster)) +
   geom_point() +
   labs(title = "K-means Clustering for y-shift",
        x = "row_data_Ctrl",
@@ -972,15 +975,15 @@ For 3 cluster
 ```{r}
 #then a k-means clustering with the optimal amount of cluster and interpretation
 #visualizing the result of kmeans
-km3_y <- kmeans(df_results_yshift, centers = 3, nstart = 25)
-#fviz_cluster(km_y, data = df_results_yshift)
+km3_y <- kmeans(results_yshift2, centers = 3, nstart = 25)
+#fviz_cluster(km_y, data = results_yshift2)
 
 # Create a data frame with clustered data and cluster labels
-clustered_data6 <- data.frame(df_results_yshift, cluster = as.factor(km3_y$cluster))
+clustered_data6 <- data.frame(results_yshift2, cluster = as.factor(km3_y$cluster))
 show(clustered_data6)
 
 # Create a scatter plot using ggplot
-dotplot6 <- ggplot(clustered_data6, aes(x = GlobalMax_Ctrl, y = GlobalMax_RNase, color = cluster)) +
+dotplot6 <- ggplot(clustered_data6, aes(x = row_global_max_Ctrl2, y = row_global_max_RNase2, color = cluster)) +
   geom_point() +
   labs(title = "K-means Clustering for y-shift",
        x = "GlobalMax_Ctrl",
