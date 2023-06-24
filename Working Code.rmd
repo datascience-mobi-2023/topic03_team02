@@ -19,6 +19,14 @@ Load the dataset from the Dropbox
 RDeeP_HeLa_Mitosis = read.csv("https://www.dropbox.com/s/ttj1z98mxefq0aj/RDeeP_HeLa_Mitosis.csv?dl=1", header=TRUE, row.names=1, sep = ";")
 head(RDeeP_HeLa_Mitosis)
 ```
+Load Libraries
+
+```{r}
+library(cluster)
+library(ggplot2)
+library(factoextra)
+```
+
 
 ## 1. Preparing data for analysis (Data Cleanup)
 
@@ -784,9 +792,9 @@ Interesting observation: Here we can see some proteins have 1 as the min and the
 Verkürzter y-shift code (Update: wurde jetzt korrigiert, sollte funktionieren)
 ```{r}
 
-# Function to calculate difference in y-values between global maxima
+# Function to calculate difference in y-values between global maxima #wo kommt die funktion her?
 calculate_maxima_diff <- function(row_name, Mitosis_Ctrl_100, Mitosis_RNase_100) {
-  # Select the specific row from both dataframes #which one?!
+  # Select the specific row from both dataframes #which one?
   row_data_Ctrl <- Mitosis_Ctrl_mean[row_name, ]
   row_data_RNase <- Mitosis_RNase_mean[row_name, ]
 
@@ -831,11 +839,6 @@ colnames(maximum_fraction) <- c("Ctrl_fraction_max", "RNase_fraction_max")
 show(maximum_fraction)
 plot(maximum_fraction, main = "comparison of maxima")
 
-
-#find the optimal amount of cluster before k-means
-library(cluster)
-library(ggplot2)
-library(factoextra)
 
 #Calculate optimal number of cluster
 fviz_nbclust(maximum_fraction, kmeans, method='silhouette') #optimal number of cluster = 2
@@ -944,8 +947,8 @@ Finde ich besser als die kmeans plots für die Maxima. Aber wir sollten uns übe
 #### 5.1.3. For y-shift
 ```{r}
 #need to generate new dataframe
-  row_global_max_Ctrl2 <- apply(Mitosis_Ctrl_100, 1, max)
-  row_global_max_RNase2 <- apply(Mitosis_RNase_100, 1, max)
+  row_global_max_Ctrl2 <- apply(Mitosis_Ctrl_mean, 1, max)
+  row_global_max_RNase2 <- apply(Mitosis_RNase_mean, 1, max)
   
 results_yshift2 <- data.frame(row_global_max_Ctrl2, row_global_max_RNase2)
 show(results_yshift2) 
@@ -994,7 +997,7 @@ plot(dotplot6)
 ```
 ###### 5.1.3.1 Description of cluster 2
 
-Lets take a closter look at cluster 3, as those proteins seem to be "extrem y-shifters"
+Lets take a closter look at cluster 2, as those proteins seem to be "extrem y-shifters"
 ```{r}
 # Extract the cluster assignments from the kmeans_result object
 cluster_assignments <- km3_y$cluster
@@ -1011,7 +1014,7 @@ num_cluster2_values <- nrow(cluster2_values)
 # Print the count
 print(num_cluster2_values)
 ```
-So we have 73 "extrem y-shifters". Lets take a look at them
+So we have 4 "extrem y-shifters". Lets take a look at them
 
 ```{r}
 # Step 1: Extract the row you want to find peaks in
@@ -1046,6 +1049,8 @@ points(peaks_RNase, row_data_RNase[peaks_RNase], col = "red", pch = 16)
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
+Auf diesen Grafiken sieht das auf jeden Fall nicht nach extrem-shifters auf
+
 
 
 
@@ -1056,6 +1061,11 @@ Ich denke das wäre bei uns ziemlich cool, eben weil wir diese verschiedenen Met
 #### 6.1 generate Dataframe
 
 ##### 6.1.1 prepare data
+
+```{r}
+#die einzelnen Dataframes skalieren und neuen dataframes zuweisen und im Code danach anpassen
+```
+
 In order to generate one big dataframe that sums up the values that we gained in our 4(?) methodes of RBP identification this data has to be brought into the right format
 
 1. Größe des x-shift: max_shift <- Ctrl_fraction_max - RNase_fraction_max
@@ -1127,8 +1137,6 @@ summary(model)
 
 summary(model)$r.squared #ist bei 0.2482234, sehrrr gering...
 #habe das gleiche mit dem Min wert beim Curve shift durchgeführt, da ist der wert genauso auch bei 0.2482234
-
-library(ggplot2)
 
 # Create a data frame with the two columns
 data <- data.frame(x = shift_comparison[[best_col1_name]], y = shift_comparison[[best_col2_name]])
