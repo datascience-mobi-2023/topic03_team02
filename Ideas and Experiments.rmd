@@ -592,9 +592,9 @@ row_global_max_RNase <- max(row_data_RNase)
 y_diff <- row_global_max_Ctrl - row_global_max_RNase
 
 # Print the global maximums and the difference in y-values
-print(row_global_max_Ctrl)
-print(row_global_max_RNase)
-print(y_diff)
+print(row_global_max_Ctrl) #max y Wert von Ctrl
+print(row_global_max_RNase) #max y Wert von RNase
+print(y_diff) # Ctrl - RNase
 
 if(y_diff > 0) {print("Down shift")}
 if(y_diff < 0) {print("Up shift")}
@@ -642,7 +642,8 @@ max(Mitosis_RNase_mean[row_name, ])
 Reeeeaaally big overview for all proteins: their  global max in Ctrl aka in RNase and the difference of this max.
 ```{r}
 # Function to calculate global maxima and difference in y-values
-calculate_maxima_diff <- function(row_name, df1, df2) {           #was sind df1 und df2
+calculate_maxima_diff <- function(row_name, Mitosis_Ctrl_100, Mitosis_RNase_100) {        
+  
   # Select the specific row from both dataframes
   row_data_Ctrl <- Mitosis_Ctrl_100[row_name, ]
   row_data_RNase <- Mitosis_RNase_100[row_name, ]
@@ -660,11 +661,12 @@ calculate_maxima_diff <- function(row_name, df1, df2) {           #was sind df1 
   return(c( GlobalMax_Ctrl = row_global_max_Ctrl, GlobalMax_RNase = row_global_max_RNase, YDiff = y_diff))
 }
 
-# Get the row names of df1
+# Get the row names of Mitosis Ctrl Dataframe
 row_names <- rownames(Mitosis_Ctrl_mean)
 
 # Apply the function to each row name and combine the results into a dataframe
-results <- mapply(calculate_maxima_diff, row_names, MoreArgs = list(df1 = df1, df2 = df2), SIMPLIFY = FALSE)
+results <- mapply(calculate_maxima_diff, row_names, MoreArgs = list(Mitosis_Ctrl_100, Mitosis_RNase_100), SIMPLIFY = FALSE)
+                    #list(df1 = df1, df2 = df2), SIMPLIFY = FALSE)
 
 # Convert the results into a dataframe
 results_yshift <- do.call(rbind, results)
@@ -690,7 +692,7 @@ Calculates y-shifts and shows (only) the difference between Ctrl peaks and RNase
 ```{r}
 
 # Function to calculate difference in y-values between global maxima
-calculate_maxima_diff <- function(row_name, df1, df2) {
+calculate_maxima_diff <- function(row_name, Mitosis_Ctrl_100, Mitosis_RNase_100) {
   # Select the specific row from both dataframes
   row_data_Ctrl <- Mitosis_Ctrl_mean[row_name, ]
   row_data_RNase <- Mitosis_RNase_mean[row_name, ]
