@@ -781,8 +781,9 @@ Interesting observation: Here we can see some proteins have 1 as the min and the
 
 #### 4.4 y-shift
 
-Verkürzter y-shift code (anderer noch nicht fertig, würde ich davor kopieren, aber damit working code erstmal wieder läuft würde ich warten bis der fertig ist.)
+Verkürzter y-shift code (Update: wurde jetyzt korrigiert, sollte funktionieren)
 ```{r}
+
 # Function to calculate difference in y-values between global maxima
 calculate_maxima_diff <- function(row_name, Mitosis_Ctrl_100, Mitosis_RNase_100) {
   # Select the specific row from both dataframes
@@ -824,7 +825,7 @@ print(results_yshift) #results as Dataframe - columns showing protein name and t
 Trying to create three cluster: left-shift, right-shift (possibly RBP); no shift (no RBP). Here only goes for data generate from difference between the max-shifts
 
 ```{r}
-
+install.packages("rlang")
 
 #generate a dataframe that holds the nummeric data of the shift. Dataframe has to have 2 dimension: RNase fraction and control fraction
 maximum_fraction <- data.frame(Ctrl_fraction_max, RNase_fraction_max)
