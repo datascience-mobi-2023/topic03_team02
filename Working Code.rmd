@@ -825,7 +825,9 @@ print(results_yshift) #results as Dataframe - columns showing protein name and t
 Trying to create three cluster: left-shift, right-shift (possibly RBP); no shift (no RBP). Here only goes for data generate from difference between the max-shifts
 
 ```{r}
-install.packages("rlang")
+install.packages(c('ggplot2', 'rlang'))
+library(ggplot2)
+install.packages("Rtools")
 
 #generate a dataframe that holds the nummeric data of the shift. Dataframe has to have 2 dimension: RNase fraction and control fraction
 maximum_fraction <- data.frame(Ctrl_fraction_max, RNase_fraction_max)
