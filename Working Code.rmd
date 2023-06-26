@@ -1051,6 +1051,42 @@ legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd
 ```
 Auf diesen Grafiken sieht das auf jeden Fall nicht nach extrem-shifters auf
 
+### other correlation
+```{r}
+# Compute the distance matrix
+distance_matrix <- dist(maximum_fraction)
+
+# Perform hierarchical clustering
+hclust_result <- hclust(distance_matrix)
+
+# Plot the dendrogram
+plot(hclust_result, main = "Hierarchical Clustering Dendrogram")
+
+# Cut the dendrogram into clusters
+num_clusters <- 3  # Specify the desired number of clusters
+clusters <- cutree(hclust_result, k = num_clusters)
+
+# Plot the dendrogram with customized options
+plot(hclust_result, main = "Hierarchical Clustering Dendrogram",
+     xlab = "Observations", ylab = "Distance",
+     labels = FALSE, hang = -1, cex = 0.8)
+
+# Add labels to the leaves of the dendrogram
+#labels <- rownames(maximum_fraction)  
+#text(x = seq_along(labels), y = par("usr")[3] - 0.1, labels = labels,
+     #srt = 90, adj = c(1, 0.5), xpd = TRUE, cex = 0.6)
+
+# Cut the dendrogram into clusters
+num_clusters <- 3  # Specify the desired number of clusters
+clusters <- cutree(hclust_result, k = num_clusters)
+
+# Add cluster labels to the plot
+rect.hclust(hclust_result, k = num_clusters, border = 2:4)
+
+# Print the cluster assignments
+print(clusters)
+
+```
 
 
 
