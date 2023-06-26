@@ -1086,6 +1086,22 @@ rect.hclust(hclust_result, k = num_clusters, border = 2:4)
 # Print the cluster assignments
 print(clusters)
 
+# Create a dataframe with cluster assignments
+data_with_clusters <- data.frame(Value = distance_matrix[, 1], Cluster = clusters)
+
+# Sort the dataframe by cluster assignments
+sorted_data <- data_with_clusters[order(data_with_clusters$Cluster), ]
+
+# Create a dotplot using ggplot
+dotplot <- ggplot(sorted_data, aes(x = reorder(Cluster, desc(Cluster)), y = Value, color = Cluster)) +
+  geom_point(size = 3) +
+  labs(title = "Hierarchical Clustering - Dotplot", x = "Cluster", y = "Value") +
+  theme_minimal()
+
+# Display the dotplot
+print(dotplot)
+
+
 ```
 
 
