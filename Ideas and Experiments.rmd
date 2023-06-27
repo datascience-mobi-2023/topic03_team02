@@ -972,22 +972,108 @@ head(shift_comparison_RBP2go) #nice, klappt alles!
 
 Frage ist jetzt, was wir damit sagen. dieser RBP2Go score gibt uns an, mit welcher Sicherheit die jeweiligen Proteine RBPs sind. 
 -> Random Idee: Summe der RBP2Go scores von den von uns als RBP identifizierten Proteinen zusammenaddieren und die mit der der Summe der non-RBPs vergleichen... Idealerweise wäre die erste Summe deutlich größer. GGf je nach Methode einzeln? Dafür müsste man nochmal den Datenframe bei paar Methoden verändern though.
--> oder irgendetwas wie Marcel mit diesen True positive und false negative erstellen. Bin aber gerade etwas zu müde um zu verstehen wie ich das mit dem RBP2go score machen würde. ggf im Tutorium nachfragen.
+
+-> oder irgendetwas wie Marcel mit diesen True positive und false negative erstellen. ggf im Tutorium nachfragen. --> wurde begonnen bisschen! Indem man schaut in welchen tabellen die Proteine beide vorkommen. Siehe unten.
 
 Vergleich RBP2go scores im max-shift.
 
+Änderung von vorger: anwendung des richtigen Kriteriums, zudem geteilt durch die anzahl der Zeilen die reinaddiert wurden:
+
 ```{r}
-# Initialize variables to store the sums
-non_zero_sum <- sum(shift_comparison_RBP2go[, 5][shift_comparison_RBP2go[, 1] != 0], na.rm = TRUE)
-zero_sum <- sum(shift_comparison_RBP2go[, 5][shift_comparison_RBP2go[, 1] == 0], na.rm = TRUE)
+# Calculate the sums based on conditions
+non_zero_sum <- sum(shift_comparison_RBP2go[, 5][shift_comparison_RBP2go[, 1] != 0 & shift_comparison_RBP2go[, 1] != 1 & shift_comparison_RBP2go[, 1] != -1], na.rm = TRUE)
+other_sum <- sum(shift_comparison_RBP2go[, 5][shift_comparison_RBP2go[, 1] == 0 | shift_comparison_RBP2go[, 1] == 1 | shift_comparison_RBP2go[, 1] == -1], na.rm = TRUE)
 
-# Print the sums
-cat("Sum of fifth column values when first column is not equal to zero:", non_zero_sum, "\n")
-cat("Sum of fifth column values when first column is equal to zero:", zero_sum, "\n")
+# Count the number of rows meeting the specific criteria
+non_zero_rows <- sum(shift_comparison_RBP2go[, 1] != 0 & shift_comparison_RBP2go[, 1] != 1 & shift_comparison_RBP2go[, 1] != -1)
+other_rows <- sum(shift_comparison_RBP2go[, 1] == 0 | shift_comparison_RBP2go[, 1] == 1 | shift_comparison_RBP2go[, 1] == -1)
 
-sum(is.na(shift_comparison_RBP2go[, 5]))
+# Calculate the division
+non_zero_avg <- non_zero_sum / non_zero_rows
+other_avg <- other_sum / other_rows
+
+# Print the sums and division results
+cat("Sum of fifth column values when first column is not equal to zero, one, or minus one:", non_zero_sum, "\n")
+cat("Number of rows meeting the specific criteria:", non_zero_rows, "\n")
+cat("Average of fifth column values when first column is not equal to zero, one, or minus one:", non_zero_avg, "\n")
+
+cat("\n")
+
+cat("Sum of fifth column values when first column is equal to zero, one, or minus one:", other_sum, "\n")
+cat("Number of rows meeting the specific criteria:", other_rows, "\n")
+cat("Average of fifth column values when first column is equal to zero, one, or minus one:", other_avg, "\n")
 ```
-Mist. der Wert bei non-shifters (max_shift = 0) ist höher als bei den shifters. Scheint irgendwie doch nicht ganz so einfach zu funktionieren
+Hier klappt es! Der mittlere RBP Wert von non-shifters ist deutlich geringer als der RBP Wert von shiftern! Yay!
+
+Gleiches Prozedere mit 50% grenze und den Curve_shifters:
+
+```{r}
+# Calculate the sums based on conditions
+shifter_sum <- sum(shift_comparison_RBP2go[, 5][rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] == "shifter"], na.rm = TRUE)
+not_shifter_sum <- sum(shift_comparison_RBP2go[, 5][rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] != "shifter"], na.rm = TRUE)
+
+# Count the number of rows meeting the specific criteria
+shifter_rows <- sum(rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] == "shifter")
+not_shifter_rows <- sum(rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] != "shifter")
+
+# Calculate the division
+shifter_avg <- shifter_sum / shifter_rows
+not_shifter_avg <- not_shifter_sum / not_shifter_rows
+
+# Print the sums and division results
+cat("Sum of fifth column values for rows with 'shifter' result in shifting_quotients:", shifter_sum, "\n")
+cat("Number of rows meeting the 'shifter' criteria:", shifter_rows, "\n")
+cat("Average of fifth column values for rows with 'shifter' result in shifting_quotients:", shifter_avg, "\n")
+
+cat("\n")
+
+cat("Sum of fifth column values for rows with 'not shifter' result in shifting_quotients:", not_shifter_sum, "\n")
+cat("Number of rows meeting the 'not shifter' criteria:", not_shifter_rows, "\n")
+cat("Average of fifth column values for rows with 'not shifter' result in shifting_quotients:", not_shifter_avg, "\n")
+```
+Mhm, scheint weniger genau. Aber dies ist noch keine tragfähige Aussage.
+
+## Von Fabio vorgeschlagener Vergleich:
+
+Ich nehme alle als max_shift identifizierten Proteine und schaue wie viele von ihnen NICHT in der comparison_RBP datei zu finden sind, aka wie viele wir also fälschlicherweise als shifter identifiziert haben. (man kann auch ganz leicht das ! löschen und dann hat man die umgekehrte selektion)
+
+erstmal wieder mit max_shift:
+```{r}
+# Get the row names that meet the criteria in shift_comparison_RBP2go
+selected_rows <- rownames(shift_comparison_RBP2go)[shift_comparison_RBP2go[, 1] != 0 & shift_comparison_RBP2go[, 1] != 1 & shift_comparison_RBP2go[, 1] != -1]
+
+# Check which selected rows are not found in comparison_RBP
+not_found_rows <- sum(!(selected_rows %in% rownames(comparison_RBP)))
+
+# Print the number of rows not found in comparison_RBP
+cat("Number of rows meeting the criteria but not found in comparison_RBP:", not_found_rows, "\n")
+```
+Ergebnis: 143. Also von unseren 581 identifizierten shiftern, haben wir anscheinend 143 laut RDeep tabelle falsch identifiziert.
+
+Jetzt für shifter:
+```{r}
+# Get the row names of the "shifters" in shifting_quotients
+shifter_rows <- rownames(shifting_quotients)[shifting_quotients$Curve_shifters == "shifter"]
+
+# Count the number of rows not found in comparison_RBP
+not_found_rows <- sum(!(shifter_rows %in% rownames(comparison_RBP)))
+
+# Print the total number of rows not found
+cat("Total number of rows from 'shifters' in shifting_quotients not found in comparison_RBP:", not_found_rows, "\n")
+```
+Hier als 675 von 2646 wurden falsch positiv identifiziert (für 30% Grenze). Für 40% habe ich 528 von 2168 falsch identifiziert (25.5%), bei 50% 416 von 1749, bei 60% 338 von 1439, für 70% 277 von 1241 (nur noch 22.3% falsch). Je höher ich die Grenze setze, desto weniger falsch positive bekomme ich (auch anteilig).
+
+```{r}
+# Get the row names of the "shifters" in quotients_using_z
+shifter_rows <- rownames(quotients_using_z)[quotients_using_z$Result == "shifter"]
+
+# Count the number of rows not found in comparison_RBP
+not_found_rows <- sum(!(shifter_rows %in% rownames(comparison_RBP)))
+
+# Print the total number of rows not found
+cat("Total number of rows from 'shifters' in quotients_using_z not found in comparison_RBP:", not_found_rows, "\n")
+```
+-> 310 von 1337 (23.2%), das ist etwas schlechter als die 70% Grenze von dem manuellen Code. Später gern noch weiter diskutieren. Können theoretisch alle Kategorien noch durchprobieren, aber ich gehe glaub erstmal schlafen. 
 
 
 ## Liniear Regression
