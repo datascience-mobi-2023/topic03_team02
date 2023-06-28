@@ -1003,7 +1003,7 @@ Lets take a closter look at cluster 2, as those proteins seem to be "extrem y-sh
 cluster_assignments <- km3_y$cluster
 
 # Filter the dataframe based on the cluster assignment
-cluster2_values <- df_results_yshift[cluster_assignments == 2, ]
+cluster2_values <- results_yshift2[cluster_assignments == 2, ]
 
 # Print the values in Cluster 2
 print(cluster2_values)
@@ -1183,7 +1183,7 @@ max_shift <- Ctrl_fraction_max - RNase_fraction_max
 shift_comparison <- data.frame(max_shift = sc_max_shift,
                                local_shift = sc_identical_fractions2,
                                YDiff = sc_results_yshift,
-                               curve_shift = sc_quotients_minmax,
+                               curve_shift = sc_quotients_max,
                                row.names = row.names(max_shift))
 colnames(shift_comparison)[1] <- "max_shift"
 
