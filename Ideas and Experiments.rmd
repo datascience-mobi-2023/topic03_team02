@@ -1110,7 +1110,7 @@ print(shift_comparison)
 ```
 
 
-## Alexandras Code
+## Lineare Regression
 
 ```{r}
 # Assuming you have a dataframe called 'my_data' with multiple columns
@@ -1186,7 +1186,7 @@ Lustigerweise egal ob ich den Maximalen wert des Kurven Quotienten Codes nehme o
 
 
 
-## Speicherung Alexandras Code zur Erstellung des result dataframes, aus Working code rüberkopiert:
+## Speicherung Code zur Erstellung des result dataframes, aus Working code rüberkopiert:
 
 
 To put all these values in a new DF we first need to make sure they have the right format:
