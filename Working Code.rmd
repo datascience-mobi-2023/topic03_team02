@@ -25,6 +25,7 @@ Load Libraries
 library(cluster)
 library(ggplot2)
 library(factoextra)
+
 ```
 
 
@@ -1059,9 +1060,6 @@ distance_matrix <- dist(maximum_fraction)
 # Perform hierarchical clustering
 hclust_result <- hclust(distance_matrix)
 
-# Plot the dendrogram
-plot(hclust_result, main = "Hierarchical Clustering Dendrogram")
-
 # Cut the dendrogram into clusters
 num_clusters <- 3  # Specify the desired number of clusters
 clusters <- cutree(hclust_result, k = num_clusters)
@@ -1076,34 +1074,26 @@ plot(hclust_result, main = "Hierarchical Clustering Dendrogram",
 #text(x = seq_along(labels), y = par("usr")[3] - 0.1, labels = labels,
      #srt = 90, adj = c(1, 0.5), xpd = TRUE, cex = 0.6)
 
-# Cut the dendrogram into clusters
-num_clusters <- 3  # Specify the desired number of clusters
-clusters <- cutree(hclust_result, k = num_clusters)
-
 # Add cluster labels to the plot
 rect.hclust(hclust_result, k = num_clusters, border = 2:4)
 
-# Print the cluster assignments
-print(clusters)
+# Create an empty list to store split data
+split_data <- list()
 
-# Create a dataframe with cluster assignments
-data_with_clusters <- data.frame(Value = distance_matrix[, 1], Cluster = clusters)
+# Split each column based on cluster assignments
+for (col in colnames(maximum_fraction)) {
+  split_data[[col]] <- split(maximum_fraction[[col]], as.factor(clusters))
+}
 
-# Sort the dataframe by cluster assignments
-sorted_data <- data_with_clusters[order(data_with_clusters$Cluster), ]
+# Create a dataframe with each cluster as a column
+cluster_dataframe <- do.call(cbind, split_data)
 
-# Create a dotplot using ggplot
-dotplot <- ggplot(sorted_data, aes(x = reorder(Cluster, desc(Cluster)), y = Value, color = Cluster)) +
-  geom_point(size = 3) +
-  labs(title = "Hierarchical Clustering - Dotplot", x = "Cluster", y = "Value") +
-  theme_minimal()
-
-# Display the dotplot
-print(dotplot)
+# Print the cluster dataframe
+print(cluster_dataframe)
 
 
 ```
-
+Sagt mir halt irgendwie nichts
 
 
 ## 6. Linear Regression
