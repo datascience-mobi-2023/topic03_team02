@@ -1,0 +1,11 @@
+---
+title: "Final report: Proteome-wide Screen for RNA-dependent Proteins; Subtopic 3: HeLa synchronized in Mitosis"
+subtitle: "Group 2: Synchronized HeLa cells in Mitosis"
+author: "Jimena, Alexandra, Verena"
+date: "2023-30-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
