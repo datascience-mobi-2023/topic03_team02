@@ -1075,6 +1075,48 @@ cat("Total number of rows from 'shifters' in quotients_using_z not found in comp
 ```
 -> 310 von 1337 (23.2%), das ist etwas schlechter als die 70% Grenze von dem manuellen Code. Später gern noch weiter diskutieren. Können theoretisch alle Kategorien noch durchprobieren, aber ich gehe glaub erstmal schlafen. 
 
+#### Versuch eines Venn-Diagramms
+
+Wäre eigentlich cool die Überlappung in Diagrammen darstellen zu können, idealerweise von allen vier Analysemethoden. y-shift ist aber noch nicht fertig, deswegen nehme ich erstmal max shift, local shift und curve shift.
+
+Dataframe preparation:
+```{r}
+# max shift: 
+# Filter rows with "left shift" or "right shift" in the shift_dataframe:
+max_shifter_names <- shift_dataframe[shift_dataframe$Shift %in% c("left shift", "right shift"), , drop = FALSE]
+
+# local shift:
+# Filter rows with FALSE results in the identical_fractions dataframe:
+local_shifter_names <- subset(identical_fractions, no_shift == FALSE)
+
+# curve shift:
+# # Filter rows with "shifter" in the shifting_quotients dataframe:
+curve_shifter_names <- shifting_quotients[shifting_quotients$Curve_shifters == "shifter", , drop = FALSE]
+
+## I also checked the numbers, I did not loose any values.
+```
+
+Now trying a Venn-Diagramm
+```{r}
+# Load the VennDiagram package
+library(VennDiagram)
+
+# Extract the row names from each dataframe
+max_shifter_row_names <- rownames(max_shifter_names)
+local_shifter_row_names <- rownames(local_shifter_names)
+curve_shifter_row_names <- rownames(curve_shifter_names)
+
+# Create the Venn diagram
+venn_result <- venn.diagram(
+  x = list(max_shifter_row_names, local_shifter_row_names, curve_shifter_row_names),
+  category.names = c("Max Shifters", "Local Shifters", "Curve Shifters"),
+  filename = "venn_diagram.png"  # Optional: Specify the filename to save the diagram as an image
+)
+
+# Plot the Venn diagram
+grid.draw(venn_result)
+```
+
 
 ## Liniear Regression
 
