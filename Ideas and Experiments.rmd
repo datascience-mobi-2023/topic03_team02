@@ -1140,6 +1140,32 @@ venn_result <- venn.diagram(
 )
 ```
 
+additional test with rdeep values:
+
+```{r}
+library(VennDiagram)
+
+# Extract the row names from each dataframe
+max_shifter_row_names <- rownames(max_shifter_names)
+local_shifter_row_names <- rownames(local_shifter_names)
+curve_shifter_row_names <- rownames(curve_shifter_names)
+RBP_row_names <- rownames(comparison_RBP)
+
+# Create the Venn diagram
+venn_result <- venn.diagram(
+  x = list(max_shifter_row_names, local_shifter_row_names, curve_shifter_row_names, RBP_row_names),
+  category.names = c("Max Shifters", "Local Shifters", "Curve Shifters", "RDeep shifters"),
+  filename = NULL,  # Set filename to NULL to prevent saving as an image file
+  fill = c("dodgerblue", "darkorange", "springgreen", "red"),  # Specify colors for the diagram elements
+  alpha = 0.5,  # Set transparency for the overlapping areas
+  cex = 1.5  # Increase the font size
+)
+
+# Print the Venn diagram
+grid.newpage()
+grid.draw(venn_result)
+```
+
 
 ## Liniear Regression
 
