@@ -1098,6 +1098,32 @@ curve_shifter_names <- shifting_quotients[shifting_quotients$Curve_shifters == "
 
 Now trying a Venn-Diagramm
 ```{r}
+install.packages("VennDiagram")
+library(VennDiagram)
+
+# Extract the row names from each dataframe
+max_shifter_row_names <- rownames(max_shifter_names)
+local_shifter_row_names <- rownames(local_shifter_names)
+curve_shifter_row_names <- rownames(curve_shifter_names)
+
+# Create the Venn diagram
+venn_result <- venn.diagram(
+  x = list(max_shifter_row_names, local_shifter_row_names, curve_shifter_row_names),
+  category.names = c("Max Shifters", "Local Shifters", "Curve Shifters"),
+  filename = NULL,  # Set filename to NULL to prevent saving as an image file
+  fill = c("dodgerblue", "darkorange", "springgreen"),  # Specify colors for the diagram elements
+  alpha = 0.5,  # Set transparency for the overlapping areas
+  cex = 1.5  # Increase the font size
+)
+
+# Print the Venn diagram
+grid.newpage()
+grid.draw(venn_result)
+```
+
+
+OLD thingey to generate the PNG picture
+```{r}
 # Load the VennDiagram package
 library(VennDiagram)
 
@@ -1112,9 +1138,6 @@ venn_result <- venn.diagram(
   category.names = c("Max Shifters", "Local Shifters", "Curve Shifters"),
   filename = "venn_diagram.png"  # Optional: Specify the filename to save the diagram as an image
 )
-
-# Plot the Venn diagram
-grid.draw(venn_result)
 ```
 
 
