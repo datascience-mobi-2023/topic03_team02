@@ -621,6 +621,7 @@ if(y_diff == 0) {print("No shift")}
 ```
 Overview of RBP and non RBPs using 20% threshold in the y-shift recognition method
 Dataframe tells us if certain protein is RBP or not
+Es wurden 2172 RBPs mit den 20% threshold in y-shifters bestimmt
 ```{r}
 
 # Function to calculate difference in y-values between global maxima #wo kommt die funktion her?
@@ -662,7 +663,7 @@ results_yrbp <- data.frame(ProteinType = results)
 
 # Print the results
 print(results_yrbp) #results as Dataframe - columns showing protein name and the difference 
-
+sum(results_yrbp$ProteinType == 'RBP') #2172 RBPs
 
 ```
 
