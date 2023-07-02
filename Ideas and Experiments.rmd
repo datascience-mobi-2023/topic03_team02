@@ -571,6 +571,8 @@ If the result is:
 '=' 0: no shift 
 '>' 0: (positive number) Ctrl peak is higher than RNase peak -> Down shift as Ctrl goes 'down' to RNase
 '<' 0: (negative number) Ctrl peak is lower than RNase peak -> Up shift as Ctrl goes 'up' to RNase
+New: addition of range of RBP detection, if y_max_RNase deviates 20% up or down from y_max_Ctrl → no RBP
+deviation more than 20% up or down → RBP
 ```{r}
 #Mitosis_Ctrl_clean
 #Mitosis_Ctrl_mean 
@@ -591,6 +593,23 @@ row_global_max_RNase <- max(row_data_RNase)
 # Calculate the difference in y-values between the global maxima
 y_diff <- row_global_max_Ctrl - row_global_max_RNase
 
+#Threshold part probably needs proof-reading:
+?#Calculate RBP threshold (20% deviation from Ctrl Max)
+lower_bound <- row_global_max_Ctrl*0.8
+upper_bound <- row_global_max_Ctrl*1.2
+
+range <- c(lower_bound, upper_bound) 
+
+# Identify RBP if RNase max lays in 20% range from Ctrl max  
+if (row_global_max_RNase >= lower_bound && row_global_max_RNase <= upper_bound) {
+  print("Non RBP")
+} else {
+  print("RBP")
+}
+
+# Print non RBP range
+print(range) #range of RBP: 20% less - 20% more than Ctrl max
+
 # Print the global maximums and the difference in y-values
 print(row_global_max_Ctrl) #max y Wert von Ctrl
 print(row_global_max_RNase) #max y Wert von RNase
@@ -600,6 +619,93 @@ if(y_diff > 0) {print("Down shift")}
 if(y_diff < 0) {print("Up shift")}
 if(y_diff == 0) {print("No shift")}
 ```
+Overview of RBP and non RBPs using 20% threshold in the y-shift recognition method
+Dataframe tells us if certain protein is RBP or not
+```{r}
+
+# Function to calculate difference in y-values between global maxima #wo kommt die funktion her?
+calculate_maxima_diff <- function(row_name, Mitosis_Ctrl_100, Mitosis_RNase_100) {
+  # Select the specific row from both dataframes #which one?
+  row_data_Ctrl <- Mitosis_Ctrl_mean[row_name, ]
+  row_data_RNase <- Mitosis_RNase_mean[row_name, ]
+
+  # Find the global maximum from the selected row in df1
+  row_global_max_Ctrl <- max(row_data_Ctrl)
+
+  # Find the global maximum from the selected row in df2
+  row_global_max_RNase <- max(row_data_RNase)
+
+  #Calculate RBP threshold (20% deviation from Ctrl Max)
+  lower_bound <- row_global_max_Ctrl*0.8
+  upper_bound <- row_global_max_Ctrl*1.2
+  range <- c(lower_bound, upper_bound)
+  
+  # Calculate the difference in y-values between the global maxima
+  y_rbp <- if (row_global_max_RNase >= lower_bound && row_global_max_RNase <= upper_bound) {
+  print("Non RBP")
+  } else {
+  print("RBP")
+  }
+
+  # Return the difference in y-values
+  return(y_rbp)
+}
+
+# Get the row names of df1
+row_names <- rownames(Mitosis_Ctrl_mean)
+
+# Apply the function to each row name
+results <- sapply(row_names, calculate_maxima_diff)
+
+# Create a dataframe with only the differences in y-values
+results_yrbp <- data.frame(ProteinType = results)
+
+# Print the results
+print(results_yrbp) #results as Dataframe - columns showing protein name and the difference 
+
+
+```
+
+Overview of RBP and non RBPs using 20% threshold in the y-shift recognition method
+But now: Dataframe shows us a value → how much the max in Ctrl and mac in RNase deviate (as far as I've compared it with the dataframe above, it should be right → values higher than 20 mean max deviate and are RBPs)
+
+```{r}
+# Function to calculate difference in y-values between global maxima #wo kommt die funktion her?
+calculate_maxima_diff <- function(row_name, Mitosis_Ctrl_100, Mitosis_RNase_100) {
+  # Select the specific row from both dataframes #which one?
+  row_data_Ctrl <- Mitosis_Ctrl_mean[row_name, ]
+  row_data_RNase <- Mitosis_RNase_mean[row_name, ]
+
+  # Find the global maximum from the selected row in df1
+  row_global_max_Ctrl <- max(row_data_Ctrl)
+
+  # Find the global maximum from the selected row in df2
+  row_global_max_RNase <- max(row_data_RNase)
+
+  # Calculate the difference in y-values between the global maxima
+  y_deviation <- abs((row_global_max_RNase - row_global_max_Ctrl) / row_global_max_Ctrl) * 100
+
+  # Return the difference in y-values
+  return(y_deviation)
+}
+
+# Get the row names of df1
+row_names <- rownames(Mitosis_Ctrl_mean)
+
+# Apply the function to each row name
+results <- sapply(row_names, calculate_maxima_diff)
+
+# Create a dataframe with only the differences in y-values
+results_yshift <- data.frame(YDeviation = results)
+
+# Print the results
+print(results_yshift) #results as Dataframe - columns showing protein name and the difference
+
+
+
+```
+
+
 Copied the 'protein web- search' to directly compare and see what our results of y-shifts mean
 ```{r}
 # Step 1: Select a specific row by name
@@ -725,7 +831,6 @@ print(results_yshift) #results as Dataframe - columns showing protein name and t
 as.vector(results_yshift) #results as vector - maybe better to work with afterwards, if needed
 
 ```
-
 
 
 ## 3. Update LOCAL MAXIMA!
