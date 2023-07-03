@@ -67,6 +67,9 @@ When looking at the dataset we noticed that already the first 7 rows have accumu
 # Find rows without any zeros
 nonzero_rows <- RDeeP_HeLa_Mitosis[rowSums(RDeeP_HeLa_Mitosis == 0) == 0, ]
 
+# Checking for negative vales
+any(RDeeP_HeLa_Mitosis < 0) # -> none, so not a problem
+
 #The condition rowSums(RDeep_Hela_Mitosis == 0) == 0 checks which rows have a sum of zeros equal to zero, indicating that those rows do *not* contain any zeros.Then we selects these rows without any zeros from our table and store it in a new table.
 
 # Print the rows without any zeros: print(nonzero_rows)
