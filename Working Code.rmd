@@ -25,6 +25,7 @@ Load Libraries
 library(cluster)
 library(ggplot2)
 library(factoextra)
+
 ```
 
 
@@ -65,6 +66,9 @@ When looking at the dataset we noticed that already the first 7 rows have accumu
 ```{r}
 # Find rows without any zeros
 nonzero_rows <- RDeeP_HeLa_Mitosis[rowSums(RDeeP_HeLa_Mitosis == 0) == 0, ]
+
+# Checking for negative vales
+any(RDeeP_HeLa_Mitosis < 0) # -> none, so not a problem
 
 #The condition rowSums(RDeep_Hela_Mitosis == 0) == 0 checks which rows have a sum of zeros equal to zero, indicating that those rows do *not* contain any zeros.Then we selects these rows without any zeros from our table and store it in a new table.
 
@@ -719,7 +723,7 @@ Alternativ: Werte weichen um 60% ab, dann Werte kleiner als 0,625 und Werte grö
 ```{r}
 # Create the shifting_quotients dataframe
 shifting_quotients <- data.frame("Curve_shifters" = apply(curve_quotients, 1, function(row) {
-  if (any(row < (4/(4*1.3)) | row > 1.3)) { #Code so angepasst das direkt die Prozentzahlen eingetragen werden können. Alternatives Vorgehen: mit "signifikanter Abweichung" arbeiten. Aber wie definiert?)
+  if (any(row < (4/(4*1.7)) | row > 1.7)) { #Code so angepasst das direkt die Prozentzahlen eingetragen werden können. Alternatives Vorgehen: mit "signifikanter Abweichung" arbeiten. Aber wie definiert?)
     "shifter"
   } else {
     "not shifter"
@@ -1003,7 +1007,7 @@ Lets take a closter look at cluster 2, as those proteins seem to be "extrem y-sh
 cluster_assignments <- km3_y$cluster
 
 # Filter the dataframe based on the cluster assignment
-cluster2_values <- df_results_yshift[cluster_assignments == 2, ]
+cluster2_values <- results_yshift2[cluster_assignments == 2, ]
 
 # Print the values in Cluster 2
 print(cluster2_values)
@@ -1051,7 +1055,48 @@ legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd
 ```
 Auf diesen Grafiken sieht das auf jeden Fall nicht nach extrem-shifters auf
 
+### other correlation
+```{r}
+# Compute the distance matrix
+distance_matrix <- dist(maximum_fraction)
 
+# Perform hierarchical clustering
+hclust_result <- hclust(distance_matrix)
+
+# Cut the dendrogram into clusters
+num_clusters <- 3  # Specify the desired number of clusters
+clusters <- cutree(hclust_result, k = num_clusters)
+
+# Plot the dendrogram with customized options
+plot(hclust_result, main = "Hierarchical Clustering Dendrogram",
+     xlab = "Observations", ylab = "Distance",
+     labels = FALSE, hang = -1, cex = 0.8)
+
+# Add labels to the leaves of the dendrogram
+#labels <- rownames(maximum_fraction)  
+#text(x = seq_along(labels), y = par("usr")[3] - 0.1, labels = labels,
+     #srt = 90, adj = c(1, 0.5), xpd = TRUE, cex = 0.6)
+
+# Add cluster labels to the plot
+rect.hclust(hclust_result, k = num_clusters, border = 2:4)
+
+# Create an empty list to store split data
+split_data <- list()
+
+# Split each column based on cluster assignments
+for (col in colnames(maximum_fraction)) {
+  split_data[[col]] <- split(maximum_fraction[[col]], as.factor(clusters))
+}
+
+# Create a dataframe with each cluster as a column
+cluster_dataframe <- do.call(cbind, split_data)
+
+# Print the cluster dataframe
+print(cluster_dataframe)
+
+
+```
+Sagt mir halt irgendwie nichts
 
 
 ## 6. Linear Regression
@@ -1064,6 +1109,56 @@ Ich denke das wäre bei uns ziemlich cool, eben weil wir diese verschiedenen Met
 
 ```{r}
 #die einzelnen Dataframes skalieren und neuen dataframes zuweisen und im Code danach anpassen
+
+#sc_max_shift <- scale(max_shift, center = FALSE, scale = FALSE)
+#sc_identical_fractions2 <- scale(identical_fractions2, center = FALSE, scale = FALSE)
+#sc_results_yshift <- scale(results_yshift, center = FALSE, scale = FALSE)
+#quotients_max <- data.frame(quotients_minmax$Max)
+#sc_quotients_minmax <- scale(quotients_max, center = FALSE, scale = FALSE)
+
+
+
+#sc_max_shift <- as.data.frame(sapply(max_shift, function(i){(i/apply(max_shift,1,sum))*100}))
+
+#sc_max_shift <- t(apply(max_shift, 1, min_max_scaling))
+#sc_identical_fractions2 <- t(apply(identical_fractions2, 1, min_max_scaling))
+#sc_results_yshift <- t(apply(results_yshift, 1, min_max_scaling))
+#sc_quotients_minmax <- t(apply(quotients_minmax, 1, min_max_scaling))
+```
+
+```{r}
+max_shift <- Ctrl_fraction_max - RNase_fraction_max
+
+sc_max_shift <- data.frame(apply(max_shift, 2, function(x) {
+  min_val <- min(x)
+  max_val <- max(x)
+  scaled_col <- 1 + 99 * (x - min_val) / (max_val - min_val)
+  return(scaled_col) }))
+print(sc_max_shift)
+  
+sc_identical_fractions2 <- data.frame(apply(identical_fractions2, 2, function(x) {
+  min_val <- min(x)
+  max_val <- max(x)
+  scaled_col2 <- 1 + 99 * (x - min_val) / (max_val - min_val)
+  return(scaled_col2) }))
+print(sc_identical_fractions2)
+
+sc_results_yshift <- data.frame(apply(results_yshift, 2, function(x) {
+  min_val <- min(x)
+  max_val <- max(x)
+  scaled_col3 <- 1 + 99 * (x - min_val) / (max_val - min_val)
+  return(scaled_col3) }))
+print(sc_results_yshift)
+
+
+quotients_max <- data.frame(quotients_minmax$Max)
+sc_quotients_max <- data.frame(apply(quotients_max, 2, function(x) {
+  min_val <- min(x)
+  max_val <- max(x)
+  scaled_col4 <- 1 + 99 * (x - min_val) / (max_val - min_val)
+  return(scaled_col4) }))
+print(sc_quotients_max)
+
 ```
 
 In order to generate one big dataframe that sums up the values that we gained in our 4(?) methodes of RBP identification this data has to be brought into the right format
@@ -1076,13 +1171,11 @@ ggf. 4. column: maximaler/minimaler Kurven quotient?? Vereinfachend den max wert
 
 
 ```{r}
-max_shift <- Ctrl_fraction_max - RNase_fraction_max
-
 # Create shift_comparison dataframe
-shift_comparison <- data.frame(max_shift = max_shift,
-                               local_shift = identical_fractions2$local_shift,
-                               YDiff = results_yshift$YDiff,
-                               curve_shift = quotients_minmax$Max,
+shift_comparison <- data.frame(max_shift = sc_max_shift,
+                               local_shift = sc_identical_fractions2,
+                               YDiff = sc_results_yshift,
+                               curve_shift = sc_quotients_max,
                                row.names = row.names(max_shift))
 colnames(shift_comparison)[1] <- "max_shift"
 
@@ -1149,4 +1242,28 @@ ggplot(data, aes(x = x, y = y)) +
 ```
 
 Mhm. Sieht noch ziemlich sketchy aus, aber es ist ein erstes Ergebnis. 
+
+
+#### 6.4 Trying out new dataframes (caution: same name!!!!!!!!!)
+Okay, mit der ersten Methode haben wir jetzt einen R Wert von 0.2658505. Das ist nicht wirklich gut genug. Im folgenden 2 dataframe, die dann jeweils auch shift_comparison heißen. Dementsprechend immer den chunk des DF vor den Finden der beiden columns mit der höchsten linearen Beziehung ausführen.
+
+```{r}
+shift_comparison <- data.frame(max_shift = max_shift,
+                               local_shift = identical_fractions2,
+                               YDiff = results_yshift,
+                               curve_shift = quotients_max,
+                               row.names = row.names(max_shift))
+colnames(shift_comparison)[1] <- "max_shift"
+
+print(shift_comparison)
+
+```
+```{r}
+#first adadpted dataframe will have the columns independently scaled to 100
+```
+
+
+```{r}
+# if that isnt enough the second dataframe will set all RBPs that we identyfied as 1 and all non-RBP as 0. For first two that would mean those with a value are set 1. For other two we take respective threshold and set those 1 that met criteria to be RBP and 0 those who do not met the threshold
+```
 
