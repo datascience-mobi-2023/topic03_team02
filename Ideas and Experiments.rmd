@@ -335,235 +335,7 @@ are_complementary #TRUE means the protein has accumulated in the last column
 TRUE, this means all proteins without a peak have either accumulated in first or last fraction.
 -> does it mean error? or normalization side effect? No.
 
-## Visualization
-```{r}
-# Step 1: Extract the row you want to find peaks in
-row_index <- 3388     # Adjust the row index as needed
-row_name <- row.names(Mitosis_Ctrl_100)[row_index] #name of plot adapts depending on protein viewed #also works if Mitosis_RNase_100, bc both dataframes would plot the same protein
-
-# Step 2: Extrakt the data for Ctrl and RNase
-row_data_Ctrl <- Mitosis_Ctrl_100[row_index, ]
-row_data_RNase <- Mitosis_RNase_100[row_index, ]
-
-# Step 3: Find the peaks in the row data
-peaks_Ctrl <- c()
-for (i in 2:(length(row_data_Ctrl) - 1)) {
-  if (row_data_Ctrl[i] > row_data_Ctrl[i-1] && row_data_Ctrl[i] > row_data_Ctrl[i+1]) {
-    peaks_Ctrl <- c(peaks_Ctrl, i)
-  }
-}
-
-peaks_RNase <- c()
-for (i in 2:(length(row_data_RNase) - 1)) {
-  if (row_data_RNase[i] > row_data_RNase[i-1] && row_data_RNase[i] > row_data_RNase[i+1]) {
-    peaks_RNase <- c(peaks_RNase, i)
-  }
-}
-
-# Step 4: Visualize the peaks on a plot
-plot(1:25, Mitosis_Ctrl_100[row_index, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,40), main = row_name)
-points(peaks_Ctrl, row_data_Ctrl[peaks_Ctrl], col = "blue", pch = 16)
-
-lines(1:25, Mitosis_RNase_100[row_index, ], type="l",col="red")
-points(peaks_RNase, row_data_RNase[peaks_RNase], col = "red", pch = 16)
-grid()
-legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
-```
-
-
-#### Index finder (not visualization)
-
-```{r}
-# Row index for which to find the column and value of global maximum
-#Change Index as necessary
-row_index <- 2
-
-# Extract the row from the dataframe
-row <- Mitosis_Ctrl_100[row_index, ]
-
-# Find the column index of the global maximum
-column_index <- which.max(row)
-
-# Find the column name corresponding to the column index
-column_name <- colnames(Mitosis_Ctrl_100)[column_index]
-
-# Find the value corresponding to the column of the global maximum
-value <- row[column_index]
-
-# Find the row name
-row_name <- row.names(Mitosis_Ctrl_100)[row_index]
-
-# Print the column name and value
-print(paste("Protein:", row_name))
-print(paste("Column Name:", column_name))
-print(paste("Value:", value))
-
-```
-
-The same as above, but for a protein name based search :)
-```{r}
-# Row name for which to find the column and value of global maximum
-#Change as necessary
-row_name <- "RBM3_HUMAN"
-
-# Extract the row from the dataframe
-row <- Mitosis_Ctrl_100[row_name, ]
-
-# Find the column index of the global maximum
-column_index <- which.max(row)
-
-# Find the column name corresponding to the column index
-column_name <- colnames(Mitosis_Ctrl_100)[column_index]
-
-# Find the value corresponding to the column of the global maximum
-value <- row[column_index]
-
-# Print the column name and value
-print(paste("Protein:", row_name))
-print(paste("Column Name:", column_name))
-print(paste("Value:", value))
-```
-
-#### Web search RNase peak finder
-"Web search" for protein indices in the RNase Dataframe
-```{r}
-# Row index for which to find the column and value of global maximum
-#Change Index as necessary
-row_index <- 2
-
-# Extract the row from the dataframe
-row <- Mitosis_RNase_100[row_index, ]
-
-# Find the column index of the global maximum
-column_index <- which.max(row)
-
-# Find the column name corresponding to the column index
-column_name <- colnames(Mitosis_RNase_100)[column_index]
-
-# Find the value corresponding to the column of the global maximum
-value <- row[column_index]
-
-# Find the row name
-row_name <- row.names(Mitosis_RNase_100)[row_index]
-
-# Print the column name and value
-print(paste("Protein:", row_name))
-print(paste("Column Name:", column_name))
-print(paste("Value:", value))
-
-```
-
-"Web search" for protein names in the RNase Dataframe
-```{r}
-# Row name for which to find the column and value of global maximum
-#Change as necessary
-row_name <- "2A5E_HUMAN"
-
-# Extract the row from the dataframe
-row <- Mitosis_RNase_100[row_name, ]
-
-# Find the column index of the global maximum
-column_index <- which.max(row)
-
-# Find the column name corresponding to the column index
-column_name <- colnames(Mitosis_RNase_100)[column_index]
-
-# Find the value corresponding to the column of the global maximum
-value <- row[column_index]
-
-# Print the column name and value
-print(paste("Protein:", row_name))
-print(paste("Column Name:", column_name))
-print(paste("Value:", value))
-```
-
-#### useful peak finder?
-
-Overview to know in which fraction the max was found. The vector should then help for further analysis.
-Overview for Ctrl Dataframe.
-```{r}
-# Find the column index of the global maximum for each row
-column_indices <- apply(Mitosis_Ctrl_100, 1, which.max)
-
-# Find the global maximum for each row
-global_maxima <- apply(Mitosis_Ctrl_100, 1, max)
-
-# Find the row names
-row_names <- row.names(Mitosis_Ctrl_100)
-
-# Create a dataframe with the results
-Ctrl_fraction_max_value <- data.frame(Fraction = column_indices, MaxValue = global_maxima)
-Ctrl_fraction_max <- data.frame(Fraction = column_indices)
-
-# Print the results
-#Shows protein name, fraction where global maxima was found and the maximum value
-print(Ctrl_fraction_max_value)
-print(Ctrl_fraction_max)
-
-#Results as vector
-as.vector(Ctrl_fraction_max) #just numbers (aka fractions where max) 
-
-```
-
-Overview RNase Dataframe.
-```{r}
-# Find the column index of the global maximum for each row
-column_indices <- apply(Mitosis_RNase_100, 1, which.max)
-
-# Find the global maximum for each row
-global_maxima <- apply(Mitosis_RNase_100, 1, max)
-
-# Find the row names
-row_names <- row.names(Mitosis_RNase_100)
-
-# Create a dataframe with the results
-RNase_fraction_max_value <- data.frame(Fraction = column_indices, MaxValue = global_maxima)
-RNase_fraction_max <- data.frame(Fraction = column_indices)
-#hier kommt bei mir Fehler raus, da anscheinend unsere Daten unterschiedlich lang sind
-
-# Print the results
-#Shows protein name, fraction where global maxima was found and the maximum value
-print(RNase_fraction_max_value)
-print(RNase_fraction_max)
-
-#Results as vector
-as.vector(RNase_fraction_max) #just numbers (aka fractions where max) 
-
-```
-
-And this is how I imagine we could detect shifts.
-We subtract the value in Ctrl_fraction_max (Ctrl fraction where max) with the value in RNase_fraction_max (RNase fraction where max) . If the result:
-'=' 0: no shift
-'>' 0: (positive number) left shift (normal, bedeutet max fraction bei Control ist größer als max fraction bei RNase)
-'<' 0: (negative number) right shift (ungewöhnlich, bedeutet RNase Fraktion ist größer als Control fraktion, Protein ist irgendwie schwerer geowrden)
-
-
-```{r}
-# Subtract the values and determine the shift
-shift_result <- Ctrl_fraction_max - RNase_fraction_max
-shift_result <- ifelse(shift_result == 0, "no shift", ifelse(shift_result > 0, "left shift", "right shift"))
-
-# Create a new dataframe with the shift result and row names
-shift_dataframe <- data.frame(Shift = shift_result, row.names = row.names(Ctrl_fraction_max))
-colnames(shift_dataframe)[1] <- "Shift"
-
-# Print the new dataframe
-print(shift_dataframe)
-
-#Von Jimena: as.vector(Ctrl_fraction_max) -as.vector(RNase_fraction_max)
-```
-
-```{r}
-# Count the number of left shifts
-sum(shift_dataframe$Shift == "left shift")
-sum(shift_dataframe$Shift == "right shift")
-sum(shift_dataframe$Shift == "no shift")
-```
-Nice :)
-
-## Statistical analysis
-
-#### y- shifts
+## 2. y- shifts
 
 Detection of y-shifts aka difference between global max in Ctrl und global max in RNase.
 We observe the changes of peaks in the Ctrl Dataframe (here Mitosis_mean) after the addition of RNase and thats why we calculate the shifts as: Ctrl - RNase
@@ -619,53 +391,44 @@ if(y_diff > 0) {print("Down shift")}
 if(y_diff < 0) {print("Up shift")}
 if(y_diff == 0) {print("No shift")}
 ```
+
+
 Overview of RBP and non RBPs using 20% threshold in the y-shift recognition method
 Dataframe tells us if certain protein is RBP or not
 Es wurden 2172 RBPs mit den 20% threshold in y-shifters bestimmt
 ```{r}
+# Function to calculate difference in y-values between global maxima
 
-# Function to calculate difference in y-values between global maxima #wo kommt die funktion her?
 calculate_maxima_diff <- function(row_name, Mitosis_Ctrl_100, Mitosis_RNase_100) {
-  # Select the specific row from both dataframes #which one?
   row_data_Ctrl <- Mitosis_Ctrl_mean[row_name, ]
   row_data_RNase <- Mitosis_RNase_mean[row_name, ]
 
-  # Find the global maximum from the selected row in df1
   row_global_max_Ctrl <- max(row_data_Ctrl)
-
-  # Find the global maximum from the selected row in df2
   row_global_max_RNase <- max(row_data_RNase)
 
-  #Calculate RBP threshold (20% deviation from Ctrl Max)
-  lower_bound <- row_global_max_Ctrl*0.8
-  upper_bound <- row_global_max_Ctrl*1.2
-  range <- c(lower_bound, upper_bound)
+  lower_bound <- row_global_max_Ctrl * 0.8
+  upper_bound <- row_global_max_Ctrl * 1.2
   
-  # Calculate the difference in y-values between the global maxima
   y_rbp <- if (row_global_max_RNase >= lower_bound && row_global_max_RNase <= upper_bound) {
-  print("Non RBP")
+    "Non RBP"
   } else {
-  print("RBP")
+    "RBP"
   }
 
-  # Return the difference in y-values
   return(y_rbp)
 }
 
-# Get the row names of df1
 row_names <- rownames(Mitosis_Ctrl_mean)
-
-# Apply the function to each row name
 results <- sapply(row_names, calculate_maxima_diff)
-
-# Create a dataframe with only the differences in y-values
 results_yrbp <- data.frame(ProteinType = results)
 
-# Print the results
-print(results_yrbp) #results as Dataframe - columns showing protein name and the difference 
+# Print the final dataframe
+results_yrbp #results as Dataframe - columns showing protein name and the difference 
 sum(results_yrbp$ProteinType == 'RBP') #2172 RBPs
 
 ```
+
+Not really necessary for us currently I think:
 
 Overview of RBP and non RBPs using 20% threshold in the y-shift recognition method
 But now: Dataframe shows us a value → how much the max in Ctrl and mac in RNase deviate (as far as I've compared it with the dataframe above, it should be right → values higher than 20 mean max deviate and are RBPs)
@@ -701,20 +464,17 @@ results_yshift <- data.frame(YDeviation = results)
 
 # Print the results
 print(results_yshift) #results as Dataframe - columns showing protein name and the difference
-
-
-
 ```
 
 
 Copied the 'protein web- search' to directly compare and see what our results of y-shifts mean
 ```{r}
 # Step 1: Select a specific row by name
-row_name <- "2A5E_HUMAN"
+row_name <- "3BP5_HUMAN"
 
 # Step 2: Find the peaks for Ctrl in the row data
-row_data_Ctrl <- Mitosis_Ctrl_mean[row_name, ]
-row_data_RNase <- Mitosis_RNase_mean[row_name, ]
+row_data_Ctrl <- Mitosis_Ctrl_100[row_name, ]
+row_data_RNase <- Mitosis_RNase_100[row_name, ]
 
 # Step 3: Find the peaks in the row data
 peaks_Ctrl <- c()
@@ -732,10 +492,10 @@ for (i in 2:(length(row_data_RNase) - 1)) {
 }
 
 # Step 4: Visualize the peaks on a plot
-plot(1:25, Mitosis_Ctrl_mean[row_name, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,525000), main = row_name)
+plot(1:25, Mitosis_Ctrl_100[row_name, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,70),xlim = c(0,7), main = row_name)
 points(peaks_Ctrl, row_data_Ctrl[peaks_Ctrl], col = "blue", pch = 16)
 
-lines(1:25, Mitosis_RNase_mean[row_name, ], type="l",col="red")
+lines(1:25, Mitosis_RNase_100[row_name, ], type="l",col="red")
 points(peaks_RNase, row_data_RNase[peaks_RNase], col = "red", pch = 16)
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
@@ -834,46 +594,36 @@ as.vector(results_yshift) #results as vector - maybe better to work with afterwa
 ```
 
 
-
+#### 2.1 Verenas anpassung
 
 kleine optimizierungs-versuch (verena versucht ueberblick zu bekommen/sachen zu verstehen)
 
 ```{r}
 calculate_maxima_diff <- function(row_name, Mitosis_Ctrl_100, Mitosis_RNase_100) {
-  # Select the specific row from both dataframes
-  row_data_Ctrl <- Mitosis_Ctrl_mean[row_name, ]
-  row_data_RNase <- Mitosis_RNase_mean[row_name, ]
+  row_data_Ctrl <- Mitosis_Ctrl_100[row_name, ]
+  row_data_RNase <- Mitosis_RNase_100[row_name, ]
 
-  # Find the global maximum from the selected row in df1
   row_global_max_Ctrl <- max(row_data_Ctrl)
-
-  # Find the global maximum from the selected row in df2
   row_global_max_RNase <- max(row_data_RNase)
 
-  # Calculate RBP threshold (20% deviation from Ctrl Max)
-  lower_bound <- row_global_max_Ctrl * 0.5
-  upper_bound <- row_global_max_Ctrl * 1.5
-
-  # Calculate the difference in y-values between the global maxima
+  lower_bound <- row_global_max_Ctrl * 0.8
+  upper_bound <- row_global_max_Ctrl * 1.2
+  
   y_rbp <- if (row_global_max_RNase >= lower_bound && row_global_max_RNase <= upper_bound) {
     "Non RBP"
   } else {
     "RBP"
   }
 
-  # Return the difference in y-values
   return(y_rbp)
 }
 
-# Apply the function to each row name
-results <- sapply(row_names, calculate_maxima_diff, Mitosis_Ctrl_100 = Mitosis_Ctrl_mean, Mitosis_RNase_100 = Mitosis_RNase_mean)
-
-# Create a dataframe with the results
-results_df <- data.frame(ProteinType = results)
+row_names <- rownames(Mitosis_Ctrl_100)
+results <- sapply(row_names, calculate_maxima_diff, Mitosis_Ctrl_100, Mitosis_RNase_100)
+results_yrbp <- data.frame(ProteinType = results)
 
 # Print the final dataframe
-print(results_df)
-sum(results_df$ProteinType == 'RBP')
+results_yrbp
 ```
 
 
@@ -883,7 +633,7 @@ sum(results_df$ProteinType == 'RBP')
 
 ```{r}
 # Step 1: Select a specific row by name
-row_name <- "ABCA1_HUMAN" #'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter) #UTP11_HUMAN PERCIPITATED PROTEIN?? #ehemals problematisch: SQOR_HUMAN
+row_name <- "UTP11_HUMAN" # "ABCA1_HUMAN" (precipitated protein, but still shifter) 'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter) #UTP11_HUMAN (percipitated non shifting protein?) #ehemals problematisch: SQOR_HUMAN
 
 #WICHTIG: ABCA1_HUMAN... von welchem verfahren wird dies (wahrscheinlich korrekterweise) als shifter erkannt? Ist aber noch in keiner Datenbank drinnen...
 
@@ -920,8 +670,8 @@ num_peaks_Ctrl <- length(peaks_Ctrl)
 num_peaks_RNase <- length(peaks_RNase)
 
 # Print the number of peaks
-cat("Number of peaks in Control:", num_peaks_Ctrl, "\n")
-cat("Number of peaks in RNase:", num_peaks_RNase, "\n")
+#cat("Number of peaks in Control:", num_peaks_Ctrl, "\n")
+#cat("Number of peaks in RNase:", num_peaks_RNase, "\n")
 ```
 
 #### 3.2 Alter code: SQOR_HUMAN Problem
@@ -1065,18 +815,18 @@ sum(identical_fractions2$local_shift != 0)
 ## 4. VERGLEICH MIT RBP2GO
 
 Übersicht:
-##### absolute maxima shifts
+-> absolute maxima shifts
 shift_dataframe #right shift, left shift, no shift -> not usable
 Sondern mit (wie Alexandra schon gemacht):
 data.frame(Ctrl_fraction_max, RNase_fraction_max)
 
-##### local maxima amount and location comparison
+-> local maxima amount and location comparison
 identical_fractions #TRUE: no shifter, FALSE: Shifter -> not really usable I think, directly already calculated into two categories
 
-##### protein content quotiens 
+-> protein content quotiens 
 quotients_minmax #Werte umdie 1, je mehr sie abweichen, desto eher sind es shifter -> usable? GGF hier einfach NUR DEN WERT NEHMEN, DER AM MEISTEN ABWEICHT!
 
-##### y-shifts
+->y-shifts
 results_yshift #relativ große und relativ unterschiedliche Werte
 
 #### 4.1 RBP2GO Datensatz ins Rmd Laden:
@@ -1224,7 +974,7 @@ cat("Total number of rows from 'shifters' in quotients_using_z not found in comp
 ```
 -> 310 von 1337 (23.2%), das ist etwas schlechter als die 70% Grenze von dem manuellen Code. Später gern noch weiter diskutieren. Können theoretisch alle Kategorien noch durchprobieren, aber ich gehe glaub erstmal schlafen. 
 
-#### Versuch eines Venn-Diagramms
+#### 4.2 Venn-Diagramms
 
 Wäre eigentlich cool die Überlappung in Diagrammen darstellen zu können, idealerweise von allen vier Analysemethoden. y-shift ist aber noch nicht fertig, deswegen nehme ich erstmal max shift, local shift und curve shift.
 
@@ -1234,6 +984,15 @@ Dataframe preparation:
 # Filter rows with "left shift" or "right shift" in the shift_dataframe:
 max_shifter_names <- shift_dataframe[shift_dataframe$Shift %in% c("left shift", "right shift"), , drop = FALSE]
 
+# y shift:
+# Filter rows from y_max_subset where ProteinType is 'RBP':
+rbp_rows <- y_max_subset[y_max_subset$ProteinType == 'RBP',, drop = FALSE ]
+
+#COMBINE ROWS WITH MAX SHIFT THIS TOOK AGES
+#colnames(rbp_rows) <- "Shift"
+#rbp_rows$Shift <- ifelse(rbp_rows$Shift == "RBP", "left shift", rbp_rows$Shift)
+#max_shifter_names <- rbind(max_shifter_names, rbp_rows)
+
 # local shift:
 # Filter rows with FALSE results in the identical_fractions dataframe:
 local_shifter_names <- subset(identical_fractions, no_shift == FALSE)
@@ -1241,6 +1000,9 @@ local_shifter_names <- subset(identical_fractions, no_shift == FALSE)
 # curve shift:
 # # Filter rows with "shifter" in the shifting_quotients dataframe:
 curve_shifter_names <- shifting_quotients[shifting_quotients$Curve_shifters == "shifter", , drop = FALSE]
+
+#alternative curve shift methode: 
+#curve_shifter_names <- quotients_using_z[quotients_using_z$Result == "shifter", , drop = FALSE]
 
 ## I also checked the numbers, I did not loose any values.
 ```
@@ -1299,6 +1061,7 @@ max_shifter_row_names <- rownames(max_shifter_names)
 local_shifter_row_names <- rownames(local_shifter_names)
 curve_shifter_row_names <- rownames(curve_shifter_names)
 RBP_row_names <- rownames(comparison_RBP)
+#rbp_rows_names <- rownames(rbp_rows)
 
 # Create the Venn diagram
 venn_result <- venn.diagram(
@@ -1315,8 +1078,43 @@ grid.newpage()
 grid.draw(venn_result)
 ```
 
+#### 4.3 alter vergleich: Comparing local with absolute maxima
 
-## Liniear Regression
+All rows with "left shift" or "right shift" in the shift_dataframe dataframe are compared with all "FALSE" results in the identical_fractions dataframe (aka shifters). If the rows fullfill both criteria in the respective dataframe, I want to create a new dataframe named dodgy_proteins, in which these rows have the result "TRUE". 
+(this code only works if you run the working code beforehand)
+
+```{r}
+# Create an empty dataframe to store the results
+dodgy_proteins <- data.frame(Result = logical(nrow(shift_dataframe)), row.names = row.names(shift_dataframe))
+
+# Iterate over the rows of shift_dataframe
+for (row_name in row.names(shift_dataframe)) {
+  # Check if the row meets the criteria in shift_dataframe
+  if ((shift_dataframe[row_name, ] %in% c("right shift", "left shift")) & !identical_fractions[row_name, ]) {
+    # Assign TRUE to the corresponding row in dodgy_proteins
+    dodgy_proteins[row_name, ] <- TRUE #These proteins give different results in each method!!!
+  } else {
+    # Assign FALSE to the corresponding row in dodgy_proteins
+    dodgy_proteins[row_name, ] <- FALSE
+  }
+}
+
+# Print the dodgy_proteins dataframe
+print(dodgy_proteins)
+
+sum(dodgy_proteins$Result)
+
+sum(shift_dataframe$Shift == "left shift") + sum(shift_dataframe$Shift == "right shift")
+```
+Nice! Both methods seem to give the EXACT SAME PROTEINS. (Only comparing the number would not guarantee that the proteins are identical, but I try to avoid this using this code.) Explanation: we have 581 TRUE results in our dataframe, meaning in 581 rows (proteins) both criteria are fulfilled. Now we count how many proteins are in total identified as shifters in the maximum peak method: also 581
+```{r}
+#Count how many have been identified using the local fraction comparison method:
+sum(!identical_fractions) #Checks all FALSE (aka shifters) results in the dataframe
+```
+This is A LOT more! Aka the maximum peak shifter only identifies about half of the proteins which the local fraction comparison identifies as shifters.
+
+
+## 5. Liniear Regression
 
 #### 5.1.Finden von zwei Spalten in einem Dataframe die eine möglichst lineare Beziehung haben
 
@@ -1350,7 +1148,7 @@ print(shift_comparison)
 ```
 
 
-## Lineare Regression
+#### 5.2. Lineare Regression
 
 ```{r}
 # Assuming you have a dataframe called 'my_data' with multiple columns
@@ -1426,7 +1224,7 @@ Lustigerweise egal ob ich den Maximalen wert des Kurven Quotienten Codes nehme o
 
 
 
-## Speicherung Code zur Erstellung des result dataframes, aus Working code rüberkopiert:
+#### 5.3. Speicherung Code zur Erstellung des result dataframes, aus Working code rüberkopiert:
 
 
 To put all these values in a new DF we first need to make sure they have the right format:

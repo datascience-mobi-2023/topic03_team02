@@ -16,7 +16,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Load the dataset from the Dropbox
 
 ```{r}
-RDeeP_HeLa_Mitosis = read.csv("https://www.dropbox.com/s/ttj1z98mxefq0aj/RDeeP_HeLa_Mitosis.csv?dl=1", header=TRUE, row.names=1, sep = ";")
+RDeeP_HeLa_Mitosis = read.csv("https://www.dropbox.com/scl/fi/3i6ht1g6clxhv28iufvyz/RDeeP_HeLa_Mitosis.csv?rlkey=awdsnjuy8xxeybr0r4twhu9fu&dl=1", header=TRUE, row.names=1, sep = ";")
 head(RDeeP_HeLa_Mitosis)
 ```
 Load Libraries
@@ -366,31 +366,10 @@ Mitosis_RNase_100 <- as.data.frame(sapply(Mitosis_RNase_mean, function(i){(i/app
 head(Mitosis_RNase_100)
 ```
 
-#### 2.3 Min Max scaling
-
-This would be an alternative to the data scaling to 100 method. We rescale the values to a fixed range, typically between 0 and 1. The scaling process involves subtracting the minimum value from each value in the variable and then dividing by the range (maximum value minus the minimum value). This transformation ensures that all values are proportionally scaled within the specified range.
-
-```{r Min Max scaling}
-# Min-max scaling function
-min_max_scaling <- function(x) {
-  (x - min(x)) / (max(x) - min(x))
-}
-
-# Apply min-max scaling
-Mitosis_Ctrl_MM <- t(apply(Mitosis_Ctrl_mean, 1, min_max_scaling)) #apply function with MARGIN = 1 specifies that the function should be applied to each row (without t() it would be applied on each column). 
-
-#For RNase
-Mitosis_RNase_MM <- t(apply(Mitosis_RNase_mean, 1, min_max_scaling)) 
-
-# Print the scaled data
-head(as.data.frame(Mitosis_Ctrl_MM))
-```
-
-We can later decide which method to chose.
 
 ```{r Clean environment}
 #I think it's time to clean up the environment to maintain an overview
-rm(nonzero_rows, column_values,max_values_Ctrl,max_values_RNase,p_values_Ctrl,p_values_RNase,RDeeP_HeLa_Mitosis_p,bad_proteins10,bad_proteins10wierd,num_sets,p_values,protein1_Ctrl_frac1,protein8_Ctrl_frac1,bad_proteins5)
+rm(nonzero_rows, column_values,max_values_Ctrl,max_values_RNase,p_values_Ctrl,p_values_RNase,RDeeP_HeLa_Mitosis_p,bad_proteins10,bad_proteins10wierd,num_sets,p_values,protein1_Ctrl_frac1,protein8_Ctrl_frac1,bad_proteins5,i,num_sets,RDeeP_HeLa_Mitosis_Ctrl,RDeeP_HeLa_Mitosis_RNase)
 ```
 
 ## 3. Visualization
@@ -439,7 +418,7 @@ View a protein and its peak using the protein name
 
 ```{r}
 # Step 1: Select a specific row by name
-row_name <- "2A5E_HUMAN" #'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter)
+row_name <- "2A5E_HUMAN" # "ABCA1_HUMAN" (precipitated protein, but still shifter) 'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter) #UTP11_HUMAN (percipitated non shifting protein?) #ehemals problematisch: SQOR_HUMAN
 
 # Step 2: Find the peaks for Ctrl in the row data
 row_data_Ctrl <- Mitosis_Ctrl_100[row_name, ]
@@ -561,6 +540,50 @@ sum(shift_dataframe$Shift == "no shift")
 
 sum(shift_dataframe$Shift == "left shift") + sum(shift_dataframe$Shift == "right shift")
 ```
+#### 4.2.1 logischer y-shift
+
+nach max shift den Y shift durchführen mit alen proteinen die 0 als max shift hatten und somit weitere partial shifter identifizieren.
+
+```{r}
+max_shift <- Ctrl_fraction_max - RNase_fraction_max
+
+# select proteins which have 0:
+max_shift_0 <- max_shift[max_shift$Fraction == 0, , drop = FALSE]
+
+calculate_maxima_diff <- function(row_name, Mitosis_Ctrl_100, Mitosis_RNase_100, max_shift_0) {
+  if (row_name %in% rownames(max_shift_0)) {
+    row_data_Ctrl <- Mitosis_Ctrl_100[row_name, ]
+    row_data_RNase <- Mitosis_RNase_100[row_name, ]
+
+    row_global_max_Ctrl <- max(row_data_Ctrl)
+    row_global_max_RNase <- max(row_data_RNase)
+
+    lower_bound <- row_global_max_Ctrl * 0.8
+    upper_bound <- row_global_max_Ctrl * 1.2
+
+    y_rbp <- if (row_global_max_RNase >= lower_bound && row_global_max_RNase <= upper_bound) {
+      "Non RBP"
+    } else {
+      "RBP"
+    }
+
+    return(y_rbp)
+  } else {
+    return(NULL)  # Return NULL for rows not found in max_shift_0
+  }
+}
+
+row_names <- rownames(max_shift_0)
+results <- sapply(row_names, calculate_maxima_diff, Mitosis_Ctrl_100, Mitosis_RNase_100, max_shift_0)
+y_max_subset <- data.frame(ProteinType = results)
+
+# Print the final dataframe
+y_max_subset
+
+sum(y_max_subset$ProteinType == 'RBP') #503 additional partial shifters identified!!
+```
+
+
 
 #### 4.2 Local maxima
 
@@ -616,9 +639,11 @@ identical_fractions["SQOR_HUMAN",] #-> FALSE, thus this protein is rightly ident
 sum(identical_fractions$no_shift == FALSE) #-> 1570 proteins are identified as shifters
 ```
 
-We get true results for all no shift proteins, meaning they have identical local and absolute maxima. To define clusters, we could convert TRUE to 0 and FALSE to 1 maybe, but how useful this is we are not sure yet. I checked a few shifting proteins, and they mostly get the right "FALSE" result.
+We get TRUE results for all NO SHIFT proteins, meaning they have identical local and absolute maxima. 
 
-#### 4.2.1 LOCAL MAX CODE DER ANZAHL DES LOCAL SHIFTS IDENTIFIZIERT
+#### 4.2.1 Local Maxima code for kmean und linear regression 
+
+Dieser Code identifiziert nur die Anzahl der local shifts und wurde nur für das kmeans und linear regression gebracht
 
 --> Hier wird jedoch nicht ein shift in den local maxima betrachtet, sondern nur ob mehr entstehen oder welche verschwinden zwischen Control und RNase. Dadurch werden ziemlich viele Proteine vernachlässigt, genauer gesagt 1570-900, also 670 Proteine werden dadurch nicht aufgeführt... Evt. später anpassen.
 
@@ -665,40 +690,6 @@ print(identical_fractions2)
 sum(identical_fractions2$local_shift != 0)
 ```
 
-#### 4.3 Comparing local with absolute maxima
-
-All rows with "left shift" or "right shift" in the shift_dataframe dataframe are compared with all "FALSE" results in the identical_fractions dataframe (aka shifters). If the rows fullfill both criteria in the respective dataframe, I want to create a new dataframe named dodgy_proteins, in which these rows have the result "TRUE". 
-(this code only works if you run the working code beforehand)
-
-```{r}
-# Create an empty dataframe to store the results
-dodgy_proteins <- data.frame(Result = logical(nrow(shift_dataframe)), row.names = row.names(shift_dataframe))
-
-# Iterate over the rows of shift_dataframe
-for (row_name in row.names(shift_dataframe)) {
-  # Check if the row meets the criteria in shift_dataframe
-  if ((shift_dataframe[row_name, ] %in% c("right shift", "left shift")) & !identical_fractions[row_name, ]) {
-    # Assign TRUE to the corresponding row in dodgy_proteins
-    dodgy_proteins[row_name, ] <- TRUE #These proteins give different results in each method!!!
-  } else {
-    # Assign FALSE to the corresponding row in dodgy_proteins
-    dodgy_proteins[row_name, ] <- FALSE
-  }
-}
-
-# Print the dodgy_proteins dataframe
-print(dodgy_proteins)
-
-sum(dodgy_proteins$Result)
-
-sum(shift_dataframe$Shift == "left shift") + sum(shift_dataframe$Shift == "right shift")
-```
-Nice! Both methods seem to give the EXACT SAME PROTEINS. (Only comparing the number would not guarantee that the proteins are identical, but I try to avoid this using this code.) Explanation: we have 581 TRUE results in our dataframe, meaning in 581 rows (proteins) both criteria are fulfilled. Now we count how many proteins are in total identified as shifters in the maximum peak method: also 581
-```{r}
-#Count how many have been identified using the local fraction comparison method:
-sum(!identical_fractions) #Checks all FALSE (aka shifters) results in the dataframe
-```
-This is A LOT more! Aka the maximum peak shifter only identifies about half of the proteins which the local fraction comparison identifies as shifters.
 
 #### 4.3 Curve quotients comparison
 
@@ -778,7 +769,7 @@ colnames(quotients_using_z) <- "Result"
 # Print the count of "shifter" values
 table(quotients_using_z$Result)["shifter"]
 ```
-Interesting. Wierdly some different shifting proteins (and a lot less) were identified (need for further anaylsis or comparison with known RBPs). For example 5NT3A_HUMAN	is identified as a shifter here, but not in the first two methods. RDeep says it is a shifter though. not that bad so maybe?
+For example 5NT3A_HUMAN	is identified as a shifter here, but not in the first two methods. RDeep says it is a shifter though. not that bad so maybe?
 
 Für Alexandra/k-means analyse: jedes Protein mit maximalen und minimalen Wert? Vllt bringt es was, nicht sicher wie die Daten aussehen müssen damit du k-means anwenden kannst.
 ```{r}
@@ -788,17 +779,14 @@ quotients_minmax <- data.frame("Min" = apply(curve_quotients, 1, min), "Max" = a
 # Print the quotients_minmax dataframe
 print(quotients_minmax)
 ```
-Interesting observation: Here we can see some proteins have 1 as the min and the max value, meaning that after normalization, the graphs are identical and the proteins most definitly not shifters.
 
 
-#### 4.4 y-shift
+#### 4.4 y-shift VERALTET NACH FABIOS ARGUMENTATION
 
-Verkürzter y-shift code (Update: wurde jetzt korrigiert, sollte funktionieren)
 ```{r}
-
-# Function to calculate difference in y-values between global maxima #wo kommt die funktion her?
+# Function to calculate difference in y-values between global maxima
 calculate_maxima_diff <- function(row_name, Mitosis_Ctrl_100, Mitosis_RNase_100) {
-  # Select the specific row from both dataframes #which one?
+  # Select the specific row from both dataframes
   row_data_Ctrl <- Mitosis_Ctrl_mean[row_name, ]
   row_data_RNase <- Mitosis_RNase_mean[row_name, ]
 
@@ -951,25 +939,25 @@ Finde ich besser als die kmeans plots für die Maxima. Aber wir sollten uns übe
 #### 5.1.3. For y-shift
 ```{r}
 #need to generate new dataframe
-  row_global_max_Ctrl2 <- apply(Mitosis_Ctrl_mean, 1, max)
-  row_global_max_RNase2 <- apply(Mitosis_RNase_mean, 1, max)
+  row_global_max_Ctrl <- apply(Mitosis_Ctrl_100, 1, max)
+  row_global_max_RNase <- apply(Mitosis_RNase_100, 1, max)
   
-results_yshift2 <- data.frame(row_global_max_Ctrl2, row_global_max_RNase2)
-show(results_yshift2) 
+results_yshift <- data.frame(row_global_max_Ctrl, row_global_max_RNase)
+show(results_yshift) 
 
-fviz_nbclust(results_yshift2, kmeans, method='silhouette') #optimal number of cluster = 2
+fviz_nbclust(results_yshift, kmeans, method='silhouette') #optimal number of cluster = 2
 
 #then a k-means clustering with the optimal amount of cluster and interpretation
 #visualizing the result of kmeans
-km_y <- kmeans(results_yshift2, centers = 2, nstart = 25)
+km_y <- kmeans(results_yshift, centers = 2, nstart = 25)
 #fviz_cluster(km_y, data = results_yshift2)
 
 # Create a data frame with clustered data and cluster labels
-clustered_data5 <- data.frame(results_yshift2, cluster = as.factor(km_y$cluster))
+clustered_data5 <- data.frame(results_yshift, cluster = as.factor(km_y$cluster))
 show(clustered_data5)
 
 # Create a scatter plot using ggplot
-dotplot5 <- ggplot(clustered_data5, aes(x = row_global_max_Ctrl2, y = row_global_max_RNase2, color = cluster)) +
+dotplot5 <- ggplot(clustered_data5, aes(x = row_global_max_Ctrl, y = row_global_max_RNase, color = cluster)) +
   geom_point() +
   labs(title = "K-means Clustering for y-shift",
        x = "row_data_Ctrl",
@@ -982,15 +970,15 @@ For 3 cluster
 ```{r}
 #then a k-means clustering with the optimal amount of cluster and interpretation
 #visualizing the result of kmeans
-km3_y <- kmeans(results_yshift2, centers = 3, nstart = 25)
-#fviz_cluster(km_y, data = results_yshift2)
+km3_y <- kmeans(results_yshift, centers = 3, nstart = 25)
+#fviz_cluster(km_y, data = results_yshift)
 
 # Create a data frame with clustered data and cluster labels
-clustered_data6 <- data.frame(results_yshift2, cluster = as.factor(km3_y$cluster))
+clustered_data6 <- data.frame(results_yshift, cluster = as.factor(km3_y$cluster))
 show(clustered_data6)
 
 # Create a scatter plot using ggplot
-dotplot6 <- ggplot(clustered_data6, aes(x = row_global_max_Ctrl2, y = row_global_max_RNase2, color = cluster)) +
+dotplot6 <- ggplot(clustered_data6, aes(x = row_global_max_Ctrl, y = row_global_max_RNase, color = cluster)) +
   geom_point() +
   labs(title = "K-means Clustering for y-shift",
        x = "GlobalMax_Ctrl",
@@ -1007,7 +995,7 @@ Lets take a closter look at cluster 2, as those proteins seem to be "extrem y-sh
 cluster_assignments <- km3_y$cluster
 
 # Filter the dataframe based on the cluster assignment
-cluster2_values <- results_yshift2[cluster_assignments == 2, ]
+cluster2_values <- results_yshift[cluster_assignments == 2, ]
 
 # Print the values in Cluster 2
 print(cluster2_values)
@@ -1100,82 +1088,19 @@ Sagt mir halt irgendwie nichts
 
 
 ## 6. Linear Regression
-Idee: columns nach jeder unserer Methoden (4?) und wir finden so sozusagen die beiden Methoden die in größer Übereinstimmung RBPs bestimmt haben und wenden dann auf die LR an
+Idee: columns nach jeder unserer Methoden (4) und wir finden so sozusagen die beiden Methoden die in größer Übereinstimmung RBPs bestimmt haben und wenden dann auf die LR an
 Ich denke das wäre bei uns ziemlich cool, eben weil wir diese verschiedenen Methoden haben
 
 #### 6.1 generate Dataframe
 
-##### 6.1.1 prepare data
-
-```{r}
-#die einzelnen Dataframes skalieren und neuen dataframes zuweisen und im Code danach anpassen
-
-#sc_max_shift <- scale(max_shift, center = FALSE, scale = FALSE)
-#sc_identical_fractions2 <- scale(identical_fractions2, center = FALSE, scale = FALSE)
-#sc_results_yshift <- scale(results_yshift, center = FALSE, scale = FALSE)
-#quotients_max <- data.frame(quotients_minmax$Max)
-#sc_quotients_minmax <- scale(quotients_max, center = FALSE, scale = FALSE)
-
-
-
-#sc_max_shift <- as.data.frame(sapply(max_shift, function(i){(i/apply(max_shift,1,sum))*100}))
-
-#sc_max_shift <- t(apply(max_shift, 1, min_max_scaling))
-#sc_identical_fractions2 <- t(apply(identical_fractions2, 1, min_max_scaling))
-#sc_results_yshift <- t(apply(results_yshift, 1, min_max_scaling))
-#sc_quotients_minmax <- t(apply(quotients_minmax, 1, min_max_scaling))
-```
-
 ```{r}
 max_shift <- Ctrl_fraction_max - RNase_fraction_max
 
-sc_max_shift <- data.frame(apply(max_shift, 2, function(x) {
-  min_val <- min(x)
-  max_val <- max(x)
-  scaled_col <- 1 + 99 * (x - min_val) / (max_val - min_val)
-  return(scaled_col) }))
-print(sc_max_shift)
-  
-sc_identical_fractions2 <- data.frame(apply(identical_fractions2, 2, function(x) {
-  min_val <- min(x)
-  max_val <- max(x)
-  scaled_col2 <- 1 + 99 * (x - min_val) / (max_val - min_val)
-  return(scaled_col2) }))
-print(sc_identical_fractions2)
-
-sc_results_yshift <- data.frame(apply(results_yshift, 2, function(x) {
-  min_val <- min(x)
-  max_val <- max(x)
-  scaled_col3 <- 1 + 99 * (x - min_val) / (max_val - min_val)
-  return(scaled_col3) }))
-print(sc_results_yshift)
-
-
-quotients_max <- data.frame(quotients_minmax$Max)
-sc_quotients_max <- data.frame(apply(quotients_max, 2, function(x) {
-  min_val <- min(x)
-  max_val <- max(x)
-  scaled_col4 <- 1 + 99 * (x - min_val) / (max_val - min_val)
-  return(scaled_col4) }))
-print(sc_quotients_max)
-
-```
-
-In order to generate one big dataframe that sums up the values that we gained in our 4(?) methodes of RBP identification this data has to be brought into the right format
-
-1. Größe des x-shift: max_shift <- Ctrl_fraction_max - RNase_fraction_max
-2. Unterschied in Anzahl local maxima: identical_fractions2$local_shift (ggf problematisch da hier eine verschiebung der local maxima ignoriert wird)
-3. Ausmaß des y-shift: results_yshift$YDiff
-
-ggf. 4. column: maximaler/minimaler Kurven quotient?? Vereinfachend den max wert genommen, da dieser in erster Linie größer und somit ggf aussagekräftiger ist.
-
-
-```{r}
 # Create shift_comparison dataframe
-shift_comparison <- data.frame(max_shift = sc_max_shift,
-                               local_shift = sc_identical_fractions2,
-                               YDiff = sc_results_yshift,
-                               curve_shift = sc_quotients_max,
+shift_comparison <- data.frame(max_shift = max_shift,
+                               local_shift = identical_fractions2$local_shift,
+                               YDiff = results_yshift$YDiff,
+                               curve_shift = quotients_minmax$Max,
                                row.names = row.names(max_shift))
 colnames(shift_comparison)[1] <- "max_shift"
 
@@ -1251,7 +1176,7 @@ Okay, mit der ersten Methode haben wir jetzt einen R Wert von 0.2658505. Das ist
 shift_comparison <- data.frame(max_shift = max_shift,
                                local_shift = identical_fractions2,
                                YDiff = results_yshift,
-                               curve_shift = quotients_max,
+                               curve_shift = quotients_minmax$Max,
                                row.names = row.names(max_shift))
 colnames(shift_comparison)[1] <- "max_shift"
 

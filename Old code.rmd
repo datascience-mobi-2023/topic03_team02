@@ -38,117 +38,6 @@ points(peaks, row_data[peaks], col = "red", pch = 16)
 legend("topright",legend=c("Control mean"),col=c("black"),bg="white",lwd=2)
 ```
 
-#### Gaussian attempt
-
-"Shifters": Laut maiwen SIN3A und CASP7
-"Non-shifters": ASNS (Asparagine synthetase), MCM2 (DNA replication licensing factor MCM2), etc.
-
-```{r gaussian distribution}
-# Step 1: Extract the row you want to fit the Gaussian to
-row_data <- Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100)==c("CASP7_HUMAN")),]
-
-# Step 2: Define the Gaussian function
-gaussian <- function(x, mean, sd, amplitude) {
-  amplitude * dnorm(x, mean, sd)
-}
-
-# Step 3: Define the negative log-likelihood (NLL) function
-nll <- function(params, x, y) {
-  mean <- params[1]
-  sd <- params[2]
-  amplitude <- params[3]
-  
-  y_pred <- gaussian(x, mean, sd, amplitude)
-  -sum(log(y_pred + 1e-10))  # Adding a small value to avoid log(0)
-}
-
-# Step 4: Fit the Gaussian using optimization
-nonzero_data <- row_data[row_data != 0]
-nonzero_indices <- which(row_data != 0)
-
-initial_params <- c(mean = mean(nonzero_data),
-                    sd = sd(nonzero_data),
-                    amplitude = max(nonzero_data))
-
-fitted_params <- optim(par = initial_params,
-                       fn = nll,
-                       x = nonzero_indices,
-                       y = nonzero_data,
-                       method = "L-BFGS-B",
-                       lower = c(-Inf, 0, 0),  # Lower bounds for parameters
-                       upper = c(Inf, Inf, Inf))  # Upper bounds for parameters
-
-mean_fitted <- fitted_params$par[1]
-sd_fitted <- fitted_params$par[2]
-amplitude_fitted <- fitted_params$par[3]
-
-# Step 5: Visualize the original data and the fitted Gaussian
-x_values <- seq(1, length(row_data), length.out = 100)
-y_values <- gaussian(x_values, mean_fitted, sd_fitted, amplitude_fitted)
-
-# Plot the data points and the fitted Gaussian curve
-plot(seq_along(row_data), row_data, type = "p", col = "blue", xlab = "Index", ylab = "Value")
-lines(x_values, y_values, col = "red")
-```
-
-Gauss Graph funktioniert nicht immer, nur bei manchen verteilungen! Vielleicht t-verteilung?
-
-```{r t-distribution}
-# Step 1: Extract the row you want to fit the t-distribution to
-row_data <- Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100) == "CASP7_HUMAN"), ]
-
-# Step 2: Define the t-distribution function
-t_distribution <- function(x, df, mean, scale) {
-  dt((x - mean) / scale, df) / scale
-}
-
-# Step 3: Define the negative log-likelihood (NLL) function
-nll_t <- function(params, x, y) {
-  df <- params[1]
-  mean <- params[2]
-  scale <- params[3]
-  
-  if (df <= 0 || scale <= 0) {
-    return(Inf)  # Return infinite value if parameters are invalid
-  }
-  
-  y_pred <- t_distribution(x, df, mean, scale)
-  -sum(log(y_pred + 1e-10))  # Adding a small value to avoid log(0)
-}
-
-# Step 4: Fit the t-distribution using optimization
-nonzero_data <- row_data[row_data != 0]
-nonzero_indices <- which(row_data != 0)
-
-initial_params <- c(df = 1,
-                    mean = mean(nonzero_data),
-                    scale = sd(nonzero_data))
-
-fitted_params <- optim(par = initial_params,
-                       fn = nll_t,
-                       x = nonzero_indices,
-                       y = nonzero_data,
-                       method = "L-BFGS-B",
-                       lower = c(0.01, -Inf, 0.01),  # Adjust parameter bounds if needed
-                       upper = c(Inf, Inf, Inf))
-
-df_fitted <- fitted_params$par[1]
-mean_fitted <- fitted_params$par[2]
-scale_fitted <- fitted_params$par[3]
-
-# Step 5: Visualize the original data and the fitted t-distribution
-x_values <- seq(1, length(row_data), length.out = 100)
-y_values <- t_distribution(x_values, df_fitted, mean_fitted, scale_fitted)
-
-# Plot the data points and the fitted t-distribution curve
-plot(seq_along(row_data), row_data, type = "p", col = "blue", xlab = "Index", ylab = "Value",ylim=c(0,0.5))
-lines(x_values, y_values, col = "red")
-
-```
-
-Funktioniert schonmal besser... Aber noch immer höchst ungünstig.
-
-
 #### Checking reproducibility with correlation?
 
 -\> NOT RELEVANT IF T-TEST IS ACCEPTED.
@@ -588,4 +477,332 @@ Find_RBD <- function(potential_RBD) {
 }
 ```
 
+## 11. Yshift reste
+
+## 12. Min Max scaling
+
+This would be an alternative to the data scaling to 100 method. We rescale the values to a fixed range, typically between 0 and 1. The scaling process involves subtracting the minimum value from each value in the variable and then dividing by the range (maximum value minus the minimum value). This transformation ensures that all values are proportionally scaled within the specified range.
+
+```{r Min Max scaling}
+# Min-max scaling function
+min_max_scaling <- function(x) {
+  (x - min(x)) / (max(x) - min(x))
+}
+
+# Apply min-max scaling
+Mitosis_Ctrl_MM <- t(apply(Mitosis_Ctrl_mean, 1, min_max_scaling)) #apply function with MARGIN = 1 specifies that the function should be applied to each row (without t() it would be applied on each column). 
+
+#For RNase
+Mitosis_RNase_MM <- t(apply(Mitosis_RNase_mean, 1, min_max_scaling)) 
+
+# Print the scaled data
+head(as.data.frame(Mitosis_Ctrl_MM))
+```
+
+We can later decide which method to chose.
+
+## Visualization
+```{r}
+# Step 1: Extract the row you want to find peaks in
+row_index <- 3388     # Adjust the row index as needed
+row_name <- row.names(Mitosis_Ctrl_100)[row_index] #name of plot adapts depending on protein viewed #also works if Mitosis_RNase_100, bc both dataframes would plot the same protein
+
+# Step 2: Extrakt the data for Ctrl and RNase
+row_data_Ctrl <- Mitosis_Ctrl_100[row_index, ]
+row_data_RNase <- Mitosis_RNase_100[row_index, ]
+
+# Step 3: Find the peaks in the row data
+peaks_Ctrl <- c()
+for (i in 2:(length(row_data_Ctrl) - 1)) {
+  if (row_data_Ctrl[i] > row_data_Ctrl[i-1] && row_data_Ctrl[i] > row_data_Ctrl[i+1]) {
+    peaks_Ctrl <- c(peaks_Ctrl, i)
+  }
+}
+
+peaks_RNase <- c()
+for (i in 2:(length(row_data_RNase) - 1)) {
+  if (row_data_RNase[i] > row_data_RNase[i-1] && row_data_RNase[i] > row_data_RNase[i+1]) {
+    peaks_RNase <- c(peaks_RNase, i)
+  }
+}
+
+# Step 4: Visualize the peaks on a plot
+plot(1:25, Mitosis_Ctrl_100[row_index, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,40), main = row_name)
+points(peaks_Ctrl, row_data_Ctrl[peaks_Ctrl], col = "blue", pch = 16)
+
+lines(1:25, Mitosis_RNase_100[row_index, ], type="l",col="red")
+points(peaks_RNase, row_data_RNase[peaks_RNase], col = "red", pch = 16)
+grid()
+legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
+```
+
+
+#### Index finder (not visualization)
+
+```{r}
+# Row index for which to find the column and value of global maximum
+#Change Index as necessary
+row_index <- 2
+
+# Extract the row from the dataframe
+row <- Mitosis_Ctrl_100[row_index, ]
+
+# Find the column index of the global maximum
+column_index <- which.max(row)
+
+# Find the column name corresponding to the column index
+column_name <- colnames(Mitosis_Ctrl_100)[column_index]
+
+# Find the value corresponding to the column of the global maximum
+value <- row[column_index]
+
+# Find the row name
+row_name <- row.names(Mitosis_Ctrl_100)[row_index]
+
+# Print the column name and value
+print(paste("Protein:", row_name))
+print(paste("Column Name:", column_name))
+print(paste("Value:", value))
+
+```
+
+The same as above, but for a protein name based search :)
+```{r}
+# Row name for which to find the column and value of global maximum
+#Change as necessary
+row_name <- "RBM3_HUMAN"
+
+# Extract the row from the dataframe
+row <- Mitosis_Ctrl_100[row_name, ]
+
+# Find the column index of the global maximum
+column_index <- which.max(row)
+
+# Find the column name corresponding to the column index
+column_name <- colnames(Mitosis_Ctrl_100)[column_index]
+
+# Find the value corresponding to the column of the global maximum
+value <- row[column_index]
+
+# Print the column name and value
+print(paste("Protein:", row_name))
+print(paste("Column Name:", column_name))
+print(paste("Value:", value))
+```
+
+#### Web search RNase peak finder
+"Web search" for protein indices in the RNase Dataframe
+```{r}
+# Row index for which to find the column and value of global maximum
+#Change Index as necessary
+row_index <- 2
+
+# Extract the row from the dataframe
+row <- Mitosis_RNase_100[row_index, ]
+
+# Find the column index of the global maximum
+column_index <- which.max(row)
+
+# Find the column name corresponding to the column index
+column_name <- colnames(Mitosis_RNase_100)[column_index]
+
+# Find the value corresponding to the column of the global maximum
+value <- row[column_index]
+
+# Find the row name
+row_name <- row.names(Mitosis_RNase_100)[row_index]
+
+# Print the column name and value
+print(paste("Protein:", row_name))
+print(paste("Column Name:", column_name))
+print(paste("Value:", value))
+
+```
+
+"Web search" for protein names in the RNase Dataframe
+```{r}
+# Row name for which to find the column and value of global maximum
+#Change as necessary
+row_name <- "2A5E_HUMAN"
+
+# Extract the row from the dataframe
+row <- Mitosis_RNase_100[row_name, ]
+
+# Find the column index of the global maximum
+column_index <- which.max(row)
+
+# Find the column name corresponding to the column index
+column_name <- colnames(Mitosis_RNase_100)[column_index]
+
+# Find the value corresponding to the column of the global maximum
+value <- row[column_index]
+
+# Print the column name and value
+print(paste("Protein:", row_name))
+print(paste("Column Name:", column_name))
+print(paste("Value:", value))
+```
+
+#### useful peak finder?
+
+Overview to know in which fraction the max was found. The vector should then help for further analysis.
+Overview for Ctrl Dataframe.
+```{r}
+# Find the column index of the global maximum for each row
+column_indices <- apply(Mitosis_Ctrl_100, 1, which.max)
+
+# Find the global maximum for each row
+global_maxima <- apply(Mitosis_Ctrl_100, 1, max)
+
+# Find the row names
+row_names <- row.names(Mitosis_Ctrl_100)
+
+# Create a dataframe with the results
+Ctrl_fraction_max_value <- data.frame(Fraction = column_indices, MaxValue = global_maxima)
+Ctrl_fraction_max <- data.frame(Fraction = column_indices)
+
+# Print the results
+#Shows protein name, fraction where global maxima was found and the maximum value
+print(Ctrl_fraction_max_value)
+print(Ctrl_fraction_max)
+
+#Results as vector
+as.vector(Ctrl_fraction_max) #just numbers (aka fractions where max) 
+
+```
+
+Overview RNase Dataframe.
+```{r}
+# Find the column index of the global maximum for each row
+column_indices <- apply(Mitosis_RNase_100, 1, which.max)
+
+# Find the global maximum for each row
+global_maxima <- apply(Mitosis_RNase_100, 1, max)
+
+# Find the row names
+row_names <- row.names(Mitosis_RNase_100)
+
+# Create a dataframe with the results
+RNase_fraction_max_value <- data.frame(Fraction = column_indices, MaxValue = global_maxima)
+RNase_fraction_max <- data.frame(Fraction = column_indices)
+#hier kommt bei mir Fehler raus, da anscheinend unsere Daten unterschiedlich lang sind
+
+# Print the results
+#Shows protein name, fraction where global maxima was found and the maximum value
+print(RNase_fraction_max_value)
+print(RNase_fraction_max)
+
+#Results as vector
+as.vector(RNase_fraction_max) #just numbers (aka fractions where max) 
+
+```
+
+And this is how I imagine we could detect shifts.
+We subtract the value in Ctrl_fraction_max (Ctrl fraction where max) with the value in RNase_fraction_max (RNase fraction where max) . If the result:
+'=' 0: no shift
+'>' 0: (positive number) left shift (normal, bedeutet max fraction bei Control ist größer als max fraction bei RNase)
+'<' 0: (negative number) right shift (ungewöhnlich, bedeutet RNase Fraktion ist größer als Control fraktion, Protein ist irgendwie schwerer geowrden)
+
+
+```{r}
+# Subtract the values and determine the shift
+shift_result <- Ctrl_fraction_max - RNase_fraction_max
+shift_result <- ifelse(shift_result == 0, "no shift", ifelse(shift_result > 0, "left shift", "right shift"))
+
+# Create a new dataframe with the shift result and row names
+shift_dataframe <- data.frame(Shift = shift_result, row.names = row.names(Ctrl_fraction_max))
+colnames(shift_dataframe)[1] <- "Shift"
+
+# Print the new dataframe
+print(shift_dataframe)
+
+#Von Jimena: as.vector(Ctrl_fraction_max) -as.vector(RNase_fraction_max)
+```
+
+```{r}
+# Count the number of left shifts
+sum(shift_dataframe$Shift == "left shift")
+sum(shift_dataframe$Shift == "right shift")
+sum(shift_dataframe$Shift == "no shift")
+```
+Nice :)
+
+## 13. Old data preparation
+
+```{r}
+#die einzelnen Dataframes skalieren und neuen dataframes zuweisen und im Code danach anpassen
+
+#sc_max_shift <- scale(max_shift, center = FALSE, scale = FALSE)
+#sc_identical_fractions2 <- scale(identical_fractions2, center = FALSE, scale = FALSE)
+#sc_results_yshift <- scale(results_yshift, center = FALSE, scale = FALSE)
+#quotients_max <- data.frame(quotients_minmax$Max)
+#sc_quotients_minmax <- scale(quotients_max, center = FALSE, scale = FALSE)
+
+
+
+#sc_max_shift <- as.data.frame(sapply(max_shift, function(i){(i/apply(max_shift,1,sum))*100}))
+
+#sc_max_shift <- t(apply(max_shift, 1, min_max_scaling))
+#sc_identical_fractions2 <- t(apply(identical_fractions2, 1, min_max_scaling))
+#sc_results_yshift <- t(apply(results_yshift, 1, min_max_scaling))
+#sc_quotients_minmax <- t(apply(quotients_minmax, 1, min_max_scaling))
+```
+
+```{r}
+max_shift <- Ctrl_fraction_max - RNase_fraction_max
+
+sc_max_shift <- data.frame(apply(max_shift, 2, function(x) {
+  min_val <- min(x)
+  max_val <- max(x)
+  scaled_col <- 1 + 99 * (x - min_val) / (max_val - min_val)
+  return(scaled_col) }))
+print(sc_max_shift)
+  
+sc_identical_fractions2 <- data.frame(apply(identical_fractions2, 2, function(x) {
+  min_val <- min(x)
+  max_val <- max(x)
+  scaled_col2 <- 1 + 99 * (x - min_val) / (max_val - min_val)
+  return(scaled_col2) }))
+print(sc_identical_fractions2)
+
+sc_results_yshift <- data.frame(apply(results_yshift, 2, function(x) {
+  min_val <- min(x)
+  max_val <- max(x)
+  scaled_col3 <- 1 + 99 * (x - min_val) / (max_val - min_val)
+  return(scaled_col3) }))
+print(sc_results_yshift)
+
+
+quotients_max <- data.frame(quotients_minmax$Max)
+sc_quotients_max <- data.frame(apply(quotients_max, 2, function(x) {
+  min_val <- min(x)
+  max_val <- max(x)
+  scaled_col4 <- 1 + 99 * (x - min_val) / (max_val - min_val)
+  return(scaled_col4) }))
+print(sc_quotients_max)
+
+```
+
+In order to generate one big dataframe that sums up the values that we gained in our 4(?) methodes of RBP identification this data has to be brought into the right format
+
+1. Größe des x-shift: max_shift <- Ctrl_fraction_max - RNase_fraction_max
+2. Unterschied in Anzahl local maxima: identical_fractions2$local_shift (ggf problematisch da hier eine verschiebung der local maxima ignoriert wird)
+3. Ausmaß des y-shift: results_yshift$YDiff
+
+ggf. 4. column: maximaler/minimaler Kurven quotient?? Vereinfachend den max wert genommen, da dieser in erster Linie größer und somit ggf aussagekräftiger ist.
+
+
+```{r}
+# Create shift_comparison dataframe
+shift_comparison <- data.frame(max_shift = sc_max_shift,
+                               local_shift = sc_identical_fractions2,
+                               YDiff = sc_results_yshift,
+                               curve_shift = sc_quotients_max,
+                               row.names = row.names(max_shift))
+colnames(shift_comparison)[1] <- "max_shift"
+
+# Print the shift_comparison dataframe
+print(shift_comparison)
+
+```
 
