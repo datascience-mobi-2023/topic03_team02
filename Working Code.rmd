@@ -547,8 +547,8 @@ nach max shift den Y shift durchführen mit alen proteinen die 0 als max shift h
 ```{r}
 max_shift <- Ctrl_fraction_max - RNase_fraction_max
 
-# select proteins which have 0:
-max_shift_0 <- max_shift[max_shift$Fraction == 0, , drop = FALSE]
+# Assuming 'max_shift' is your data frame with the 'Fraction' column
+max_shift_0 <- max_shift[max_shift$Fraction %in% c(0, 1, -1), , drop = FALSE]
 
 calculate_maxima_diff <- function(row_name, Mitosis_Ctrl_100, Mitosis_RNase_100, max_shift_0) {
   if (row_name %in% rownames(max_shift_0)) {

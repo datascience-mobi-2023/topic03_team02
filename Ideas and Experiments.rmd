@@ -153,8 +153,8 @@ legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd
 ```
 
 ```{r}
-plot(1:25, Mitosis_Ctrl_mean[which(rownames(Mitosis_Ctrl_mean)==c("CASP7_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Absolute Protein Amount",main="CASP7_HUMAN",ylim=c(0,1500000))
-lines(1:25, Mitosis_RNase_mean[which(rownames(Mitosis_RNase_mean)==c("CASP7_HUMAN")),], type="l",lwd=3,col="red")
+plot(1:25, Mitosis_Ctrl_mean[which(rownames(Mitosis_Ctrl_mean)==c("CASP7_HUMAN")),],type="l",lwd=2,col="blue",xlab="Fractions",ylab="Absolute Protein Amount",main="CASP7_HUMAN pre normalization",ylim=c(0,1400000))
+lines(1:25, Mitosis_RNase_mean[which(rownames(Mitosis_RNase_mean)==c("CASP7_HUMAN")),], type="l",lwd=2,col="red")
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
@@ -163,15 +163,15 @@ legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd
 
 Also added ylim
 ```{r}
-plot(1:25, Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100)==c("SIN3B_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="SIN3B_HUMAN Normalized", ylim=c(0,100))
+plot(1:25, Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100)==c("SIN3B_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="SIN3B_HUMAN Normalized", ylim=c(0,80))
 lines(1:25, Mitosis_RNase_100[which(rownames(Mitosis_RNase_100)==c("SIN3B_HUMAN")),], type="l",lwd=3,col="red")
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
 
 ```{r}
-plot(1:25, Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100)==c("TARA_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="TARA_HUMAN Normailzed", ylim=c(0,100))
-lines(1:25, Mitosis_RNase_100[which(rownames(Mitosis_RNase_100)==c("TARA_HUMAN")),], type="l",lwd=3,col="red")
+plot(1:25, Mitosis_Ctrl_100[which(rownames(Mitosis_Ctrl_100)==c("CASP7_HUMAN")),],type="l",lwd=2,col="blue",xlab="Fractions",ylab="Relative Protein Amount",main="CASP7_HUMAN 100 normalized", ylim=c(0,40))
+lines(1:25, Mitosis_RNase_100[which(rownames(Mitosis_RNase_100)==c("CASP7_HUMAN")),], type="l",lwd=2,col="red")
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
@@ -180,8 +180,8 @@ With this last plot we already see a potential problem, as Control and RNase see
 ##### With Normalization (min max scaling) 
 
 ```{r}
-plot(1:25, Mitosis_Ctrl_MM[which(rownames(Mitosis_Ctrl_MM)==c("CASP7_HUMAN")),],type="l",lwd=3,col="blue",xlab="Fractions",ylab="Absolute Protein Amount",main="CASP7_HUMAN MinMax",ylim=c(0,1))
-lines(1:25, Mitosis_RNase_MM[which(rownames(Mitosis_RNase_MM)==c("CASP7_HUMAN")),], type="l",lwd=3,col="red")
+plot(1:25, Mitosis_Ctrl_MM[which(rownames(Mitosis_Ctrl_MM)==c("CASP7_HUMAN")),],type="l",lwd=2,col="blue",xlab="Fractions",ylab="Absolute Protein Amount",main="CASP7_HUMAN MinMax normalized",ylim=c(0,1))
+lines(1:25, Mitosis_RNase_MM[which(rownames(Mitosis_RNase_MM)==c("CASP7_HUMAN")),], type="l",lwd=2,col="red")
 grid()
 legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
 ```
@@ -633,7 +633,7 @@ results_yrbp
 
 ```{r}
 # Step 1: Select a specific row by name
-row_name <- "UTP11_HUMAN" # "ABCA1_HUMAN" (precipitated protein, but still shifter) 'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter) #UTP11_HUMAN (percipitated non shifting protein?) #ehemals problematisch: SQOR_HUMAN
+row_name <- "2A5E_HUMAN" # "ABCA1_HUMAN" (precipitated protein, but still shifter) 'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter) #UTP11_HUMAN (percipitated non shifting protein?) #ehemals problematisch: SQOR_HUMAN #RBM3_HUMAN complicated but cool
 
 #WICHTIG: ABCA1_HUMAN... von welchem verfahren wird dies (wahrscheinlich korrekterweise) als shifter erkannt? Ist aber noch in keiner Datenbank drinnen...
 
@@ -986,12 +986,12 @@ max_shifter_names <- shift_dataframe[shift_dataframe$Shift %in% c("left shift", 
 
 # y shift:
 # Filter rows from y_max_subset where ProteinType is 'RBP':
-rbp_rows <- y_max_subset[y_max_subset$ProteinType == 'RBP',, drop = FALSE ]
+y_rows <- y_max_subset[y_max_subset$ProteinType == 'RBP',, drop = FALSE ]
 
 #COMBINE ROWS WITH MAX SHIFT THIS TOOK AGES
-#colnames(rbp_rows) <- "Shift"
-#rbp_rows$Shift <- ifelse(rbp_rows$Shift == "RBP", "left shift", rbp_rows$Shift)
-#max_shifter_names <- rbind(max_shifter_names, rbp_rows)
+#colnames(y_rows) <- "Shift"
+#y_rows$Shift <- ifelse(y_rows$Shift == "RBP", "left shift", y_rows$Shift)
+#max_shifter_names <- rbind(max_shifter_names, y_rows)
 
 # local shift:
 # Filter rows with FALSE results in the identical_fractions dataframe:
@@ -1000,6 +1000,8 @@ local_shifter_names <- subset(identical_fractions, no_shift == FALSE)
 # curve shift:
 # # Filter rows with "shifter" in the shifting_quotients dataframe:
 curve_shifter_names <- shifting_quotients[shifting_quotients$Curve_shifters == "shifter", , drop = FALSE]
+
+curvez_shifter_names <- quotients_using_z[quotients_using_z$Result == "shifter", , drop = FALSE]
 
 #alternative curve shift methode: 
 #curve_shifter_names <- quotients_using_z[quotients_using_z$Result == "shifter", , drop = FALSE]
@@ -1032,6 +1034,64 @@ grid.newpage()
 grid.draw(venn_result)
 ```
 
+additional test with rdeep values:
+
+```{r}
+library(VennDiagram)
+
+# Extract the row names from each dataframe
+max_shifter_row_names <- rownames(max_shifter_names)
+local_shifter_row_names <- rownames(local_shifter_names)
+curve_shifter_row_names <- rownames(curve_shifter_names)
+RBP_row_names <- rownames(comparison_RBP)
+
+# Create the Venn diagram
+venn_result <- venn.diagram(
+  x = list(max_shifter_row_names, local_shifter_row_names, curve_shifter_row_names, RBP_row_names),
+  category.names = c("Max Shifters", "Local Shifters", "Curve Shifters", "RDeep shifters"),
+  filename = NULL,  # Set filename to NULL to prevent saving as an image file
+  fill = c("dodgerblue", "darkorange", "springgreen", "red"),  # Specify colors for the diagram elements
+  alpha = 0.5,  # Set transparency for the overlapping areas
+  cex = 1.5  # Increase the font size
+)
+
+# Print the Venn diagram
+grid.newpage()
+grid.draw(venn_result)
+```
+
+Testen ob ich z test überhaupt nehmen darf -> eher nein
+```{r}
+# Convert the table to a vector
+values <- unlist(curve_quotients)
+qqnorm(values)
+qqline(values)
+```
+
+
+Direct test with rdeep values one on one
+
+```{r}
+library(VennDiagram)
+
+# Extract the row names from each dataframe
+curvez_shifter_row_names <- rownames(curvez_shifter_names)
+RBP_row_names <- rownames(comparison_RBP)
+
+# Create the Venn diagram
+venn_result <- venn.diagram(
+  x = list(curvez_shifter_row_names, RBP_row_names),
+  category.names = c("Curvez Shifters", "RDeep shifters"),
+  filename = NULL,  # Set filename to NULL to prevent saving as an image file
+  fill = c("dodgerblue", "red"),  # Specify colors for the diagram elements
+  alpha = 0.5,  # Set transparency for the overlapping areas
+  cex = 1.5  # Increase the font size
+)
+
+# Print the Venn diagram
+grid.newpage()
+grid.draw(venn_result)
+```
 
 OLD thingey to generate the PNG picture
 ```{r}
@@ -1049,33 +1109,6 @@ venn_result <- venn.diagram(
   category.names = c("Max Shifters", "Local Shifters", "Curve Shifters"),
   filename = "venn_diagram.png"  # Optional: Specify the filename to save the diagram as an image
 )
-```
-
-additional test with rdeep values:
-
-```{r}
-library(VennDiagram)
-
-# Extract the row names from each dataframe
-max_shifter_row_names <- rownames(max_shifter_names)
-local_shifter_row_names <- rownames(local_shifter_names)
-curve_shifter_row_names <- rownames(curve_shifter_names)
-RBP_row_names <- rownames(comparison_RBP)
-#rbp_rows_names <- rownames(rbp_rows)
-
-# Create the Venn diagram
-venn_result <- venn.diagram(
-  x = list(max_shifter_row_names, local_shifter_row_names, curve_shifter_row_names, RBP_row_names),
-  category.names = c("Max Shifters", "Local Shifters", "Curve Shifters", "RDeep shifters"),
-  filename = NULL,  # Set filename to NULL to prevent saving as an image file
-  fill = c("dodgerblue", "darkorange", "springgreen", "red"),  # Specify colors for the diagram elements
-  alpha = 0.5,  # Set transparency for the overlapping areas
-  cex = 1.5  # Increase the font size
-)
-
-# Print the Venn diagram
-grid.newpage()
-grid.draw(venn_result)
 ```
 
 #### 4.3 alter vergleich: Comparing local with absolute maxima
