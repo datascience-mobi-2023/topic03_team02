@@ -633,7 +633,8 @@ results_yrbp
 
 ```{r}
 # Step 1: Select a specific row by name
-row_name <- "2A5E_HUMAN" # "ABCA1_HUMAN" (precipitated protein, but still shifter) 'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter) #UTP11_HUMAN (percipitated non shifting protein?) #ehemals problematisch: SQOR_HUMAN #RBM3_HUMAN complicated but cool
+row_name <- "ABCB7_HUMAN" # "ABCA1_HUMAN" (precipitated protein, but still shifter) 'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter) #UTP11_HUMAN (percipitated non shifting protein?) #ehemals problematisch: SQOR_HUMAN #RBM3_HUMAN complicated but cool
+#3HIDH_HUMAN und ABCB7_HUMAN Y SHIFTER
 
 #WICHTIG: ABCA1_HUMAN... von welchem verfahren wird dies (wahrscheinlich korrekterweise) als shifter erkannt? Ist aber noch in keiner Datenbank drinnen...
 
@@ -657,7 +658,7 @@ for (i in 2:(length(row_data_RNase) - 1)) {
 }
 
 # Step 4: Visualize the peaks on a plot
-plot(1:25, Mitosis_Ctrl_100[row_name, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,60), main = row_name)
+plot(1:25, Mitosis_Ctrl_100[row_name, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,30), main = row_name)
 points(peaks_Ctrl, row_data_Ctrl[peaks_Ctrl], col = "blue", pch = 16)
 
 lines(1:25, Mitosis_RNase_100[row_name, ], type="l",col="red")
