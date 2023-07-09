@@ -1173,7 +1173,6 @@ Mhm. Sieht noch ziemlich sketchy aus, aber es ist ein erstes Ergebnis.
 Okay, mit der ersten Methode haben wir jetzt einen R Wert von 0.2658505. Das ist nicht wirklich gut genug. Im folgenden 2 dataframe, die dann jeweils auch shift_comparison heißen. Dementsprechend immer den chunk des DF vor den Finden der beiden columns mit der höchsten linearen Beziehung ausführen.
 
 ```{r}
-
 shift_comparison <- data.frame(max_shift = max_shift,
                                local_shift = identical_fractions2,
                                YDiff = results_yshift,
@@ -1187,17 +1186,18 @@ print(shift_comparison)
 
 ```{r}
 #first adadpted dataframe will have the columns independently scaled to 100
-# Assuming your dataframe is called 'df'
 
-# Apply min-max scaling to each column
+# Apply separate scaling to each column
 shift_comparison <- as.data.frame(apply(shift_comparison, 2, function(x) {
   min_val <- min(x, na.rm = TRUE)
   max_val <- max(x, na.rm = TRUE)
-  scaled <- (x - min_val) / (max_val - min_val) * 100
+  scaled <- (x - min_val) / (max_val - min_val)
+  scaled <- ifelse(is.na(x), NA, scaled)  # Preserve NA values
+  scaled <- scaled * 100  # Scale to the range of 0 to 100
   scaled
 }))
 
-# Print the scaled dataframe
+# Print the original and scaled dataframes
 print(shift_comparison)
 
 #also der R-Wert beträgt noch immer 0.2658505
@@ -1207,5 +1207,21 @@ print(shift_comparison)
 
 ```{r}
 # if that isnt enough the second dataframe will set all RBPs that we identyfied as 1 and all non-RBP as 0. For first two that would mean those with a value are set 1. For other two we take respective threshold and set those 1 that met criteria to be RBP and 0 those who do not met the threshold
-```
 
+# Create a new dataframes
+new_df <- as.data.frame(ifelse(max_shift == 0, 0, 1))
+
+new_df2 <- as.data.frame(ifelse(identical_fractions == TRUE, 0, 1))
+
+
+
+shift_comparison <- data.frame(max_shift = new_df,
+                               local_shift = new_df2,
+                               YDiff = results_yshift,
+                               curve_shift = quotients_minmax$Max,
+                               row.names = row.names(max_shift))
+colnames(shift_comparison)[1] <- "max_shift"
+
+print(shift_comparison)
+
+```
