@@ -988,7 +988,6 @@ Okay, mit der ersten Methode haben wir jetzt einen R Wert von 0.2658505. Das ist
 ```{r}
 shift_comparison <- data.frame(max_shift = max_shift,
                                local_shift = identical_fractions2,
-                               YDiff = results_yshift,
                                curve_shift = quotients_minmax$Max,
                                row.names = row.names(max_shift))
 colnames(shift_comparison)[1] <- "max_shift"
@@ -1029,10 +1028,10 @@ new_df2 <- as.data.frame(ifelse(identical_fractions == TRUE, 0, 1))
 
 shift_comparison <- data.frame(max_shift = new_df,
                                local_shift = new_df2,
-                               YDiff = results_yshift,
                                curve_shift = quotients_minmax$Max,
                                row.names = row.names(max_shift))
 colnames(shift_comparison)[1] <- "max_shift"
+colnames(shift_comparison)[2] <- "local_shift"
 
 print(shift_comparison)
 
