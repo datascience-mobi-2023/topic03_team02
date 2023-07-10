@@ -806,3 +806,160 @@ print(shift_comparison)
 
 ```
 
+
+
+## 5. Statistical analysis
+### 5.1 kmeans
+#### 5.1.3. For y-shift
+```{r}
+#need to generate new dataframe
+  row_global_max_Ctrl <- apply(Mitosis_Ctrl_100, 1, max)
+  row_global_max_RNase <- apply(Mitosis_RNase_100, 1, max)
+  
+results_yshift2 <- data.frame(row_global_max_Ctrl, row_global_max_RNase)
+show(results_yshift2) 
+
+fviz_nbclust(results_yshift2, kmeans, method='silhouette') #optimal number of cluster = 2
+
+#then a k-means clustering with the optimal amount of cluster and interpretation
+#visualizing the result of kmeans
+km_y <- kmeans(results_yshift2, centers = 2, nstart = 25)
+#fviz_cluster(km_y, data = results_yshift2)
+
+# Create a data frame with clustered data and cluster labels
+clustered_data5 <- data.frame(results_yshift2, cluster = as.factor(km_y$cluster))
+show(clustered_data5)
+
+# Create a scatter plot using ggplot
+dotplot5 <- ggplot(clustered_data5, aes(x = row_global_max_Ctrl, y = row_global_max_RNase, color = cluster)) +
+  geom_point() +
+  labs(title = "K-means Clustering for y-shift",
+       x = "row_data_Ctrl",
+       y = "row_data_RNase",
+       color = "Cluster")
+
+plot(dotplot5)
+```
+
+For 3 cluster
+```{r}
+#then a k-means clustering with the optimal amount of cluster and interpretation
+#visualizing the result of kmeans
+km3_y <- kmeans(results_yshift, centers = 3, nstart = 25)
+#fviz_cluster(km_y, data = results_yshift)
+
+# Create a data frame with clustered data and cluster labels
+clustered_data6 <- data.frame(results_yshift, cluster = as.factor(km3_y$cluster))
+show(clustered_data6)
+
+# Create a scatter plot using ggplot
+dotplot6 <- ggplot(clustered_data6, aes(x = row_global_max_Ctrl, y = row_global_max_RNase, color = cluster)) +
+  geom_point() +
+  labs(title = "K-means Clustering for y-shift",
+       x = "GlobalMax_Ctrl",
+       y = "GlobalMax_RNase",
+       color = "Cluster")
+
+plot(dotplot6)
+```
+
+###### 5.1.3.1 Description of cluster 2
+
+Lets take a closter look at cluster 2, as those proteins seem to be "extrem y-shifters"
+```{r}
+# Extract the cluster assignments from the kmeans_result object
+cluster_assignments <- km3_y$cluster
+
+# Filter the dataframe based on the cluster assignment
+cluster2_values <- results_yshift[cluster_assignments == 2, ]
+
+# Print the values in Cluster 2
+print(cluster2_values)
+
+# Count the number of values in Cluster 2
+num_cluster2_values <- nrow(cluster2_values)
+
+# Print the count
+print(num_cluster2_values)
+```
+
+So we have 4 "extrem y-shifters". Lets take a look at them
+
+```{r}
+# Step 1: Extract the row you want to find peaks in
+row_index <- 4269     # Adjust the row index as needed
+row_name <- row.names(Mitosis_Ctrl_100)[row_index] #name of plot adapts depending on protein viewed #also works if Mitosis_RNase_100, bc both dataframes would plot the same protein
+
+# Step 2: Extrakt the data for Ctrl and RNase
+row_data_Ctrl <- Mitosis_Ctrl_100[row_index, ]
+row_data_RNase <- Mitosis_RNase_100[row_index, ]
+
+# Step 3: Find the peaks in the row data
+peaks_Ctrl <- c()
+for (i in 2:(length(row_data_Ctrl) - 1)) {
+  if (row_data_Ctrl[i] > row_data_Ctrl[i-1] && row_data_Ctrl[i] > row_data_Ctrl[i+1]) {
+    peaks_Ctrl <- c(peaks_Ctrl, i)
+  }
+}
+
+peaks_RNase <- c()
+for (i in 2:(length(row_data_RNase) - 1)) {
+  if (row_data_RNase[i] > row_data_RNase[i-1] && row_data_RNase[i] > row_data_RNase[i+1]) {
+    peaks_RNase <- c(peaks_RNase, i)
+  }
+}
+
+# Step 4: Visualize the peaks on a plot
+plot(1:25, Mitosis_Ctrl_100[row_index, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,40), main = row_name)
+points(peaks_Ctrl, row_data_Ctrl[peaks_Ctrl], col = "blue", pch = 16)
+
+lines(1:25, Mitosis_RNase_100[row_index, ], type="l",col="red")
+points(peaks_RNase, row_data_RNase[peaks_RNase], col = "red", pch = 16)
+grid()
+legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
+```
+
+
+Auf diesen Grafiken sieht das auf jeden Fall nicht nach extrem-shifters auf
+
+### other correlation
+```{r}
+# Compute the distance matrix
+distance_matrix <- dist(maximum_fraction)
+
+# Perform hierarchical clustering
+hclust_result <- hclust(distance_matrix)
+
+# Cut the dendrogram into clusters
+num_clusters <- 3  # Specify the desired number of clusters
+clusters <- cutree(hclust_result, k = num_clusters)
+
+# Plot the dendrogram with customized options
+plot(hclust_result, main = "Hierarchical Clustering Dendrogram",
+     xlab = "Observations", ylab = "Distance",
+     labels = FALSE, hang = -1, cex = 0.8)
+
+# Add labels to the leaves of the dendrogram
+#labels <- rownames(maximum_fraction)  
+#text(x = seq_along(labels), y = par("usr")[3] - 0.1, labels = labels,
+     #srt = 90, adj = c(1, 0.5), xpd = TRUE, cex = 0.6)
+
+# Add cluster labels to the plot
+rect.hclust(hclust_result, k = num_clusters, border = 2:4)
+
+# Create an empty list to store split data
+split_data <- list()
+
+# Split each column based on cluster assignments
+for (col in colnames(maximum_fraction)) {
+  split_data[[col]] <- split(maximum_fraction[[col]], as.factor(clusters))
+}
+
+# Create a dataframe with each cluster as a column
+cluster_dataframe <- do.call(cbind, split_data)
+
+# Print the cluster dataframe
+print(cluster_dataframe)
+
+
+```
