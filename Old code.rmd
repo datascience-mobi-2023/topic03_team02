@@ -807,6 +807,43 @@ print(shift_comparison)
 ```
 
 
+#### 4.4 y-shift VERALTET NACH FABIOS ARGUMENTATION
+
+```{r}
+# Function to calculate difference in y-values between global maxima
+calculate_maxima_diff <- function(row_name, Mitosis_Ctrl_100, Mitosis_RNase_100) {
+  # Select the specific row from both dataframes
+  row_data_Ctrl <- Mitosis_Ctrl_mean[row_name, ]
+  row_data_RNase <- Mitosis_RNase_mean[row_name, ]
+
+  # Find the global maximum from the selected row in df1
+  row_global_max_Ctrl <- max(row_data_Ctrl)
+
+  # Find the global maximum from the selected row in df2
+  row_global_max_RNase <- max(row_data_RNase)
+
+  # Calculate the difference in y-values between the global maxima
+  y_diff <- row_global_max_Ctrl - row_global_max_RNase
+
+  # Return the difference in y-values
+  return(y_diff)
+}
+
+# Get the row names of df1
+row_names <- rownames(Mitosis_Ctrl_mean)
+
+# Apply the function to each row name
+results <- sapply(row_names, calculate_maxima_diff)
+
+# Create a dataframe with only the differences in y-values
+results_yshift <- data.frame(YDiff = results)
+
+# Print the results
+print(results_yshift) #results as Dataframe - columns showing protein name and the difference 
+
+#as.vector(results_yshift) #results as vector - maybe better to work with afterwards, if needed
+```
+
 
 ## 5. Statistical analysis
 ### 5.1 kmeans
