@@ -858,7 +858,7 @@ show(quotients_minmax)
 fviz_nbclust(quotients_minmax, kmeans, method='silhouette') #optimal number of cluster = 2
 
 #then a k-means clustering with the optimal amount of cluster and interpretation
-km_q <- kmeans(quotients_minmax, centers = 2, nstart = 25, algorithm = "MacQueen")
+km_q <- kmeans(quotients_minmax, centers = 2, nstart = 25)
 
 #visualizing the result of kmeans
 km_q
