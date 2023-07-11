@@ -854,84 +854,9 @@ comparison_non_RBP = read.csv("https://www.dropbox.com/s/cgbrvponhw7arpt/Table_H
 comparison_non_RBP = comparison_non_RBP[order(row.names(comparison_non_RBP)),]
 
 # View the loaded data
-head(comparison_RBP)
+head(comparison_non_RBP)
 ```
 
-Werte des aus den geladenen Tabellen nun in unseren shift_comparison datensatz laden (um Überschneidungen zu vermeiden habe ich einen neuen, namenähnlichen Datensatz erstellt.)
-```{r}
-shift_comparison_RBP2go <- shift_comparison
-shift_comparison_RBP2go[, 5] = NA
-colnames(shift_comparison_RBP2go) = c(colnames(shift_comparison_RBP2go)[-5], "RBP2GO_Score")
-
-shift_comparison_RBP2go[which(rownames(shift_comparison_RBP2go) %in% rownames(comparison_RBP)), 5] = comparison_RBP[which(rownames(comparison_RBP) %in% rownames(shift_comparison_RBP2go)), 3]
-
-shift_comparison_RBP2go[which(rownames(shift_comparison_RBP2go) %in% rownames(comparison_non_RBP)), 5] = comparison_non_RBP[which(rownames(comparison_non_RBP) %in% rownames(shift_comparison_RBP2go)), 3]
-
-head(shift_comparison_RBP2go) #nice, klappt alles!
-```
-
-Frage ist jetzt, was wir damit sagen. dieser RBP2Go score gibt uns an, mit welcher Sicherheit die jeweiligen Proteine RBPs sind. 
--> Random Idee: Summe der RBP2Go scores von den von uns als RBP identifizierten Proteinen zusammenaddieren und die mit der der Summe der non-RBPs vergleichen... Idealerweise wäre die erste Summe deutlich größer. GGf je nach Methode einzeln? Dafür müsste man nochmal den Datenframe bei paar Methoden verändern though.
-
--> oder irgendetwas wie Marcel mit diesen True positive und false negative erstellen. ggf im Tutorium nachfragen. --> wurde begonnen bisschen! Indem man schaut in welchen tabellen die Proteine beide vorkommen. Siehe unten.
-
-Vergleich RBP2go scores im max-shift.
-
-Änderung von vorger: anwendung des richtigen Kriteriums, zudem geteilt durch die anzahl der Zeilen die reinaddiert wurden:
-
-```{r}
-# Calculate the sums based on conditions
-non_zero_sum <- sum(shift_comparison_RBP2go[, 5][shift_comparison_RBP2go[, 1] != 0 & shift_comparison_RBP2go[, 1] != 1 & shift_comparison_RBP2go[, 1] != -1], na.rm = TRUE)
-other_sum <- sum(shift_comparison_RBP2go[, 5][shift_comparison_RBP2go[, 1] == 0 | shift_comparison_RBP2go[, 1] == 1 | shift_comparison_RBP2go[, 1] == -1], na.rm = TRUE)
-
-# Count the number of rows meeting the specific criteria
-non_zero_rows <- sum(shift_comparison_RBP2go[, 1] != 0 & shift_comparison_RBP2go[, 1] != 1 & shift_comparison_RBP2go[, 1] != -1)
-other_rows <- sum(shift_comparison_RBP2go[, 1] == 0 | shift_comparison_RBP2go[, 1] == 1 | shift_comparison_RBP2go[, 1] == -1)
-
-# Calculate the division
-non_zero_avg <- non_zero_sum / non_zero_rows
-other_avg <- other_sum / other_rows
-
-# Print the sums and division results
-cat("Sum of fifth column values when first column is not equal to zero, one, or minus one:", non_zero_sum, "\n")
-cat("Number of rows meeting the specific criteria:", non_zero_rows, "\n")
-cat("Average of fifth column values when first column is not equal to zero, one, or minus one:", non_zero_avg, "\n")
-
-cat("\n")
-
-cat("Sum of fifth column values when first column is equal to zero, one, or minus one:", other_sum, "\n")
-cat("Number of rows meeting the specific criteria:", other_rows, "\n")
-cat("Average of fifth column values when first column is equal to zero, one, or minus one:", other_avg, "\n")
-```
-Hier klappt es! Der mittlere RBP Wert von non-shifters ist deutlich geringer als der RBP Wert von shiftern! Yay!
-
-Gleiches Prozedere mit 50% grenze und den Curve_shifters:
-
-```{r}
-# Calculate the sums based on conditions
-shifter_sum <- sum(shift_comparison_RBP2go[, 5][rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] == "shifter"], na.rm = TRUE)
-not_shifter_sum <- sum(shift_comparison_RBP2go[, 5][rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] != "shifter"], na.rm = TRUE)
-
-# Count the number of rows meeting the specific criteria
-shifter_rows <- sum(rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] == "shifter")
-not_shifter_rows <- sum(rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] != "shifter")
-
-# Calculate the division
-shifter_avg <- shifter_sum / shifter_rows
-not_shifter_avg <- not_shifter_sum / not_shifter_rows
-
-# Print the sums and division results
-cat("Sum of fifth column values for rows with 'shifter' result in shifting_quotients:", shifter_sum, "\n")
-cat("Number of rows meeting the 'shifter' criteria:", shifter_rows, "\n")
-cat("Average of fifth column values for rows with 'shifter' result in shifting_quotients:", shifter_avg, "\n")
-
-cat("\n")
-
-cat("Sum of fifth column values for rows with 'not shifter' result in shifting_quotients:", not_shifter_sum, "\n")
-cat("Number of rows meeting the 'not shifter' criteria:", not_shifter_rows, "\n")
-cat("Average of fifth column values for rows with 'not shifter' result in shifting_quotients:", not_shifter_avg, "\n")
-```
-Mhm, scheint weniger genau. Aber dies ist noch keine tragfähige Aussage.
 
 ## Von Fabio vorgeschlagener Vergleich:
 

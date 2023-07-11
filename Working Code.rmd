@@ -368,8 +368,8 @@ head(Mitosis_RNase_100)
 
 
 ```{r Clean environment}
-#I think it's time to clean up the environment to maintain an overview
-rm(nonzero_rows, column_values,max_values_Ctrl,max_values_RNase,p_values_Ctrl,p_values_RNase,RDeeP_HeLa_Mitosis_p,bad_proteins10,bad_proteins10wierd,num_sets,p_values,protein1_Ctrl_frac1,protein8_Ctrl_frac1,bad_proteins5,i,num_sets,RDeeP_HeLa_Mitosis_Ctrl,RDeeP_HeLa_Mitosis_RNase)
+# Clean up the environment of variables not used later to maintain an overview
+rm(nonzero_rows, column_values,max_values_Ctrl,max_values_RNase,p_values_Ctrl,p_values_RNase,RDeeP_HeLa_Mitosis_p,bad_proteins10,bad_proteins10wierd,num_sets,p_values,protein1_Ctrl_frac1,protein8_Ctrl_frac1,bad_proteins5,i,RDeeP_HeLa_Mitosis_Ctrl,RDeeP_HeLa_Mitosis_RNase)
 ```
 
 ## 3. Visualization
@@ -381,7 +381,7 @@ This code helps us visualize one specific protein
 ```{r}
 # Step 1: Extract the row you want to find peaks in
 row_index <- 6  # Adjust the row index as needed
-row_name <- row.names(Mitosis_Ctrl_100)[row_index] #name of plot adapts depending on protein viewed #also works if Mitosis_RNase_100, bc both dataframes would plot the same protein
+row_name <- row.names(Mitosis_Ctrl_100)[row_index] #name of plot adapts depending on protein viewed
 
 # Step 2: Extrakt the data for Ctrl and RNase
 row_data_Ctrl <- Mitosis_Ctrl_100[row_index, ]
@@ -418,7 +418,7 @@ View a protein and its peak using the protein name
 
 ```{r}
 # Step 1: Select a specific row by name
-row_name <- "2A5E_HUMAN" # "ABCA1_HUMAN" (precipitated protein, but still shifter) 'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter) #UTP11_HUMAN (percipitated non shifting protein?) #ehemals problematisch: SQOR_HUMAN
+row_name <- "2A5E_HUMAN" # "ABCA1_HUMAN" (precipitated protein, but still shifter) ABT1_HUMAN (right shifter) #ABCF1_HUMAN and RBM3_HUMAN (left shifter) #UTP11_HUMAN (percipitated non shifting protein?) #ehemals problematisch: SQOR_HUMAN
 
 # Step 2: Find the peaks for Ctrl in the row data
 row_data_Ctrl <- Mitosis_Ctrl_100[row_name, ]
@@ -451,10 +451,8 @@ legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd
 
 ## 4. Different shift finders
 
-#### 4.1 Peak finder (only absolute maxima)
+#### 4.1 Max shift: Global Peak finder
 
-Overview to know in which fraction the max was found. The vector should then help for further analysis.
-Overview for Ctrl Dataframe.
 ```{r Peak finder Ctrl}
 # Find the column index of the global maximum for each row
 column_indices <- apply(Mitosis_Ctrl_100, 1, which.max)
@@ -475,7 +473,7 @@ print(Ctrl_fraction_max_value)
 print(Ctrl_fraction_max)
 
 #Results as vector
-#as.vector(Ctrl_fraction_max) #just numbers (aka fractions where max) 
+#as.vector(Ctrl_fraction_max)
 
 ```
 
@@ -494,8 +492,6 @@ row_names <- row.names(Mitosis_RNase_100)
 # Create a dataframe with the results
 RNase_fraction_max_value <- data.frame(Fraction = column_indices, MaxValue = global_maxima)
 RNase_fraction_max <- data.frame(Fraction = column_indices)
-#hier kommt bei mir Fehler raus, da anscheinend unsere Daten unterschiedlich lang sind
-#Bei mir passt alles? Ist das noch aktuell? Wenn nein kommentare gern löschen - Verena
 
 # Print the results
 # Shows protein name, fraction where global maxima was found and the maximum value
@@ -503,13 +499,13 @@ print(RNase_fraction_max_value)
 print(RNase_fraction_max)
 
 #Results as vector
-#as.vector(RNase_fraction_max) #just numbers (aka fractions where max) 
+#as.vector(RNase_fraction_max)
 ```
 
 We subtract the value in Ctrl_fraction_max (Ctrl fraction where max) with the value in RNase_fraction_max (RNase fraction where max) . If the result:
 '=' 0: no shift
-'>' 0: (positive number) left shift (normal, bedeutet max fraction bei Control ist größer als max fraction bei RNase)
-'<' 0: (negative number) right shift (meist eher ungewöhnlich, bedeutet RNase Fraktion ist größer als Control fraktion, Protein ist irgendwie schwerer geowrden)
+'>' 1: left shift (max fraction in Control larger than max fraction in RNase)
+'<' -1: right shift (max fraction in Control larger than max fraction in RNase)
 
 ```{r Peak assigner}
 # Subtract the values and determine the shift
@@ -529,7 +525,7 @@ colnames(shift_dataframe)[1] <- "Shift"
 # Print the new dataframe
 print(shift_dataframe)
 
-shift_dataframe["RBM3_HUMAN",] #RBM3 is a sure shifter, siehe graph etc. (aber auch komplex)
+shift_dataframe["RBM3_HUMAN",] #RBM3 is a sure right shifter, as a check for the method
 ```
 
 ```{r}
@@ -540,9 +536,9 @@ sum(shift_dataframe$Shift == "no shift")
 
 sum(shift_dataframe$Shift == "left shift") + sum(shift_dataframe$Shift == "right shift")
 ```
-##### 4.1.1 logischer y-shift
+##### 4.1.1  y-shift for partial shifter
 
-nach max shift den Y shift durchführen mit alen proteinen die 0 als max shift hatten und somit weitere partial shifter identifizieren.
+After the max shift, we execute a y shift on all proteins which had 0, 1 or -1 shifts in the first part (no significant max shift). This allows us to identify additional partial shifter.
 
 ```{r}
 max_shift <- Ctrl_fraction_max - RNase_fraction_max
@@ -587,14 +583,15 @@ sum(y_max_subset$ProteinType == 'RBP') #503 additional partial shifters identifi
 
 #### 4.2 Local maxima
 
-Next step would to further analyse our left shift and right shift proteins.
+Next step would to further analyse our proteins with all their local peaks.
 
-For our shift proteins, we now want to compare all the location of the absolute and local maxima in Control and RNase with each other. Here, we save the column indices of Mitosis_RNase_100, with all maxima, no matter local or absolute, in a new dataframe (RNase_maxima) and repeat this process with Mitosis_Ctrl_100. 
+We now want to compare the location of all (absolute and local) maxima in Control and RNase with each other. Here, we save the column indices of Mitosis_RNase_100, with all maxima, no matter local or absolute, in a new dataframe (RNase_maxima) and repeat this process with Mitosis_Ctrl_100. 
 
-Then we compare if all peaks found in RNA are identical to all peaks found in Control (by comparing the column indices of the peaks). If they are identical, the condition results in TRUE, otherwise FALSE.
+Then we compare if all peaks found in RNA are identical to all peaks found in Control (by comparing the column indices of the peaks). If they are identical, the condition results in TRUE, otherwise FALSE. 
 
 TRUE: no shift, because all local maxima are identical
 FALSE: shifter -> change of amount or location of maxima
+
 ```{r}
 # Create an empty vector to store the results
 results <- vector("logical", nrow(Mitosis_Ctrl_100))
@@ -639,13 +636,12 @@ identical_fractions["SQOR_HUMAN",] #-> FALSE, thus this protein is rightly ident
 sum(identical_fractions$no_shift == FALSE) #-> 1570 proteins are identified as shifters
 ```
 
-We get TRUE results for all NO SHIFT proteins, meaning they have identical local and absolute maxima. 
 
-##### 4.2.1 Local Maxima code for kmean und linear regression 
+##### 4.2.1 Local Maxima code for kmeans and linear regression 
 
-Dieser Code identifiziert nur die Anzahl der local shifts und wurde nur für das kmeans und linear regression gebracht
+This code only identifies the number of local shifts and is only used for kmeans and linear regression later.
 
---> Hier wird jedoch nicht ein shift in den local maxima betrachtet, sondern nur ob mehr entstehen oder welche verschwinden zwischen Control und RNase. Dadurch werden ziemlich viele Proteine vernachlässigt, genauer gesagt 1570-900, also 670 Proteine werden dadurch nicht aufgeführt... Evt. später anpassen.
+Here, the only thing which can be rightly quantified and thus considered, is how many local maxima appear or which disappear between control and RNase. The question whether the fractions of these peaks are identical cannot be quantified directly and thus is left out. As a result, quite a few proteins are neglected, more precisely 670 proteins are not listed (proteins with same amount of peaks but which are found in different fractions).
 
 ```{r}
 # Create an empty vector to store the results
@@ -678,6 +674,13 @@ for (i in 1:nrow(Mitosis_Ctrl_100)) {
   
   # Store the difference in the results vector
   results[i] <- diff_peaks
+  
+  # Compare the peaks between Ctrl and RNase
+  #if (diff_peaks == 0 && !identical(peaks_Ctrl, peaks_RNase)) {
+   # results[i] <- 1
+  #} else {
+    #NULL
+    #}
 }
 
 # Create a data frame with the results
