@@ -477,9 +477,85 @@ Find_RBD <- function(potential_RBD) {
 }
 ```
 
-## 11. Yshift reste
+## 10.1 RBP COMP.
+Werte des aus den geladenen Tabellen nun in unseren shift_comparison datensatz laden (um Überschneidungen zu vermeiden habe ich einen neuen, namenähnlichen Datensatz erstellt.)
+```{r}
+shift_comparison_RBP2go <- shift_comparison
+shift_comparison_RBP2go[, 5] = NA
+colnames(shift_comparison_RBP2go) = c(colnames(shift_comparison_RBP2go)[-5], "RBP2GO_Score")
 
-## 12. Min Max scaling
+shift_comparison_RBP2go[which(rownames(shift_comparison_RBP2go) %in% rownames(comparison_RBP)), 5] = comparison_RBP[which(rownames(comparison_RBP) %in% rownames(shift_comparison_RBP2go)), 3]
+
+shift_comparison_RBP2go[which(rownames(shift_comparison_RBP2go) %in% rownames(comparison_non_RBP)), 5] = comparison_non_RBP[which(rownames(comparison_non_RBP) %in% rownames(shift_comparison_RBP2go)), 3]
+
+head(shift_comparison_RBP2go) #nice, klappt alles!
+```
+
+Frage ist jetzt, was wir damit sagen. dieser RBP2Go score gibt uns an, mit welcher Sicherheit die jeweiligen Proteine RBPs sind. 
+-> Random Idee: Summe der RBP2Go scores von den von uns als RBP identifizierten Proteinen zusammenaddieren und die mit der der Summe der non-RBPs vergleichen... Idealerweise wäre die erste Summe deutlich größer. GGf je nach Methode einzeln? Dafür müsste man nochmal den Datenframe bei paar Methoden verändern though.
+
+-> oder irgendetwas wie Marcel mit diesen True positive und false negative erstellen. ggf im Tutorium nachfragen. --> wurde begonnen bisschen! Indem man schaut in welchen tabellen die Proteine beide vorkommen. Siehe unten.
+
+Vergleich RBP2go scores im max-shift.
+
+Änderung von vorger: anwendung des richtigen Kriteriums, zudem geteilt durch die anzahl der Zeilen die reinaddiert wurden:
+
+```{r}
+# Calculate the sums based on conditions
+non_zero_sum <- sum(shift_comparison_RBP2go[, 5][shift_comparison_RBP2go[, 1] != 0 & shift_comparison_RBP2go[, 1] != 1 & shift_comparison_RBP2go[, 1] != -1], na.rm = TRUE)
+other_sum <- sum(shift_comparison_RBP2go[, 5][shift_comparison_RBP2go[, 1] == 0 | shift_comparison_RBP2go[, 1] == 1 | shift_comparison_RBP2go[, 1] == -1], na.rm = TRUE)
+
+# Count the number of rows meeting the specific criteria
+non_zero_rows <- sum(shift_comparison_RBP2go[, 1] != 0 & shift_comparison_RBP2go[, 1] != 1 & shift_comparison_RBP2go[, 1] != -1)
+other_rows <- sum(shift_comparison_RBP2go[, 1] == 0 | shift_comparison_RBP2go[, 1] == 1 | shift_comparison_RBP2go[, 1] == -1)
+
+# Calculate the division
+non_zero_avg <- non_zero_sum / non_zero_rows
+other_avg <- other_sum / other_rows
+
+# Print the sums and division results
+cat("Sum of fifth column values when first column is not equal to zero, one, or minus one:", non_zero_sum, "\n")
+cat("Number of rows meeting the specific criteria:", non_zero_rows, "\n")
+cat("Average of fifth column values when first column is not equal to zero, one, or minus one:", non_zero_avg, "\n")
+
+cat("\n")
+
+cat("Sum of fifth column values when first column is equal to zero, one, or minus one:", other_sum, "\n")
+cat("Number of rows meeting the specific criteria:", other_rows, "\n")
+cat("Average of fifth column values when first column is equal to zero, one, or minus one:", other_avg, "\n")
+```
+Hier klappt es! Der mittlere RBP Wert von non-shifters ist deutlich geringer als der RBP Wert von shiftern! Yay!
+
+Gleiches Prozedere mit 50% grenze und den Curve_shifters:
+
+```{r}
+# Calculate the sums based on conditions
+shifter_sum <- sum(shift_comparison_RBP2go[, 5][rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] == "shifter"], na.rm = TRUE)
+not_shifter_sum <- sum(shift_comparison_RBP2go[, 5][rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] != "shifter"], na.rm = TRUE)
+
+# Count the number of rows meeting the specific criteria
+shifter_rows <- sum(rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] == "shifter")
+not_shifter_rows <- sum(rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] != "shifter")
+
+# Calculate the division
+shifter_avg <- shifter_sum / shifter_rows
+not_shifter_avg <- not_shifter_sum / not_shifter_rows
+
+# Print the sums and division results
+cat("Sum of fifth column values for rows with 'shifter' result in shifting_quotients:", shifter_sum, "\n")
+cat("Number of rows meeting the 'shifter' criteria:", shifter_rows, "\n")
+cat("Average of fifth column values for rows with 'shifter' result in shifting_quotients:", shifter_avg, "\n")
+
+cat("\n")
+
+cat("Sum of fifth column values for rows with 'not shifter' result in shifting_quotients:", not_shifter_sum, "\n")
+cat("Number of rows meeting the 'not shifter' criteria:", not_shifter_rows, "\n")
+cat("Average of fifth column values for rows with 'not shifter' result in shifting_quotients:", not_shifter_avg, "\n")
+```
+Mhm, scheint weniger genau. Aber dies ist noch keine tragfähige Aussage.
+
+
+## 11. Min Max scaling
 
 This would be an alternative to the data scaling to 100 method. We rescale the values to a fixed range, typically between 0 and 1. The scaling process involves subtracting the minimum value from each value in the variable and then dividing by the range (maximum value minus the minimum value). This transformation ensures that all values are proportionally scaled within the specified range.
 
@@ -501,7 +577,7 @@ head(as.data.frame(Mitosis_Ctrl_MM))
 
 We can later decide which method to chose.
 
-## Visualization
+## 12. Visualization
 ```{r}
 # Step 1: Extract the row you want to find peaks in
 row_index <- 3388     # Adjust the row index as needed
@@ -537,7 +613,7 @@ legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd
 ```
 
 
-#### Index finder (not visualization)
+#### 12.1 Index finder 
 
 ```{r}
 # Row index for which to find the column and value of global maximum
@@ -590,7 +666,8 @@ print(paste("Column Name:", column_name))
 print(paste("Value:", value))
 ```
 
-#### Web search RNase peak finder
+#### 12.2 Web search RNase and Control peak finder
+
 "Web search" for protein indices in the RNase Dataframe
 ```{r}
 # Row index for which to find the column and value of global maximum
@@ -791,6 +868,51 @@ In order to generate one big dataframe that sums up the values that we gained in
 
 ggf. 4. column: maximaler/minimaler Kurven quotient?? Vereinfachend den max wert genommen, da dieser in erster Linie größer und somit ggf aussagekräftiger ist.
 
+Testen ob ich z test überhaupt nehmen darf -> eher nein
+```{r}
+# Convert the table to a vector
+values <- unlist(curve_quotients)
+qqnorm(values)
+qqline(values)
+```
+
+## 14 alter curve z shift
+Alternative method to determine shifters via z-test (t test doesnt work bc in some rows the values do not vary enough). The z-test is a statistical test that compares a sample mean to a population mean, assuming a known standard deviation. It identifies values that significantly deviate from the expected value based on the given confidence interval.
+```{r}
+# Create a function to perform z-test for each value
+perform_z_test <- function(value) {
+  z_score <- (value - 1) / sd_value  # Calculate the z-score
+  
+  if (abs(z_score) > #1.96) {  # Assuming 95% confidence interval. If the absolute value of the z-score is greater than 1.96, it indicates that the value significantly differs from the expectation value.
+                    1.645) {  # Assuming 90% confidence interval. The bigger the confidence interval, the more proteins are identified as shifters.
+    return("shifter")
+  } else {
+    return("no shifter")
+  }
+}
+
+# Calculate the standard deviation across the entire dataframe
+sd_value <- sd(as.matrix(curve_quotients)) #shifter abhängig auch von der sd, hier über den gesamten Datensatz eine sd von 0.361562, je kleiner, desto näher nimmt man an sind die Werte aneinander, je größer, desto weiter entfernt.
+
+# Apply the z-test function to each value in the dataframe
+quotients_using_z <- apply(curve_quotients, 1, function(row) {
+  result <- sapply(row, perform_z_test)
+  if ("shifter" %in% result) {
+    return("shifter")
+  } else {
+    return("no shifter")
+  }
+})
+
+quotients_using_z <- data.frame(quotients_using_z)
+colnames(quotients_using_z) <- "Result"
+```
+
+```{r}
+# Print the count of "shifter" values
+table(quotients_using_z$Result)["shifter"]
+```
+For example 5NT3A_HUMAN	is identified as a shifter here, but not in the first two methods. RDeep says it is a shifter though. not that bad so maybe?
 
 ```{r}
 # Create shift_comparison dataframe

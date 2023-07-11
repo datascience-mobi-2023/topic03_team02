@@ -633,7 +633,7 @@ results_yrbp
 
 ```{r}
 # Step 1: Select a specific row by name
-row_name <- "ABCB7_HUMAN" # "ABCA1_HUMAN" (precipitated protein, but still shifter) 'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter) #UTP11_HUMAN (percipitated non shifting protein?) #ehemals problematisch: SQOR_HUMAN #RBM3_HUMAN complicated but cool
+row_name <- "PELO_HUMAN" # "ABCA1_HUMAN" (precipitated protein, but still shifter) 'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter) #UTP11_HUMAN (percipitated non shifting protein?) #ehemals problematisch: SQOR_HUMAN #RBM3_HUMAN complicated but cool, # PHLB2_HUMAN SOSSC_HUMAN CURVE SHIFTER
 #3HIDH_HUMAN und ABCB7_HUMAN Y SHIFTER
 
 #WICHTIG: ABCA1_HUMAN... von welchem verfahren wird dies (wahrscheinlich korrekterweise) als shifter erkannt? Ist aber noch in keiner Datenbank drinnen...
@@ -658,7 +658,7 @@ for (i in 2:(length(row_data_RNase) - 1)) {
 }
 
 # Step 4: Visualize the peaks on a plot
-plot(1:25, Mitosis_Ctrl_100[row_name, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,30), main = row_name)
+plot(1:25, Mitosis_Ctrl_100[row_name, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,50), main = row_name)
 points(peaks_Ctrl, row_data_Ctrl[peaks_Ctrl], col = "blue", pch = 16)
 
 lines(1:25, Mitosis_RNase_100[row_name, ], type="l",col="red")
@@ -854,84 +854,9 @@ comparison_non_RBP = read.csv("https://www.dropbox.com/s/cgbrvponhw7arpt/Table_H
 comparison_non_RBP = comparison_non_RBP[order(row.names(comparison_non_RBP)),]
 
 # View the loaded data
-head(comparison_RBP)
+head(comparison_non_RBP)
 ```
 
-Werte des aus den geladenen Tabellen nun in unseren shift_comparison datensatz laden (um Überschneidungen zu vermeiden habe ich einen neuen, namenähnlichen Datensatz erstellt.)
-```{r}
-shift_comparison_RBP2go <- shift_comparison
-shift_comparison_RBP2go[, 5] = NA
-colnames(shift_comparison_RBP2go) = c(colnames(shift_comparison_RBP2go)[-5], "RBP2GO_Score")
-
-shift_comparison_RBP2go[which(rownames(shift_comparison_RBP2go) %in% rownames(comparison_RBP)), 5] = comparison_RBP[which(rownames(comparison_RBP) %in% rownames(shift_comparison_RBP2go)), 3]
-
-shift_comparison_RBP2go[which(rownames(shift_comparison_RBP2go) %in% rownames(comparison_non_RBP)), 5] = comparison_non_RBP[which(rownames(comparison_non_RBP) %in% rownames(shift_comparison_RBP2go)), 3]
-
-head(shift_comparison_RBP2go) #nice, klappt alles!
-```
-
-Frage ist jetzt, was wir damit sagen. dieser RBP2Go score gibt uns an, mit welcher Sicherheit die jeweiligen Proteine RBPs sind. 
--> Random Idee: Summe der RBP2Go scores von den von uns als RBP identifizierten Proteinen zusammenaddieren und die mit der der Summe der non-RBPs vergleichen... Idealerweise wäre die erste Summe deutlich größer. GGf je nach Methode einzeln? Dafür müsste man nochmal den Datenframe bei paar Methoden verändern though.
-
--> oder irgendetwas wie Marcel mit diesen True positive und false negative erstellen. ggf im Tutorium nachfragen. --> wurde begonnen bisschen! Indem man schaut in welchen tabellen die Proteine beide vorkommen. Siehe unten.
-
-Vergleich RBP2go scores im max-shift.
-
-Änderung von vorger: anwendung des richtigen Kriteriums, zudem geteilt durch die anzahl der Zeilen die reinaddiert wurden:
-
-```{r}
-# Calculate the sums based on conditions
-non_zero_sum <- sum(shift_comparison_RBP2go[, 5][shift_comparison_RBP2go[, 1] != 0 & shift_comparison_RBP2go[, 1] != 1 & shift_comparison_RBP2go[, 1] != -1], na.rm = TRUE)
-other_sum <- sum(shift_comparison_RBP2go[, 5][shift_comparison_RBP2go[, 1] == 0 | shift_comparison_RBP2go[, 1] == 1 | shift_comparison_RBP2go[, 1] == -1], na.rm = TRUE)
-
-# Count the number of rows meeting the specific criteria
-non_zero_rows <- sum(shift_comparison_RBP2go[, 1] != 0 & shift_comparison_RBP2go[, 1] != 1 & shift_comparison_RBP2go[, 1] != -1)
-other_rows <- sum(shift_comparison_RBP2go[, 1] == 0 | shift_comparison_RBP2go[, 1] == 1 | shift_comparison_RBP2go[, 1] == -1)
-
-# Calculate the division
-non_zero_avg <- non_zero_sum / non_zero_rows
-other_avg <- other_sum / other_rows
-
-# Print the sums and division results
-cat("Sum of fifth column values when first column is not equal to zero, one, or minus one:", non_zero_sum, "\n")
-cat("Number of rows meeting the specific criteria:", non_zero_rows, "\n")
-cat("Average of fifth column values when first column is not equal to zero, one, or minus one:", non_zero_avg, "\n")
-
-cat("\n")
-
-cat("Sum of fifth column values when first column is equal to zero, one, or minus one:", other_sum, "\n")
-cat("Number of rows meeting the specific criteria:", other_rows, "\n")
-cat("Average of fifth column values when first column is equal to zero, one, or minus one:", other_avg, "\n")
-```
-Hier klappt es! Der mittlere RBP Wert von non-shifters ist deutlich geringer als der RBP Wert von shiftern! Yay!
-
-Gleiches Prozedere mit 50% grenze und den Curve_shifters:
-
-```{r}
-# Calculate the sums based on conditions
-shifter_sum <- sum(shift_comparison_RBP2go[, 5][rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] == "shifter"], na.rm = TRUE)
-not_shifter_sum <- sum(shift_comparison_RBP2go[, 5][rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] != "shifter"], na.rm = TRUE)
-
-# Count the number of rows meeting the specific criteria
-shifter_rows <- sum(rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] == "shifter")
-not_shifter_rows <- sum(rownames(shift_comparison_RBP2go) %in% rownames(shifting_quotients) & shifting_quotients[, "Curve_shifters"] != "shifter")
-
-# Calculate the division
-shifter_avg <- shifter_sum / shifter_rows
-not_shifter_avg <- not_shifter_sum / not_shifter_rows
-
-# Print the sums and division results
-cat("Sum of fifth column values for rows with 'shifter' result in shifting_quotients:", shifter_sum, "\n")
-cat("Number of rows meeting the 'shifter' criteria:", shifter_rows, "\n")
-cat("Average of fifth column values for rows with 'shifter' result in shifting_quotients:", shifter_avg, "\n")
-
-cat("\n")
-
-cat("Sum of fifth column values for rows with 'not shifter' result in shifting_quotients:", not_shifter_sum, "\n")
-cat("Number of rows meeting the 'not shifter' criteria:", not_shifter_rows, "\n")
-cat("Average of fifth column values for rows with 'not shifter' result in shifting_quotients:", not_shifter_avg, "\n")
-```
-Mhm, scheint weniger genau. Aber dies ist noch keine tragfähige Aussage.
 
 ## Von Fabio vorgeschlagener Vergleich:
 
@@ -990,9 +915,9 @@ max_shifter_names <- shift_dataframe[shift_dataframe$Shift %in% c("left shift", 
 y_rows <- y_max_subset[y_max_subset$ProteinType == 'RBP',, drop = FALSE ]
 
 #COMBINE ROWS WITH MAX SHIFT THIS TOOK AGES
-#colnames(y_rows) <- "Shift"
-#y_rows$Shift <- ifelse(y_rows$Shift == "RBP", "left shift", y_rows$Shift)
-#max_shifter_names <- rbind(max_shifter_names, y_rows)
+colnames(y_rows) <- "Shift"
+y_rows$Shift <- ifelse(y_rows$Shift == "RBP", "left shift", y_rows$Shift)
+max_shifter_names <- rbind(max_shifter_names, y_rows)
 
 # local shift:
 # Filter rows with FALSE results in the identical_fractions dataframe:
@@ -1012,7 +937,7 @@ curvez_shifter_names <- quotients_using_z[quotients_using_z$Result == "shifter",
 
 Now trying a Venn-Diagramm
 ```{r}
-install.packages("VennDiagram")
+#install.packages("VennDiagram")
 library(VennDiagram)
 
 # Extract the row names from each dataframe
@@ -1023,9 +948,9 @@ curve_shifter_row_names <- rownames(curve_shifter_names)
 # Create the Venn diagram
 venn_result <- venn.diagram(
   x = list(max_shifter_row_names, local_shifter_row_names, curve_shifter_row_names),
-  category.names = c("Max Shifters", "Local Shifters", "Curve Shifters"),
+  category.names = c("Max & Y Shifters", "Local Shifters", "Curve Shifters"),
   filename = NULL,  # Set filename to NULL to prevent saving as an image file
-  fill = c("dodgerblue", "darkorange", "springgreen"),  # Specify colors for the diagram elements
+  fill = c("dodgerblue", "firebrick1", "darkgoldenrod1"),  # Specify colors for the diagram elements
   alpha = 0.5,  # Set transparency for the overlapping areas
   cex = 1.5  # Increase the font size
 )
@@ -1044,14 +969,15 @@ library(VennDiagram)
 max_shifter_row_names <- rownames(max_shifter_names)
 local_shifter_row_names <- rownames(local_shifter_names)
 curve_shifter_row_names <- rownames(curve_shifter_names)
+#y_row_names <- rownames(y_rows)
 RBP_row_names <- rownames(comparison_RBP)
 
 # Create the Venn diagram
 venn_result <- venn.diagram(
   x = list(max_shifter_row_names, local_shifter_row_names, curve_shifter_row_names, RBP_row_names),
-  category.names = c("Max Shifters", "Local Shifters", "Curve Shifters", "RDeep shifters"),
+  category.names = c("Max Shifters", "Local Shifters", "Curve Shifters", "RBP2GO shifters"),
   filename = NULL,  # Set filename to NULL to prevent saving as an image file
-  fill = c("dodgerblue", "darkorange", "springgreen", "red"),  # Specify colors for the diagram elements
+  fill = c("dodgerblue", "firebrick1", "darkgoldenrod1", "springgreen"),  # Specify colors for the diagram elements
   alpha = 0.5,  # Set transparency for the overlapping areas
   cex = 1.5  # Increase the font size
 )
@@ -1061,13 +987,6 @@ grid.newpage()
 grid.draw(venn_result)
 ```
 
-Testen ob ich z test überhaupt nehmen darf -> eher nein
-```{r}
-# Convert the table to a vector
-values <- unlist(curve_quotients)
-qqnorm(values)
-qqline(values)
-```
 
 
 Direct test with rdeep values one on one
@@ -1076,15 +995,15 @@ Direct test with rdeep values one on one
 library(VennDiagram)
 
 # Extract the row names from each dataframe
-curvez_shifter_row_names <- rownames(curvez_shifter_names)
+local_shifter_row_names <- rownames(local_shifter_names)
 RBP_row_names <- rownames(comparison_RBP)
 
 # Create the Venn diagram
 venn_result <- venn.diagram(
-  x = list(curvez_shifter_row_names, RBP_row_names),
-  category.names = c("Curvez Shifters", "RDeep shifters"),
+  x = list(local_shifter_row_names, RBP_row_names),
+  category.names = c(" ", " "),
   filename = NULL,  # Set filename to NULL to prevent saving as an image file
-  fill = c("dodgerblue", "red"),  # Specify colors for the diagram elements
+  fill = c("dodgerblue", "firebrick1"),  # Specify colors for the diagram elements
   alpha = 0.5,  # Set transparency for the overlapping areas
   cex = 1.5  # Increase the font size
 )
@@ -1093,6 +1012,20 @@ venn_result <- venn.diagram(
 grid.newpage()
 grid.draw(venn_result)
 ```
+
+```{r}
+# Find the common row names in max_shifter_row_names and RBP_row_names
+common_row_names <- intersect(curve_shifter_row_names, RBP_row_names)
+
+# Find the row names that are not present in local_shifter_row_names and curve_shifter_row_names
+desired_row_names <- setdiff(common_row_names, union(local_shifter_row_names, max_shifter_row_names))
+
+# Print the desired row names
+print(desired_row_names)
+length(desired_row_names)
+```
+
+
 
 OLD thingey to generate the PNG picture
 ```{r}
