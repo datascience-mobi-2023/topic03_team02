@@ -675,12 +675,12 @@ for (i in 1:nrow(Mitosis_Ctrl_100)) {
   # Store the difference in the results vector
   results[i] <- diff_peaks
   
-  # Compare the peaks between Ctrl and RNase
-  #if (diff_peaks == 0 && !identical(peaks_Ctrl, peaks_RNase)) {
-   # results[i] <- 1
-  #} else {
-    #NULL
-    #}
+  #Compare the peaks between Ctrl and RNase
+  if (diff_peaks == 0 && !identical(peaks_Ctrl, peaks_RNase)) {
+    results[i] <- 1
+  } else {
+    NULL
+    }
 }
 
 # Create a data frame with the results
@@ -989,10 +989,11 @@ new_df <- as.data.frame(ifelse(max_shift == 0, 0, 1))
 
 new_df2 <- as.data.frame(ifelse(identical_fractions == TRUE, 0, 1))
 
+new_df3 <- ifelse(quotients_minmax$Max == 1, 1, 0)
 
 shift_comparison <- data.frame(max_shift = new_df,
                                local_shift = new_df2,
-                               curve_shift = quotients_minmax$Max,
+                               curve_shift = new_df3,
                                row.names = row.names(max_shift))
 colnames(shift_comparison)[1] <- "max_shift"
 colnames(shift_comparison)[2] <- "local_shift"
