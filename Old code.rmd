@@ -868,6 +868,51 @@ In order to generate one big dataframe that sums up the values that we gained in
 
 ggf. 4. column: maximaler/minimaler Kurven quotient?? Vereinfachend den max wert genommen, da dieser in erster Linie größer und somit ggf aussagekräftiger ist.
 
+Testen ob ich z test überhaupt nehmen darf -> eher nein
+```{r}
+# Convert the table to a vector
+values <- unlist(curve_quotients)
+qqnorm(values)
+qqline(values)
+```
+
+## 14 alter curve z shift
+Alternative method to determine shifters via z-test (t test doesnt work bc in some rows the values do not vary enough). The z-test is a statistical test that compares a sample mean to a population mean, assuming a known standard deviation. It identifies values that significantly deviate from the expected value based on the given confidence interval.
+```{r}
+# Create a function to perform z-test for each value
+perform_z_test <- function(value) {
+  z_score <- (value - 1) / sd_value  # Calculate the z-score
+  
+  if (abs(z_score) > #1.96) {  # Assuming 95% confidence interval. If the absolute value of the z-score is greater than 1.96, it indicates that the value significantly differs from the expectation value.
+                    1.645) {  # Assuming 90% confidence interval. The bigger the confidence interval, the more proteins are identified as shifters.
+    return("shifter")
+  } else {
+    return("no shifter")
+  }
+}
+
+# Calculate the standard deviation across the entire dataframe
+sd_value <- sd(as.matrix(curve_quotients)) #shifter abhängig auch von der sd, hier über den gesamten Datensatz eine sd von 0.361562, je kleiner, desto näher nimmt man an sind die Werte aneinander, je größer, desto weiter entfernt.
+
+# Apply the z-test function to each value in the dataframe
+quotients_using_z <- apply(curve_quotients, 1, function(row) {
+  result <- sapply(row, perform_z_test)
+  if ("shifter" %in% result) {
+    return("shifter")
+  } else {
+    return("no shifter")
+  }
+})
+
+quotients_using_z <- data.frame(quotients_using_z)
+colnames(quotients_using_z) <- "Result"
+```
+
+```{r}
+# Print the count of "shifter" values
+table(quotients_using_z$Result)["shifter"]
+```
+For example 5NT3A_HUMAN	is identified as a shifter here, but not in the first two methods. RDeep says it is a shifter though. not that bad so maybe?
 
 ```{r}
 # Create shift_comparison dataframe

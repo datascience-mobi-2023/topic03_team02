@@ -503,9 +503,9 @@ print(RNase_fraction_max)
 ```
 
 We subtract the value in Ctrl_fraction_max (Ctrl fraction where max) with the value in RNase_fraction_max (RNase fraction where max) . If the result:
-'=' 0: no shift
-'>' 1: left shift (max fraction in Control larger than max fraction in RNase)
-'<' -1: right shift (max fraction in Control larger than max fraction in RNase)
+'=','>-1'and'<1' 0: no shift
+'>1': left shift (max fraction in Control larger than max fraction in RNase)
+'<-1': right shift (max fraction in Control larger than max fraction in RNase)
 
 ```{r Peak assigner}
 # Subtract the values and determine the shift
@@ -707,12 +707,10 @@ row.names(curve_quotients) <- row.names(Mitosis_Ctrl_100)
 print(curve_quotients)
 ```
 
-Hier bedeutet ein Wert von 1 eine komplette Übereinstimmung. Je mehr richtung null, desto größer ist der RNase Wert im Vergleich zum Control wert (aka RNase peak), je näher richtung 2, 3, 4 etc, desto größer ist der Ctrl Wert (aka Ctrl peak).
+Here a value of 1 means identical values. The closer to zero, the higher the RNase value compared to the control value (aka RNase peak), the closer to 2, 3, 4 etc, the higher the Ctrl value (aka Ctrl peak).
 
-Eine Möglichkeit jetzt wäre zu sagen, wir gucken welche proteine im Quotienten einen Wert tiefer als 0,8 haben, also eine abweichung um 25% (z.B. : Ctrl=4, und RNase=4 * 1,25, also 25% größer, und 4/(4 * 1,25) =0,8). Oder eben einen Wert größer als 1,25. Dann würden wir diese Proteine als shifter definieren.
---> Hier sind paar zu viele shifter identifiziert worden
-Alternativ: Werte weichen um 60% ab, dann Werte kleiner als 0,625 und Werte größer als 1,6. 
---> Hier ist fast nichts mehr ein shifter.
+Now we look at which proteins in the quotient have a value lower than 0.8, i.e. a deviation of 25% (e.g. : proteins with values greater than 1.25 would be assigned as shifters.) -> a lot of proteins are identified, possibly falsly including several statistcal fluctuations and identifying them as shifters
+--> 70% is a much more reliable margin.
 
 ```{r}
 # Create the shifting_quotients dataframe
@@ -731,50 +729,13 @@ shifting_quotients["RBM3_HUMAN",] #RBM3 is a sure shifter, but a bit complex
 ```
 This seems like an interesting alternative way to anaylse the proteins! For example 41_HUMAN is now identified as RBP, which was not the case in previous methods, and accoriding to RDeep it is really an RBP! So lets see what we do with this information.
 
-Additional shifter count:
+Shifter count:
 ```{r}
 sum(shifting_quotients$"Curve_shifters" == "shifter")
 ```
-This is A LOT OF SHIFTERS, even more than in the local shifter! Maybe we still have to adjust the threshold.
 
-Alternative method to determine shifters via z-test (t test doesnt work bc in some rows the values do not vary enough). The z-test is a statistical test that compares a sample mean to a population mean, assuming a known standard deviation. It identifies values that significantly deviate from the expected value based on the given confidence interval.
-```{r}
-# Create a function to perform z-test for each value
-perform_z_test <- function(value) {
-  z_score <- (value - 1) / sd_value  # Calculate the z-score
-  
-  if (abs(z_score) > #1.96) {  # Assuming 95% confidence interval. If the absolute value of the z-score is greater than 1.96, it indicates that the value significantly differs from the expectation value.
-                    1.645) {  # Assuming 90% confidence interval. The bigger the confidence interval, the more proteins are identified as shifters.
-    return("shifter")
-  } else {
-    return("no shifter")
-  }
-}
+For k-means analyse: save the minimal and maximal quotient value for each protein in a new table. 
 
-# Calculate the standard deviation across the entire dataframe
-sd_value <- sd(as.matrix(curve_quotients)) #shifter abhängig auch von der sd, hier über den gesamten Datensatz eine sd von 0.361562, je kleiner, desto näher nimmt man an sind die Werte aneinander, je größer, desto weiter entfernt.
-
-# Apply the z-test function to each value in the dataframe
-quotients_using_z <- apply(curve_quotients, 1, function(row) {
-  result <- sapply(row, perform_z_test)
-  if ("shifter" %in% result) {
-    return("shifter")
-  } else {
-    return("no shifter")
-  }
-})
-
-quotients_using_z <- data.frame(quotients_using_z)
-colnames(quotients_using_z) <- "Result"
-```
-
-```{r}
-# Print the count of "shifter" values
-table(quotients_using_z$Result)["shifter"]
-```
-For example 5NT3A_HUMAN	is identified as a shifter here, but not in the first two methods. RDeep says it is a shifter though. not that bad so maybe?
-
-Für Alexandra/k-means analyse: jedes Protein mit maximalen und minimalen Wert? Vllt bringt es was, nicht sicher wie die Daten aussehen müssen damit du k-means anwenden kannst.
 ```{r}
 # Calculate the minimum and maximum values for each row in curve_quotients
 quotients_minmax <- data.frame("Min" = apply(curve_quotients, 1, min), "Max" = apply(curve_quotients, 1, max), row.names = row.names(curve_quotients))
