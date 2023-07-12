@@ -660,6 +660,7 @@ for (i in 2:(length(row_data_RNase) - 1)) {
 # Step 4: Visualize the peaks on a plot
 plot(1:25, Mitosis_Ctrl_100[row_name, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,50), main = row_name)
 points(peaks_Ctrl, row_data_Ctrl[peaks_Ctrl], col = "blue", pch = 16)
+#main= paste(row_name, "no y shift", collapse = "")
 
 lines(1:25, Mitosis_RNase_100[row_name, ], type="l",col="red")
 points(peaks_RNase, row_data_RNase[peaks_RNase], col = "red", pch = 16)
