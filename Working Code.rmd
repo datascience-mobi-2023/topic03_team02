@@ -637,7 +637,7 @@ sum(identical_fractions$no_shift == FALSE) #-> 1570 proteins are identified as s
 ```
 
 
-##### 4.2.1 Local Maxima code for kmeans and linear regression 
+##### 4.2.1 Local Maxima code and linear regression 
 
 This code quantifies the local shifts and is only used for kmeans and linear regression later. In order to do this I select all proteins which do not have any differences in the local peaks, and then assign the value 1 for all proteins in this subcategory which have different column indexes in their peaks. If the peak number AND all column indexes are identical, the proteins have the value 0. If we only take the difference in numbers of overall peaks, quite a few proteins are neglected, more precisely 670 proteins are not listed (proteins with same amount of peaks but which are found in different fractions). Using this method, we can quantify the local shift for later evaluation in the linear regression. 
 
