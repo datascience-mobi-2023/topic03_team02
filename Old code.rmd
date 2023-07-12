@@ -1120,5 +1120,15 @@ cluster_dataframe <- do.call(cbind, split_data)
 # Print the cluster dataframe
 print(cluster_dataframe)
 
-
 ```
+
+```{r}
+#Rows in which both Control and RNase p-values exceed 5%:
+#bad_proteins5 <- which(RDeeP_HeLa_Mitosis_p[, 151] > 0.05 & RDeeP_HeLa_Mitosis_p[, 152] > 0.05)
+#length(bad_proteins5)
+
+#Alternative 5%/10% BUT THIS RESULTS IN ANTOHER VALUE, WHY? I DO NOT KNOW.
+#bad_proteins5 <- which(RDeeP_HeLa_Mitosis_p[, 151:152] > 0.05)
+bad_proteins10wierd <- which(RDeeP_HeLa_Mitosis_p[, 151:152] > 0.1)
+```
+
