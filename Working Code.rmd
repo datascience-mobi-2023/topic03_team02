@@ -941,6 +941,10 @@ ggplot(data, aes(x = x, y = y)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, color = "blue") +
   labs(title = "Linear Regression", x = best_col1_name, y = best_col2_name)
+
+#Calculation of the root mean square error
+print("The RMSE is")
+rmse(model,data)
 ```
 
 Mhm. Sieht noch ziemlich sketchy aus, aber es ist ein erstes Ergebnis. 
@@ -985,20 +989,20 @@ print(shift_comparison)
 # if that isnt enough the second dataframe will set all RBPs that we identyfied as 1 and all non-RBP as 0. For first two that would mean those with a value are set 1. For other two we take respective threshold and set those 1 that met criteria to be RBP and 0 those who do not met the threshold
 
 # Create a new dataframes
-new_df <- as.data.frame(ifelse(max_shift == 0, 0, 1))
+#new_df <- as.data.frame(ifelse(max_shift == 0, 0, 1))
 
-new_df2 <- as.data.frame(ifelse(identical_fractions == TRUE, 0, 1))
+#new_df2 <- as.data.frame(ifelse(identical_fractions == TRUE, 0, 1))
 
-new_df3 <- ifelse(quotients_minmax$Max == 1, 1, 0)
+#new_df3 <- ifelse(quotients_minmax$Max == 1, 1, 0)
 
-shift_comparison <- data.frame(max_shift = new_df,
-                               local_shift = new_df2,
-                               curve_shift = new_df3,
-                               row.names = row.names(max_shift))
-colnames(shift_comparison)[1] <- "max_shift"
-colnames(shift_comparison)[2] <- "local_shift"
+#shift_comparison <- data.frame(max_shift = new_df,
+                               #local_shift = new_df2,
+                               #curve_shift = new_df3,
+                               #row.names = row.names(max_shift))
+#colnames(shift_comparison)[1] <- "max_shift"
+#colnames(shift_comparison)[2] <- "local_shift"
 
-print(shift_comparison)
+#print(shift_comparison)
 
 ```
 
@@ -1013,6 +1017,6 @@ qqplot(qnorm(ppoints(length(residuals))), residuals,
        xlab = "Theoretical Quantiles",
        ylab = "Standardized Residuals",
        main = "QQ Plot of Linear Model")
-abline(a = 0, b = 1, col = "red", lwd = 2)
+abline(a = 0, b = 1, col = "blue", lwd = 2)
 ```
 
