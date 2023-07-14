@@ -51,17 +51,13 @@ print(RDeeP_HeLa_Mitosis["KLD10_HUMAN",])
 RDeeP_HeLa_Mitosis <- RDeeP_HeLa_Mitosis[-which(rowSums(RDeeP_HeLa_Mitosis)==0),] #Habe hier das letzte Komma hinzugefügt und das = in ein <- geändert.
 #Tabelle ohne die Nullzeile wieder in der Variable gespeichert
 
-#We might have to repeat this later, for when we have separated Control and RNase, as the same argumentation applies if already only one of them only has zeros.
-#which(rowSums(RDeeP_HeLa_Mitosis_Ctrl)==0)
-#which(rowSums(RDeeP_HeLa_Mitosis_RNase)==0) #Careful, that we have to delete the the zero rows of RNase also in the Control Dataframe
-
+#This step was repeated later again, see code line 291, after we have split the dataset (which is after data cleanup, but the argumentation applies just the same. If rows before were still are all 0, they are still 0 afterwards, which is definitely an experimental error)
 
 dim(RDeeP_HeLa_Mitosis)
 ```
 
-#### 1.3 Handeling other wierd rows
+#### 1.3 Checking for nonzero rows and negative values.
 
-When looking at the dataset we noticed that already the first 7 rows have accumulation of protein in every fraction. We are not sure if we can work with them as they maybe have no clear peak, therefore we first identify them and then maybe delete them later.
 
 ```{r}
 # Find rows without any zeros
@@ -70,11 +66,10 @@ nonzero_rows <- RDeeP_HeLa_Mitosis[rowSums(RDeeP_HeLa_Mitosis == 0) == 0, ]
 # Checking for negative vales
 any(RDeeP_HeLa_Mitosis < 0) # -> none, so not a problem
 
-#The condition rowSums(RDeep_Hela_Mitosis == 0) == 0 checks which rows have a sum of zeros equal to zero, indicating that those rows do *not* contain any zeros.Then we selects these rows without any zeros from our table and store it in a new table.
+#The condition rowSums(RDeep_Hela_Mitosis == 0) == 0 checks which rows have a sum of zeros equal to zero, indicating that those rows do *not* contain any zeros.
 
 # Print the rows without any zeros: print(nonzero_rows)
-nrow(nonzero_rows) #320 rows do not have zeros
-
+nrow(nonzero_rows) #320 rows do not have zeros. But we decided this as not relevant for our further analysis
 
 #Possibly deleting these nonzero rows and storing it in the original matrix:
 #RDeeP_HeLa_Mitosis <- RDeeP_HeLa_Mitosis[rowSums(RDeeP_HeLa_Mitosis == 0) > 0, ]
@@ -86,7 +81,6 @@ nrow(nonzero_rows) #320 rows do not have zeros
 Here we try to determine data type of our dataset, whether it is numerical, categorical, etc
 
 ```{r}
-
 nrow(RDeeP_HeLa_Mitosis)
 ncol(RDeeP_HeLa_Mitosis)
 sum(apply(RDeeP_HeLa_Mitosis, 1, is.na)) # Summe aller Spalten, die NA Werte haben
@@ -95,7 +89,6 @@ sum(apply(RDeeP_HeLa_Mitosis, 1, is.numeric))
 sum(apply(RDeeP_HeLa_Mitosis, 2, is.numeric))
 
 sum(apply(RDeeP_HeLa_Mitosis, 1, is.numeric)) == nrow(RDeeP_HeLa_Mitosis)
-
 ```
 
 This means we have numeric data, aka the data from the mass spectrometry.
@@ -115,8 +108,6 @@ protein1_Ctrl_frac1 <- RDeeP_HeLa_Mitosis[1, 1:3] #Zeile 1, Spalten eins bis dre
 
 # Perform the t-test
 print(t.test(protein1_Ctrl_frac1))
-
-#beide schritte kann man theoretisch auch noch in einem vereinigen.
 ```
 
 Here our p-value is over 5%, thus we can determine the reproducibility of the experiment is not given and we would have to delete the entire protein. How much sense this makes we will see later.
@@ -184,7 +175,7 @@ rownames(p_values_Ctrl) <- rownames(RDeeP_HeLa_Mitosis_Ctrl)
 print(p_values_Ctrl)
 ```
 
-Finding the maximum value for each row, then deciding if it is smaller than our significance level (either 5% or 10%, has to be decided beforehand)
+Finding the maximum value for each row, then deciding if it is smaller than our significance level (10%)
 
 ```{r}
 # Replace NA values with zero in p_values_Ctrl dataframe
@@ -200,7 +191,7 @@ rownames(max_values_Ctrl) <- rownames(p_values_Ctrl)
 print(max_values_Ctrl)
 ```
 
-We still have to determine which p-values are over 10% and use that information on the dataframe. But now first all the same for the RNase:
+All the same for the RNase:
 
 ```{r}
 # Calculate the number of sets in the RNase dataset
@@ -260,8 +251,6 @@ sum(max_values_Ctrl > 0.1)
 #length(max_values_RNase[max_values_RNase$MaxValue > 0.1, ])
 ```
 
-Whoops, that is A LOT! Sometimes that is more than half (or more than a quarter) of our data...
-
 Now adding the columns to the main dataframe and doing the same, identify the rows in which the p-value exceeds 10%:
 
 ```{r}
@@ -274,24 +263,14 @@ bad_proteins10 <- which(RDeeP_HeLa_Mitosis_p[, 151] > 0.1 | RDeeP_HeLa_Mitosis_p
 
 #When using the logical OR (|) operator, if either condition is true, the result will be true. 
 
-
-#Rows in which both Control and RNase p-values exceed 5%:
-#bad_proteins5 <- which(RDeeP_HeLa_Mitosis_p[, 151] > 0.05 & RDeeP_HeLa_Mitosis_p[, 152] > 0.05)
-#length(bad_proteins5)
-
-#Alternative 5%/10% BUT THIS RESULTS IN ANTOHER VALUE, WHY? I DO NOT KNOW.
-#bad_proteins5 <- which(RDeeP_HeLa_Mitosis_p[, 151:152] > 0.05)
-bad_proteins10wierd <- which(RDeeP_HeLa_Mitosis_p[, 151:152] > 0.1)
-
 length(bad_proteins5)
 length(bad_proteins10)
-length(bad_proteins10wierd)
 ```
 
-Anywayyyy, let's work with the 10 % margin and delete all corresponding rows.
+Let's work with the 10 % margin and delete all corresponding rows.
 
 ```{r}
-RDeeP_HeLa_Mitosis_clean <- RDeeP_HeLa_Mitosis_p[!(RDeeP_HeLa_Mitosis_p[, 151] > 0.1 | RDeeP_HeLa_Mitosis_p[, 152] > 0.1), ] #the ! Operator negate the condition.It excludes rows where the condition is TRUE, thus effectively filtering out rows that exceed 10%.
+RDeeP_HeLa_Mitosis_clean <- RDeeP_HeLa_Mitosis_p[!(RDeeP_HeLa_Mitosis_p[, 151] > 0.1 | RDeeP_HeLa_Mitosis_p[, 152] > 0.1), ] #the ! Operator negate the condition. It excludes rows where the condition is TRUE, thus effectively filtering out rows that exceed 10%.
 
 # Remove the last two columns
 RDeeP_HeLa_Mitosis_clean <- RDeeP_HeLa_Mitosis_clean[, 1:(ncol(RDeeP_HeLa_Mitosis_clean) - 2)]
