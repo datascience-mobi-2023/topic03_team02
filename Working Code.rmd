@@ -1034,8 +1034,6 @@ local_shifter_names <- subset(identical_fractions, no_shift == FALSE)
 # # Filter rows with "shifter" in the shifting_quotients dataframe:
 curve_shifter_names <- shifting_quotients[shifting_quotients$Curve_shifters == "shifter", , drop = FALSE]
 
-curvez_shifter_names <- quotients_using_z[quotients_using_z$Result == "shifter", , drop = FALSE]
-
 ## I also checked the numbers, I did not loose any values.
 ```
 
@@ -1063,7 +1061,7 @@ grid.newpage()
 grid.draw(venn_result)
 ```
 
-Venn Diaframm with RBP2GO proteins:
+Venn Diagram with RBP2GO proteins:
 
 ```{r}
 library(VennDiagram)
