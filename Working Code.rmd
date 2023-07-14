@@ -25,7 +25,7 @@ Load Libraries
 library(cluster)
 library(ggplot2)
 library(factoextra)
-
+library(VennDiagram)
 ```
 
 
@@ -41,17 +41,14 @@ head(colnames(RDeeP_HeLa_Mitosis))
 
 #### 1.2 Finding rows with missing values
 
-Finding which rows are all 0 (and are most likely experimental errors). And removing this rows.
+Finding which rows are all 0 (and are most likely experimental errors). And removing these rows.
 
 ```{r}
 which(rowSums(RDeeP_HeLa_Mitosis)==0)
 
 print(RDeeP_HeLa_Mitosis["KLD10_HUMAN",])
 
-RDeeP_HeLa_Mitosis <- RDeeP_HeLa_Mitosis[-which(rowSums(RDeeP_HeLa_Mitosis)==0),] #Habe hier das letzte Komma hinzugefügt und das = in ein <- geändert.
-#Tabelle ohne die Nullzeile wieder in der Variable gespeichert
-
-#This step was repeated later again, see code line 291, after we have split the dataset (which is after data cleanup, but the argumentation applies just the same. If rows before were still are all 0, they are still 0 afterwards, which is definitely an experimental error)
+RDeeP_HeLa_Mitosis <- RDeeP_HeLa_Mitosis[-which(rowSums(RDeeP_HeLa_Mitosis)==0),] 
 
 dim(RDeeP_HeLa_Mitosis)
 ```
@@ -69,7 +66,7 @@ any(RDeeP_HeLa_Mitosis < 0) # -> none, so not a problem
 #The condition rowSums(RDeep_Hela_Mitosis == 0) == 0 checks which rows have a sum of zeros equal to zero, indicating that those rows do *not* contain any zeros.
 
 # Print the rows without any zeros: print(nonzero_rows)
-nrow(nonzero_rows) #320 rows do not have zeros. But we decided this as not relevant for our further analysis
+nrow(nonzero_rows) #320 rows do not have zeros. But not relevant for our further analysis
 
 #Possibly deleting these nonzero rows and storing it in the original matrix:
 #RDeeP_HeLa_Mitosis <- RDeeP_HeLa_Mitosis[rowSums(RDeeP_HeLa_Mitosis == 0) > 0, ]
@@ -78,11 +75,9 @@ nrow(nonzero_rows) #320 rows do not have zeros. But we decided this as not relev
 
 #### 1.4 Check data format
 
-Here we try to determine data type of our dataset, whether it is numerical, categorical, etc
+Here we determine the data type of our dataset, whether it is numerical, categorical, etc
 
 ```{r}
-nrow(RDeeP_HeLa_Mitosis)
-ncol(RDeeP_HeLa_Mitosis)
 sum(apply(RDeeP_HeLa_Mitosis, 1, is.na)) # Summe aller Spalten, die NA Werte haben
 sum(apply(RDeeP_HeLa_Mitosis, 2, is.na)) # Summe aller Zeilen, die NA Werte haben
 sum(apply(RDeeP_HeLa_Mitosis, 1, is.numeric))
@@ -91,7 +86,7 @@ sum(apply(RDeeP_HeLa_Mitosis, 2, is.numeric))
 sum(apply(RDeeP_HeLa_Mitosis, 1, is.numeric)) == nrow(RDeeP_HeLa_Mitosis)
 ```
 
-This means we have numeric data, aka the data from the mass spectrometry.
+The TRUE results clarifies that all we have is numeric data, aka the data from the mass spectrometry.
 
 ```{r}
 #Complete DataSet
@@ -100,7 +95,7 @@ This means we have numeric data, aka the data from the mass spectrometry.
 
 #### 1.5 Checking reproducibility with student t-test
 
-The first step would be to perform a student t-test on the first three values in our table, so for example protein 1, Control Fraction 1 the rep1, rep2, rep3
+Testing the t-test method: The first step would be to perform a student t-test on the first three values in our table, so for example protein 1, Control Fraction 1 the rep1, rep2, rep3
 
 ```{r}
 # Extract the first three values from the table
@@ -112,7 +107,7 @@ print(t.test(protein1_Ctrl_frac1))
 
 Here our p-value is over 5%, thus we can determine the reproducibility of the experiment is not given and we would have to delete the entire protein. How much sense this makes we will see later.
 
-Now the same for protein 8
+Now the same for protein 8, fraction 1 Control
 
 ```{r}
 # Extract the first three values from the table
@@ -211,7 +206,7 @@ for (i in seq(1, ncol(RDeeP_HeLa_Mitosis_RNase), by = 3)) {
       t_result <- t.test(x)
       t_result$p.value
     } else {
-      0  # Assign 0 if the data is constant (OR NA, then we have to replace na with zero later on)
+      0  # Assign 0 if the data is constant
     }
   })
   
@@ -397,7 +392,7 @@ View a protein and its peak using the protein name
 
 ```{r}
 # Step 1: Select a specific row by name
-row_name <- "2A5E_HUMAN" # "ABCA1_HUMAN" (precipitated protein, but still shifter) ABT1_HUMAN (right shifter) #ABCF1_HUMAN and RBM3_HUMAN (left shifter) #UTP11_HUMAN (percipitated non shifting protein?) #ehemals problematisch: SQOR_HUMAN
+row_name <- "2A5E_HUMAN" #EXAMPLE PROTEINS: ABCA1_HUMAN (precipitated protein, but still shifter), ABT1_HUMAN (right shifter), ABCF1_HUMAN and RBM3_HUMAN (left shifters), SQOR_HUMAN (local shifter)
 
 # Step 2: Find the peaks for Ctrl in the row data
 row_data_Ctrl <- Mitosis_Ctrl_100[row_name, ]
@@ -515,9 +510,10 @@ sum(shift_dataframe$Shift == "no shift")
 
 sum(shift_dataframe$Shift == "left shift") + sum(shift_dataframe$Shift == "right shift")
 ```
-##### 4.1.1  y-shift for partial shifter
 
-After the max shift, we execute a y shift on all proteins which had 0, 1 or -1 shifts in the first part (no significant max shift). This allows us to identify additional partial shifter.
+##### 4.1.1  y-shift for identification of partial shifter
+
+After the max shift, we execute a y shift on all proteins which had 0, 1 or -1 shifts in the first part (no significant max shift). This allows us to identify additional partial shifters.
 
 ```{r}
 max_shift <- Ctrl_fraction_max - RNase_fraction_max
@@ -557,7 +553,6 @@ y_max_subset
 
 sum(y_max_subset$ProteinType == 'RBP') #503 additional partial shifters identified!!
 ```
-
 
 
 #### 4.2 Local maxima
@@ -618,7 +613,8 @@ sum(identical_fractions$no_shift == FALSE) #-> 1570 proteins are identified as s
 
 ##### 4.2.1 Local Maxima code and linear regression 
 
-This code quantifies the local shifts and is only used for kmeans and linear regression later. In order to do this I select all proteins which do not have any differences in the local peaks, and then assign the value 1 for all proteins in this subcategory which have different column indexes in their peaks. If the peak number AND all column indexes are identical, the proteins have the value 0. If we only take the difference in numbers of overall peaks, quite a few proteins are neglected, more precisely 670 proteins are not listed (proteins with same amount of peaks but which are found in different fractions). Using this method, we can quantify the local shift for later evaluation in the linear regression. 
+This code quantifies the local shifts and is only used for kmeans and linear regression later on. In order to do this first all proteins with different numbers of local peaks are saved, then all remaining proteins are selected. Those are assigned the value 1 for when their peaks have different column indexes (of their peaks), between Control and RNase. If the peak number AND all column indexes are identical, the proteins have the value 0. 
+If we only take the difference in numbers of overall peaks, quite a few proteins are neglected, more precisely 670 proteins are not listed (proteins with same amount of peaks but which are found in different fractions). Using this method, we can quantify all local shifters for later evaluation in the linear regression. 
 
 ```{r}
 # Create an empty vector to store the results
@@ -840,11 +836,11 @@ dotplot4 <- ggplot(clustered_data4, aes(x = Min, y = Max, color = cluster)) +
 
 plot(dotplot4)
 ```
-Finde ich besser als die kmeans plots für die Maxima. Aber wir sollten uns überlegen was aus "biologischer" Sicht hier logischer ist und das andere kmeans dann rausschmeissen.
+
 
 ## 6. Linear Regression
 Idee: columns nach jeder unserer Methoden (4) und wir finden so sozusagen die beiden Methoden die in größer Übereinstimmung RBPs bestimmt haben und wenden dann auf die LR an
-Ich denke das wäre bei uns ziemlich cool, eben weil wir diese verschiedenen Methoden haben
+Ich denke das wäre bei uns ziemlich cool, eben weil wir diese verschiedenen Methoden haben
 
 #### 6.1 generate Dataframe
 
@@ -984,7 +980,7 @@ print(shift_comparison)
 ```
 
 
-###6.4 QQ-Plot of the linear regression
+#### 6.4 QQ-Plot of the linear regression
 
 ```{r}
 residuals <- rstandard(model)
@@ -996,4 +992,100 @@ qqplot(qnorm(ppoints(length(residuals))), residuals,
        main = "QQ Plot of Linear Model")
 abline(a = 0, b = 1, col = "blue", lwd = 2)
 ```
+
+
+## 7. Venn-Diagramm visualization
+
+First Loading the RBP2GO Dataset into our environment:
+
+```{r}
+comparison_RBP = read.csv("https://www.dropbox.com/s/xpjob8g8flxl3ik/Table_HS_RBP.txt?dl=1", sep = "", header = T, row.names = 1)
+
+comparison_RBP = comparison_RBP[order(row.names(comparison_RBP)),]
+
+comparison_non_RBP = read.csv("https://www.dropbox.com/s/cgbrvponhw7arpt/Table_HS_Non_RBP.txt?dl=1", sep = "", header = T, row.names = 1)
+
+comparison_non_RBP = comparison_non_RBP[order(row.names(comparison_non_RBP)),]
+
+# View the loaded data
+head(comparison_non_RBP)
+```
+
+Dataframe preparation:
+```{r}
+# max shift: 
+# Filter rows with "left shift" or "right shift" in the shift_dataframe:
+max_shifter_names <- shift_dataframe[shift_dataframe$Shift %in% c("left shift", "right shift"), , drop = FALSE]
+
+# y shift:
+# Filter rows from y_max_subset where ProteinType is 'RBP':
+y_rows <- y_max_subset[y_max_subset$ProteinType == 'RBP',, drop = FALSE ]
+
+# COMBINE YSHIFT ROWS WITH MAX SHIFT:
+colnames(y_rows) <- "Shift"
+y_rows$Shift <- ifelse(y_rows$Shift == "RBP", "left shift", y_rows$Shift)
+max_shifter_names <- rbind(max_shifter_names, y_rows)
+
+# local shift:
+# Filter rows with FALSE results in the identical_fractions dataframe:
+local_shifter_names <- subset(identical_fractions, no_shift == FALSE)
+
+# curve shift:
+# # Filter rows with "shifter" in the shifting_quotients dataframe:
+curve_shifter_names <- shifting_quotients[shifting_quotients$Curve_shifters == "shifter", , drop = FALSE]
+
+## I also checked the numbers, I did not loose any values.
+```
+
+Trying a Venn-Diagramm, without RBP2GO proteins:
+```{r}
+library(VennDiagram)
+
+# Extract the row names from each dataframe
+max_shifter_row_names <- rownames(max_shifter_names)
+local_shifter_row_names <- rownames(local_shifter_names)
+curve_shifter_row_names <- rownames(curve_shifter_names)
+
+# Create the Venn diagram
+venn_result <- venn.diagram(
+  x = list(max_shifter_row_names, local_shifter_row_names, curve_shifter_row_names),
+  category.names = c("Max & Y Shifters", "Local Shifters", "Curve Shifters"),
+  filename = NULL,  # Set filename to NULL to prevent saving as an image file
+  fill = c("dodgerblue", "firebrick1", "darkgoldenrod1"),  # Specify colors for the diagram elements
+  alpha = 0.5,  # Set transparency for the overlapping areas
+  cex = 1.5  # Increase the font size
+)
+
+# Print the Venn diagram
+grid.newpage()
+grid.draw(venn_result)
+```
+
+Venn Diagram with RBP2GO proteins:
+
+```{r}
+library(VennDiagram)
+
+# Extract the row names from each dataframe
+max_shifter_row_names <- rownames(max_shifter_names)
+local_shifter_row_names <- rownames(local_shifter_names)
+curve_shifter_row_names <- rownames(curve_shifter_names)
+#y_row_names <- rownames(y_rows)
+RBP_row_names <- rownames(comparison_RBP)
+
+# Create the Venn diagram
+venn_result <- venn.diagram(
+  x = list(max_shifter_row_names, local_shifter_row_names, curve_shifter_row_names, RBP_row_names),
+  category.names = c("Max Shifters", "Local Shifters", "Curve Shifters", "RBP2GO shifters"),
+  filename = NULL,  # Set filename to NULL to prevent saving as an image file
+  fill = c("dodgerblue", "firebrick1", "darkgoldenrod1", "springgreen"),
+  alpha = 0.5,  # Set transparency for the overlapping areas
+  cex = 1.5  # Increase the font size
+)
+
+# Print the Venn diagram
+grid.newpage()
+grid.draw(venn_result)
+```
+
 
