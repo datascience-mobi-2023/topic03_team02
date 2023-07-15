@@ -1,5 +1,6 @@
-# team02 of topic03 
 ## Proteome- wide Screen for RNA-dependent Proteins
-# Synchronized HeLa cells in Mitosis
- This is the GitHub repository for team02 of the topic03.  
- To refresh your memory on how to manage GitHub, you can find commonly used commands [here](https://github.com/joshnh/Git-Commands). 
+# Synchronized HeLa cells in Mitosis - team02 of topic03 
+
+We aim at identifying RBPs through different analysis methods, using the results of a genome wide proteome screening. RNA is a multifunctional molecule that not only acts as a template for protein synthesis but also interacts with proteins to form RNA-protein complexes. These complexes play crucial regulatory roles in numerous vital cellular processes, and the dysregulation of these processes are linked to many diseases such as Mulitple Sclerosis or cancer. Consequently, studying RNA-protein complexes is vital for unraveling intricate intracellular molecular patterns. This caused the rise of several comprehensive studies, which aim at identifying and categorizing RBPs on a proteome-wide scale.
+
+ 
