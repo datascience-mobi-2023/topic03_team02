@@ -43,8 +43,8 @@ head(colnames(RDeeP_HeLa_Mitosis))
 
 Finding which rows are all 0 (and are most likely experimental errors). And removing these rows.
 
-```{r}
-which(rowSums(RDeeP_HeLa_Mitosis)==0)
+```{r} 
+which(rowSums(RDeeP_HeLa_Mitosis)==0) #this is repeated later on, after splitting the dataset in two
 
 print(RDeeP_HeLa_Mitosis["KLD10_HUMAN",])
 
@@ -111,10 +111,12 @@ Now the same for protein 8, fraction 1 Control
 
 ```{r}
 # Extract the first three values from the table
-protein8_Ctrl_frac1 <- RDeeP_HeLa_Mitosis[8, 1:3]
+protein8_Ctrl_frac1 <- RDeeP_HeLa_Mitosis[8, 1:3] 
 
 # Perform the t-test
 print(t.test(protein8_Ctrl_frac1)) 
+
+#t.test(c(206396.80, 302858.50, 333653.20)) #Protein 23 as comparison
 ```
 
 Here all three repetitions were 0, thus making our p-value not determinable. This is normal and we would have to repeat this for all fractions and then check if there are any p-values in the entire protein above 5%. If not, we can confidently confirm the reproducibility.
@@ -206,7 +208,7 @@ for (i in seq(1, ncol(RDeeP_HeLa_Mitosis_RNase), by = 3)) {
       t_result <- t.test(x)
       t_result$p.value
     } else {
-      0  # Assign 0 if the data is constant
+      0  # Assign 0 if the data is constant (or NA)
     }
   })
   
@@ -343,7 +345,7 @@ head(Mitosis_RNase_100)
 
 ```{r Clean environment}
 # Clean up the environment of variables not used later to maintain an overview
-rm(nonzero_rows, column_values,max_values_Ctrl,max_values_RNase,p_values_Ctrl,p_values_RNase,RDeeP_HeLa_Mitosis_p,bad_proteins10,bad_proteins10wierd,num_sets,p_values,protein1_Ctrl_frac1,protein8_Ctrl_frac1,bad_proteins5,i,RDeeP_HeLa_Mitosis_Ctrl,RDeeP_HeLa_Mitosis_RNase)
+rm(nonzero_rows, column_values,max_values_Ctrl,max_values_RNase,p_values_Ctrl,p_values_RNase,RDeeP_HeLa_Mitosis_p,bad_proteins10,num_sets,p_values,protein1_Ctrl_frac1,protein8_Ctrl_frac1,bad_proteins5,i,RDeeP_HeLa_Mitosis_Ctrl,RDeeP_HeLa_Mitosis_RNase)
 ```
 
 ## 3. Visualization
