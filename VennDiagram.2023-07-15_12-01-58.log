@@ -1,0 +1,18 @@
+INFO [2023-07-15 12:01:59] $x
+INFO [2023-07-15 12:01:59] list(max_shifter_row_names, local_shifter_row_names, curve_shifter_row_names)
+INFO [2023-07-15 12:01:59] 
+INFO [2023-07-15 12:01:59] $category.names
+INFO [2023-07-15 12:01:59] c("Max & Y Shifters", "Local Shifters", "Curve Shifters")
+INFO [2023-07-15 12:01:59] 
+INFO [2023-07-15 12:01:59] $filename
+INFO [2023-07-15 12:01:59] NULL
+INFO [2023-07-15 12:01:59] 
+INFO [2023-07-15 12:01:59] $fill
+INFO [2023-07-15 12:01:59] c("dodgerblue", "firebrick1", "darkgoldenrod1")
+INFO [2023-07-15 12:01:59] 
+INFO [2023-07-15 12:01:59] $alpha
+INFO [2023-07-15 12:01:59] [1] 0.5
+INFO [2023-07-15 12:01:59] 
+INFO [2023-07-15 12:01:59] $cex
+INFO [2023-07-15 12:01:59] [1] 1.5
+INFO [2023-07-15 12:01:59] 
