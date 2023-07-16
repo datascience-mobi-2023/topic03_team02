@@ -1,7 +1,8 @@
 # Proteome- wide Screen for RNA-dependent Proteins
 ## Synchronized HeLa cells in Mitosis - team02 of topic03 
-**Supervisor**: PD Dr. Maïwen Caudron- Herger
-**Tutor**: Fabio Rauscher
+**Supervisor:** PD Dr. Maïwen Caudron- Herger \
+**Tutor:** Fabio Rauscher \
+**Authors:** Verena Kantelhardt, Alexandra Kornelius and Jimena Orrego Chong \
 **Submission**: 17th July 2023
 
 ### Goal
@@ -9,6 +10,14 @@ We aim at identifying RBPs through different analysis methods, using the results
 
 ### Contents 
 - [Files on this repository](#Files-on-this-repository)
+
+### Where does data come from 
+maiwens investigation + link
+Dataset beschreibung
+
+![**Figure 1:**](http://url/to/img.png)
+
+### Abstract?
 
 ### Files on this repository
 
@@ -18,3 +27,5 @@ The markdown that contains our code
 Our final report
   #### Venn Diagramm
 Found at the end of of our working code, we created a Venn Diagramm, that sums up our main results
+
+### Analysis steps
