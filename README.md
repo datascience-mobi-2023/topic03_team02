@@ -1,12 +1,20 @@
-## Proteome- wide Screen for RNA-dependent Proteins
-# Synchronized HeLa cells in Mitosis - team02 of topic03 
+# Proteome- wide Screen for RNA-dependent Proteins
+## Synchronized HeLa cells in Mitosis - team02 of topic03 
+**Supervisor**: PD Dr. Maïwen Caudron- Herger
+**Tutor**: Fabio Rauscher
+**Submission**: 17th July 2023
 
-We aim at identifying RBPs through different analysis methods, using the results of a genome wide proteome screening. RNA is a multifunctional molecule that not only acts as a template for protein synthesis but also interacts with proteins to form RNA-protein complexes. These complexes play crucial regulatory roles in numerous vital cellular processes, and the dysregulation of these processes are linked to many diseases such as Mulitple Sclerosis or cancer. Consequently, studying RNA-protein complexes is vital for unraveling intricate intracellular molecular patterns. This caused the rise of several comprehensive studies, which aim at identifying and categorizing RBPs on a proteome-wide scale.
+### Goal
+We aim at identifying RBPs through different analysis methods, using the results of a genome wide proteome screening. RNA is a multifunctional molecule that not only acts as a template for protein synthesis but also interacts with proteins to form ribonucleoproteincomplexes (RNP). These complexes play crucial regulatory roles in numerous vital cellular processes, and the dysregulation of these processes are linked to many diseases such as mulitple sclerosis or cancer. Consequently, studying RNA-protein complexes is vital for unraveling intricate intracellular molecular patterns. This caused the rise of several comprehensive studies, which aim at identifying and categorizing RBPs on a proteome-wide scale.
 
-### Files on in this repository
-#### Working code
+### Contents 
+- [Files on this repository](#Files-on-this-repository)
+
+### Files on this repository
+
+  #### Working code
 The markdown that contains our code
-#### Report
+  #### Report
 Our final report
-#### Venn Diagramm
+  #### Venn Diagramm
 Found at the end of of our working code, we created a Venn Diagramm, that sums up our main results
