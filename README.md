@@ -15,7 +15,7 @@ We aim at identifying RBPs through different analysis methods, using the results
 maiwens investigation + link
 Dataset beschreibung
 
-![**Figure 1:**](http://url/to/img.png)
+![**Figure 1:**]([http://url/to/img.png](https://github.com/datascience-mobi-2023/topic03_team02/blob/main/RBPs.jpg))
 
 ### Abstract?
 
