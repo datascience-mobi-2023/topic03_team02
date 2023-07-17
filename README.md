@@ -25,10 +25,10 @@ The data for the protein amount per fraction was collected using mass spectromet
 
 ### Files on this repository
   #### [Final Code](https://github.com/datascience-mobi-2023/topic03_team02/tree/main/Working%20Code)
- File containing our final cleaned code as markdown (.rmd) and HTML
-  #### [Report](https://github.com/datascience-mobi-2023/topic03_team02/tree/main/Report)
-File containing our final report in pdf and its corresponding source format
+File containing our final cleaned code as markdown (.rmd) and HTML
   #### [Presentations](https://github.com/datascience-mobi-2023/topic03_team02/tree/main/Report)
 File containing PPTs to Project Proposal
-  #### Additional Material
+  #### [Report](https://github.com/datascience-mobi-2023/topic03_team02/tree/main/Report)
+File containing our final report in pdf and its corresponding source format
+  #### [Additional Material](https://github.com/datascience-mobi-2023/topic03_team02/tree/main/Additional%20Material)
 Data and figures created during the working progess
