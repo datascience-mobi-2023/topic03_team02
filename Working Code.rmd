@@ -721,204 +721,7 @@ print(quotients_minmax)
 ```
 
 
-
-
-## 5. Statistical analysis
-### 5.1 kmeans
-##### 5.1.1 For maxima
-
-Trying to create three cluster: left-shift, right-shift (possibly RBP); no shift (no RBP). Here only goes for data generate from difference between the max-shifts
-
-```{r}
-#generate a dataframe that holds the nummeric data of the shift. Dataframe has to have 2 dimension: RNase fraction and control fraction
-maximum_fraction <- data.frame(Ctrl_fraction_max, RNase_fraction_max)
-colnames(maximum_fraction) <- c("Ctrl_fraction_max", "RNase_fraction_max")
-show(maximum_fraction)
-plot(maximum_fraction, main = "comparison of maxima")
-
-
-#Calculate optimal number of cluster
-fviz_nbclust(maximum_fraction, kmeans, method='silhouette') #optimal number of cluster = 2
-#fviz_nbclust(maximum_fraction, kmeans, method='wss')        #optimal number of cluster = 2
-#fviz_nbclust(maximum_fraction, kmeans, method='gap_stat')   #optimal number of cluster = 6 
-
-
-#then a k-means clustering with the optimal amount of cluster and interpretation
-km <- kmeans(maximum_fraction, centers = 2, nstart = 25)
-
-#visualizing the result of kmeans
-fviz_cluster(km, data = maximum_fraction)
-
-# Create a data frame with clustered data and cluster labels
-clustered_data1 <- data.frame(maximum_fraction, cluster = as.factor(km$cluster))
-show(clustered_data1)
-
-# Create a scatter plot using ggplot
-dotplot1 <- ggplot(clustered_data1, aes(x = Ctrl_fraction_max, y = RNase_fraction_max, color = cluster)) +
-  geom_point() +
-  labs(title = "K-means Clustering for maxima",
-       x = "Ctrl_fraction_max",
-       y = "RNase_fraction_max",
-       color = "Cluster")
-
-plot(dotplot1)
-```
-
-The same kmeans clustering again for the 3 cluster that we expected to see. We hope for a cluster of no-shift, left-shift and right-shift -> not successful
-
-```{r}
-#kmeans with same data but 3 cluster
-km3 <- kmeans(maximum_fraction, centers = 3, nstart = 25)
-#fviz_cluster(km3, data = maximum_fraction)
-
-# Create a data frame with clustered data and cluster labels
-clustered_data2 <- data.frame(maximum_fraction, cluster = as.factor(km3$cluster))
-show(clustered_data2)
-
-# Create a scatter plot using ggplot
-dotplot2 <- ggplot(clustered_data2, aes(x = Ctrl_fraction_max, y = RNase_fraction_max, color = cluster)) +
-  geom_point() +
-  labs(title = "K-means Clustering for maxima",
-       x = "Ctrl_fraction_max",
-       y = "RNase_fraction_max",
-       color = "Cluster")
-
-plot(dotplot2)
-```
-
-##### 5.1.2 For quotients
-
-Since we are unsure how well kmeans worked for the maxima-clustering we now do the same clustering for quotients_minmax
-
-```{r}
-#here we don´t need to generate a new dataframe since we already have one we can work with
-show(quotients_minmax)
-
-#Calculate optimal number of cluster
-fviz_nbclust(quotients_minmax, kmeans, method='silhouette') #optimal number of cluster = 2
-
-#then a k-means clustering with the optimal amount of cluster and interpretation
-km_q <- kmeans(quotients_minmax, centers = 2, nstart = 25)
-
-#visualizing the result of kmeans
-km_q
-#fviz_cluster(km_q, data = quotients_minmax)
-
-# Create a data frame with clustered data and cluster labels
-clustered_data3 <- data.frame(quotients_minmax, cluster = as.factor(km_q$cluster))
-show(clustered_data3)
-
-# Create a scatter plot using ggplot
-dotplot3 <- ggplot(clustered_data3, aes(x = Min, y = Max, color = cluster)) +
-  geom_point() +
-  labs(title = "K-means Clustering for quotients",
-       x = "Min",
-       y = "Max",
-       color = "Cluster")
-
-plot(dotplot3)
-```
-
-
-## 6. Linear Regression
-
-#### 6.1 generate Dataframe
-
-```{r}
-max_shift <- Ctrl_fraction_max - RNase_fraction_max
-
-# Create shift_comparison dataframe
-shift_comparison <- data.frame(max_shift = max_shift,
-                               local_shift = identical_fractions2,
-                               curve_shift = quotients_minmax$Max,
-                               row.names = row.names(max_shift))
-colnames(shift_comparison)[1] <- "max_shift"
-
-# Print the shift_comparison dataframe
-print(shift_comparison)
-
-```
-
-#### 6.2 identify two columns with a linear relationship
-
-```{r}
-# Initialize variables to store the best linear relationship found
-best_correlation <- 0
-best_fit <- NULL
-best_col1_name <- ""
-best_col2_name <- ""
-
-# Loop through all possible pairs of columns in the dataframe
-for (i in 1:(ncol(shift_comparison) - 1)) {
-  for (j in (i + 1):ncol(shift_comparison)) {
-    # Extract the two columns
-    col1 <- shift_comparison[, i]
-    col2 <- shift_comparison[, j]
-    
-    # Calculate the Pearson correlation coefficient
-    correlation <- cor(col1, col2, use = "pairwise.complete.obs")
-    
-    # Check if the correlation is stronger than the previous best
-    if (abs(correlation) > abs(best_correlation)) {
-      best_correlation <- correlation
-      best_col1_name <- names(shift_comparison)[i]
-      best_col2_name <- names(shift_comparison)[j]
-    }
-  }
-}
-
-# Print the columns with the best linear relationship found
-cat("Columns with the highest correlation were:", best_col1_name, "and", best_col2_name, "\n")
-```
-As hoped, we can see that there is a linear relationship between the max-shift and the curve-shift. In the following we test whether that relationship is strong enought to give us a reliable linear regression model.
-
-#### 6.3 perform a linear regression
-
-```{r}
-# Perform linear regression on the columns with the best linear relationship
-model <- lm(shift_comparison[[best_col2_name]] ~ shift_comparison[[best_col1_name]])
-
-
-# Print the regression summary
-summary(model)
-
-summary(model)$r.squared 
-
-# Create a data frame with the two columns
-data <- data.frame(x = shift_comparison[[best_col1_name]], y = shift_comparison[[best_col2_name]])
-
-# Create a scatter plot with regression line
-ggplot(data, aes(x = x, y = y)) +
-  geom_point() +
-  geom_smooth(method = "lm", se = FALSE, color = "blue") +
-  labs(title = "Linear Regression", x = best_col1_name, y = best_col2_name)
-
-# Calculate RMSE
-predicted <- as.numeric(fitted(model))
-
-column1 <- data$x
-column2 <- data$y
-rmse <- rmse(predicted, c(column1, column2))
-
-cat("The Root Mean Square Error is ", rmse, "\n")
-```
-
-
-#### 6.4 QQ-Plot of the linear regression
-
-```{r}
-residuals <- rstandard(model)
-
-# Create a QQ plot
-qqplot(qnorm(ppoints(length(residuals))), residuals,
-       xlab = "Theoretical Quantiles",
-       ylab = "Standardized Residuals",
-       main = "QQ Plot of Linear Model")
-abline(a = 0, b = 1, col = "blue", lwd = 2)
-```
-
-
-## 7. Venn-Diagramm visualization
+## 5. Venn-Diagramm visualization
 
 First Loading the RBP2GO Dataset into our environment:
 
@@ -1011,5 +814,201 @@ venn_result <- venn.diagram(
 grid.newpage()
 grid.draw(venn_result)
 ```
+
+
+## 6. Statistical analysis
+### 6.1 kmeans
+##### 6.1.1 For maxima
+
+Trying to create three cluster: left-shift, right-shift (possibly RBP); no shift (no RBP). Here only goes for data generate from difference between the max-shifts
+
+```{r}
+#generate a dataframe that holds the nummeric data of the shift. Dataframe has to have 2 dimension: RNase fraction and control fraction
+maximum_fraction <- data.frame(Ctrl_fraction_max, RNase_fraction_max)
+colnames(maximum_fraction) <- c("Ctrl_fraction_max", "RNase_fraction_max")
+show(maximum_fraction)
+plot(maximum_fraction, main = "comparison of maxima")
+
+
+#Calculate optimal number of cluster
+fviz_nbclust(maximum_fraction, kmeans, method='silhouette') #optimal number of cluster = 2
+#fviz_nbclust(maximum_fraction, kmeans, method='wss')        #optimal number of cluster = 2
+#fviz_nbclust(maximum_fraction, kmeans, method='gap_stat')   #optimal number of cluster = 6 
+
+
+#then a k-means clustering with the optimal amount of cluster and interpretation
+km <- kmeans(maximum_fraction, centers = 2, nstart = 25)
+
+#visualizing the result of kmeans
+fviz_cluster(km, data = maximum_fraction)
+
+# Create a data frame with clustered data and cluster labels
+clustered_data1 <- data.frame(maximum_fraction, cluster = as.factor(km$cluster))
+show(clustered_data1)
+
+# Create a scatter plot using ggplot
+dotplot1 <- ggplot(clustered_data1, aes(x = Ctrl_fraction_max, y = RNase_fraction_max, color = cluster)) +
+  geom_point() +
+  labs(title = "K-means Clustering for maxima",
+       x = "Ctrl_fraction_max",
+       y = "RNase_fraction_max",
+       color = "Cluster")
+
+plot(dotplot1)
+```
+
+The same kmeans clustering again for the 3 cluster that we expected to see. We hope for a cluster of no-shift, left-shift and right-shift -> not successful
+
+```{r}
+#kmeans with same data but 3 cluster
+km3 <- kmeans(maximum_fraction, centers = 3, nstart = 25)
+#fviz_cluster(km3, data = maximum_fraction)
+
+# Create a data frame with clustered data and cluster labels
+clustered_data2 <- data.frame(maximum_fraction, cluster = as.factor(km3$cluster))
+show(clustered_data2)
+
+# Create a scatter plot using ggplot
+dotplot2 <- ggplot(clustered_data2, aes(x = Ctrl_fraction_max, y = RNase_fraction_max, color = cluster)) +
+  geom_point() +
+  labs(title = "K-means Clustering for maxima",
+       x = "Ctrl_fraction_max",
+       y = "RNase_fraction_max",
+       color = "Cluster")
+
+plot(dotplot2)
+```
+
+##### 6.1.2 For quotients
+
+Since we are unsure how well kmeans worked for the maxima-clustering we now do the same clustering for quotients_minmax
+
+```{r}
+#here we don´t need to generate a new dataframe since we already have one we can work with
+show(quotients_minmax)
+
+#Calculate optimal number of cluster
+fviz_nbclust(quotients_minmax, kmeans, method='silhouette') #optimal number of cluster = 2
+
+#then a k-means clustering with the optimal amount of cluster and interpretation
+km_q <- kmeans(quotients_minmax, centers = 2, nstart = 25)
+
+#visualizing the result of kmeans
+km_q
+#fviz_cluster(km_q, data = quotients_minmax)
+
+# Create a data frame with clustered data and cluster labels
+clustered_data3 <- data.frame(quotients_minmax, cluster = as.factor(km_q$cluster))
+show(clustered_data3)
+
+# Create a scatter plot using ggplot
+dotplot3 <- ggplot(clustered_data3, aes(x = Min, y = Max, color = cluster)) +
+  geom_point() +
+  labs(title = "K-means Clustering for quotients",
+       x = "Min",
+       y = "Max",
+       color = "Cluster")
+
+plot(dotplot3)
+```
+
+
+## 7. Linear Regression
+
+#### 7.1 generate Dataframe
+
+```{r}
+max_shift <- Ctrl_fraction_max - RNase_fraction_max
+
+# Create shift_comparison dataframe
+shift_comparison <- data.frame(max_shift = max_shift,
+                               local_shift = identical_fractions2,
+                               curve_shift = quotients_minmax$Max,
+                               row.names = row.names(max_shift))
+colnames(shift_comparison)[1] <- "max_shift"
+
+# Print the shift_comparison dataframe
+print(shift_comparison)
+
+```
+
+#### 7.2 identify two columns with a linear relationship
+
+```{r}
+# Initialize variables to store the best linear relationship found
+best_correlation <- 0
+best_fit <- NULL
+best_col1_name <- ""
+best_col2_name <- ""
+
+# Loop through all possible pairs of columns in the dataframe
+for (i in 1:(ncol(shift_comparison) - 1)) {
+  for (j in (i + 1):ncol(shift_comparison)) {
+    # Extract the two columns
+    col1 <- shift_comparison[, i]
+    col2 <- shift_comparison[, j]
+    
+    # Calculate the Pearson correlation coefficient
+    correlation <- cor(col1, col2, use = "pairwise.complete.obs")
+    
+    # Check if the correlation is stronger than the previous best
+    if (abs(correlation) > abs(best_correlation)) {
+      best_correlation <- correlation
+      best_col1_name <- names(shift_comparison)[i]
+      best_col2_name <- names(shift_comparison)[j]
+    }
+  }
+}
+
+# Print the columns with the best linear relationship found
+cat("Columns with the highest correlation were:", best_col1_name, "and", best_col2_name, "\n")
+```
+As hoped, we can see that there is a linear relationship between the max-shift and the curve-shift. In the following we test whether that relationship is strong enought to give us a reliable linear regression model.
+
+#### 7.3 perform a linear regression
+
+```{r}
+# Perform linear regression on the columns with the best linear relationship
+model <- lm(shift_comparison[[best_col2_name]] ~ shift_comparison[[best_col1_name]])
+
+
+# Print the regression summary
+summary(model)
+
+summary(model)$r.squared 
+
+# Create a data frame with the two columns
+data <- data.frame(x = shift_comparison[[best_col1_name]], y = shift_comparison[[best_col2_name]])
+
+# Create a scatter plot with regression line
+ggplot(data, aes(x = x, y = y)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(title = "Linear Regression", x = best_col1_name, y = best_col2_name)
+
+# Calculate RMSE
+predicted <- as.numeric(fitted(model))
+
+column1 <- data$x
+column2 <- data$y
+rmse <- rmse(predicted, c(column1, column2))
+
+cat("The Root Mean Square Error is ", rmse, "\n")
+```
+
+
+#### 7.4 QQ-Plot of the linear regression
+
+```{r}
+residuals <- rstandard(model)
+
+# Create a QQ plot
+qqplot(qnorm(ppoints(length(residuals))), residuals,
+       xlab = "Theoretical Quantiles",
+       ylab = "Standardized Residuals",
+       main = "QQ Plot of Linear Model")
+abline(a = 0, b = 1, col = "blue", lwd = 2)
+```
+
 
 
