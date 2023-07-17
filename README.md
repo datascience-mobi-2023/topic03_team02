@@ -30,5 +30,5 @@ File containing our final cleaned code as markdown (.rmd) and HTML
 File containing PPTs to Project Proposal
   #### [Report](https://github.com/datascience-mobi-2023/topic03_team02/tree/main/Report)
 File containing our final report in pdf and its corresponding source format
-  #### [Additional Material](https://github.com/datascience-mobi-2023/topic03_team02/tree/main/Additional%20Material)
+  #### [Additional Material](https://github.com/datascience-mobi-2023/topic03_team02/tree/main/additional%20material)
 Data and figures created during the working progess
