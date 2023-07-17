@@ -25,7 +25,8 @@ Load Libraries
 library(cluster)
 library(ggplot2)
 library(factoextra)
-
+library(VennDiagram)
+library(Metrics)
 ```
 
 
@@ -41,27 +42,20 @@ head(colnames(RDeeP_HeLa_Mitosis))
 
 #### 1.2 Finding rows with missing values
 
-Finding which rows are all 0 (and are most likely experimental errors). And removing this rows.
+Finding which rows are all 0 (and are most likely experimental errors). And removing these rows.
 
-```{r}
-which(rowSums(RDeeP_HeLa_Mitosis)==0)
+```{r} 
+which(rowSums(RDeeP_HeLa_Mitosis)==0) #this is repeated later on, after splitting the dataset in two
 
 print(RDeeP_HeLa_Mitosis["KLD10_HUMAN",])
 
-RDeeP_HeLa_Mitosis <- RDeeP_HeLa_Mitosis[-which(rowSums(RDeeP_HeLa_Mitosis)==0),] #Habe hier das letzte Komma hinzugefügt und das = in ein <- geändert.
-#Tabelle ohne die Nullzeile wieder in der Variable gespeichert
-
-#We might have to repeat this later, for when we have separated Control and RNase, as the same argumentation applies if already only one of them only has zeros.
-#which(rowSums(RDeeP_HeLa_Mitosis_Ctrl)==0)
-#which(rowSums(RDeeP_HeLa_Mitosis_RNase)==0) #Careful, that we have to delete the the zero rows of RNase also in the Control Dataframe
-
+RDeeP_HeLa_Mitosis <- RDeeP_HeLa_Mitosis[-which(rowSums(RDeeP_HeLa_Mitosis)==0),] 
 
 dim(RDeeP_HeLa_Mitosis)
 ```
 
-#### 1.3 Handeling other wierd rows
+#### 1.3 Checking for nonzero rows and negative values.
 
-When looking at the dataset we noticed that already the first 7 rows have accumulation of protein in every fraction. We are not sure if we can work with them as they maybe have no clear peak, therefore we first identify them and then maybe delete them later.
 
 ```{r}
 # Find rows without any zeros
@@ -70,11 +64,10 @@ nonzero_rows <- RDeeP_HeLa_Mitosis[rowSums(RDeeP_HeLa_Mitosis == 0) == 0, ]
 # Checking for negative vales
 any(RDeeP_HeLa_Mitosis < 0) # -> none, so not a problem
 
-#The condition rowSums(RDeep_Hela_Mitosis == 0) == 0 checks which rows have a sum of zeros equal to zero, indicating that those rows do *not* contain any zeros.Then we selects these rows without any zeros from our table and store it in a new table.
+#The condition rowSums(RDeep_Hela_Mitosis == 0) == 0 checks which rows have a sum of zeros equal to zero, indicating that those rows do *not* contain any zeros.
 
 # Print the rows without any zeros: print(nonzero_rows)
-nrow(nonzero_rows) #320 rows do not have zeros
-
+nrow(nonzero_rows) #320 rows do not have zeros. But not relevant for our further analysis
 
 #Possibly deleting these nonzero rows and storing it in the original matrix:
 #RDeeP_HeLa_Mitosis <- RDeeP_HeLa_Mitosis[rowSums(RDeeP_HeLa_Mitosis == 0) > 0, ]
@@ -83,22 +76,18 @@ nrow(nonzero_rows) #320 rows do not have zeros
 
 #### 1.4 Check data format
 
-Here we try to determine data type of our dataset, whether it is numerical, categorical, etc
+Here we determine the data type of our dataset, whether it is numerical, categorical, etc
 
 ```{r}
-
-nrow(RDeeP_HeLa_Mitosis)
-ncol(RDeeP_HeLa_Mitosis)
 sum(apply(RDeeP_HeLa_Mitosis, 1, is.na)) # Summe aller Spalten, die NA Werte haben
 sum(apply(RDeeP_HeLa_Mitosis, 2, is.na)) # Summe aller Zeilen, die NA Werte haben
 sum(apply(RDeeP_HeLa_Mitosis, 1, is.numeric))
 sum(apply(RDeeP_HeLa_Mitosis, 2, is.numeric))
 
 sum(apply(RDeeP_HeLa_Mitosis, 1, is.numeric)) == nrow(RDeeP_HeLa_Mitosis)
-
 ```
 
-This means we have numeric data, aka the data from the mass spectrometry.
+The TRUE results clarifies that all we have is numeric data, aka the data from the mass spectrometry.
 
 ```{r}
 #Complete DataSet
@@ -107,7 +96,7 @@ This means we have numeric data, aka the data from the mass spectrometry.
 
 #### 1.5 Checking reproducibility with student t-test
 
-The first step would be to perform a student t-test on the first three values in our table, so for example protein 1, Control Fraction 1 the rep1, rep2, rep3
+Testing the t-test method: The first step would be to perform a student t-test on the first three values in our table, so for example protein 1, Control Fraction 1 the rep1, rep2, rep3
 
 ```{r}
 # Extract the first three values from the table
@@ -115,20 +104,20 @@ protein1_Ctrl_frac1 <- RDeeP_HeLa_Mitosis[1, 1:3] #Zeile 1, Spalten eins bis dre
 
 # Perform the t-test
 print(t.test(protein1_Ctrl_frac1))
-
-#beide schritte kann man theoretisch auch noch in einem vereinigen.
 ```
 
 Here our p-value is over 5%, thus we can determine the reproducibility of the experiment is not given and we would have to delete the entire protein. How much sense this makes we will see later.
 
-Now the same for protein 8
+Now the same for protein 8, fraction 1 Control
 
 ```{r}
 # Extract the first three values from the table
-protein8_Ctrl_frac1 <- RDeeP_HeLa_Mitosis[8, 1:3]
+protein8_Ctrl_frac1 <- RDeeP_HeLa_Mitosis[8, 1:3] 
 
 # Perform the t-test
 print(t.test(protein8_Ctrl_frac1)) 
+
+#t.test(c(206396.80, 302858.50, 333653.20)) #Protein 23 as comparison
 ```
 
 Here all three repetitions were 0, thus making our p-value not determinable. This is normal and we would have to repeat this for all fractions and then check if there are any p-values in the entire protein above 5%. If not, we can confidently confirm the reproducibility.
@@ -184,7 +173,11 @@ rownames(p_values_Ctrl) <- rownames(RDeeP_HeLa_Mitosis_Ctrl)
 print(p_values_Ctrl)
 ```
 
-Finding the maximum value for each row, then deciding if it is smaller than our significance level (either 5% or 10%, has to be decided beforehand)
+<<<<<<< HEAD
+Finding the maximum value for each row, then deciding if it is smaller than our significance level (10%)
+=======
+Finding the maximum value for each row
+>>>>>>> 65a39dd5a1666188775609e97134025fc90c5eee
 
 ```{r}
 # Replace NA values with zero in p_values_Ctrl dataframe
@@ -200,7 +193,7 @@ rownames(max_values_Ctrl) <- rownames(p_values_Ctrl)
 print(max_values_Ctrl)
 ```
 
-We still have to determine which p-values are over 10% and use that information on the dataframe. But now first all the same for the RNase:
+All the same for the RNase:
 
 ```{r}
 # Calculate the number of sets in the RNase dataset
@@ -220,7 +213,7 @@ for (i in seq(1, ncol(RDeeP_HeLa_Mitosis_RNase), by = 3)) {
       t_result <- t.test(x)
       t_result$p.value
     } else {
-      0  # Assign 0 if the data is constant (OR NA, then we have to replace na with zero later on)
+      0  # Assign 0 if the data is constant (or NA)
     }
   })
   
@@ -260,8 +253,6 @@ sum(max_values_Ctrl > 0.1)
 #length(max_values_RNase[max_values_RNase$MaxValue > 0.1, ])
 ```
 
-Whoops, that is A LOT! Sometimes that is more than half (or more than a quarter) of our data...
-
 Now adding the columns to the main dataframe and doing the same, identify the rows in which the p-value exceeds 10%:
 
 ```{r}
@@ -274,24 +265,14 @@ bad_proteins10 <- which(RDeeP_HeLa_Mitosis_p[, 151] > 0.1 | RDeeP_HeLa_Mitosis_p
 
 #When using the logical OR (|) operator, if either condition is true, the result will be true. 
 
-
-#Rows in which both Control and RNase p-values exceed 5%:
-#bad_proteins5 <- which(RDeeP_HeLa_Mitosis_p[, 151] > 0.05 & RDeeP_HeLa_Mitosis_p[, 152] > 0.05)
-#length(bad_proteins5)
-
-#Alternative 5%/10% BUT THIS RESULTS IN ANTOHER VALUE, WHY? I DO NOT KNOW.
-#bad_proteins5 <- which(RDeeP_HeLa_Mitosis_p[, 151:152] > 0.05)
-bad_proteins10wierd <- which(RDeeP_HeLa_Mitosis_p[, 151:152] > 0.1)
-
 length(bad_proteins5)
 length(bad_proteins10)
-length(bad_proteins10wierd)
 ```
 
-Anywayyyy, let's work with the 10 % margin and delete all corresponding rows.
+Let's work with the 10 % margin and delete all corresponding rows.
 
 ```{r}
-RDeeP_HeLa_Mitosis_clean <- RDeeP_HeLa_Mitosis_p[!(RDeeP_HeLa_Mitosis_p[, 151] > 0.1 | RDeeP_HeLa_Mitosis_p[, 152] > 0.1), ] #the ! Operator negate the condition.It excludes rows where the condition is TRUE, thus effectively filtering out rows that exceed 10%.
+RDeeP_HeLa_Mitosis_clean <- RDeeP_HeLa_Mitosis_p[!(RDeeP_HeLa_Mitosis_p[, 151] > 0.1 | RDeeP_HeLa_Mitosis_p[, 152] > 0.1), ] #the ! Operator negate the condition. It excludes rows where the condition is TRUE, thus effectively filtering out rows that exceed 10%.
 
 # Remove the last two columns
 RDeeP_HeLa_Mitosis_clean <- RDeeP_HeLa_Mitosis_clean[, 1:(ncol(RDeeP_HeLa_Mitosis_clean) - 2)]
@@ -368,8 +349,8 @@ head(Mitosis_RNase_100)
 
 
 ```{r Clean environment}
-#I think it's time to clean up the environment to maintain an overview
-rm(nonzero_rows, column_values,max_values_Ctrl,max_values_RNase,p_values_Ctrl,p_values_RNase,RDeeP_HeLa_Mitosis_p,bad_proteins10,bad_proteins10wierd,num_sets,p_values,protein1_Ctrl_frac1,protein8_Ctrl_frac1,bad_proteins5,i,num_sets,RDeeP_HeLa_Mitosis_Ctrl,RDeeP_HeLa_Mitosis_RNase)
+# Clean up the environment of variables not used later to maintain an overview
+rm(nonzero_rows, column_values,max_values_Ctrl,max_values_RNase,p_values_Ctrl,p_values_RNase,RDeeP_HeLa_Mitosis_p,bad_proteins10,num_sets,p_values,protein1_Ctrl_frac1,protein8_Ctrl_frac1,bad_proteins5,i,RDeeP_HeLa_Mitosis_Ctrl,RDeeP_HeLa_Mitosis_RNase)
 ```
 
 ## 3. Visualization
@@ -381,7 +362,7 @@ This code helps us visualize one specific protein
 ```{r}
 # Step 1: Extract the row you want to find peaks in
 row_index <- 6  # Adjust the row index as needed
-row_name <- row.names(Mitosis_Ctrl_100)[row_index] #name of plot adapts depending on protein viewed #also works if Mitosis_RNase_100, bc both dataframes would plot the same protein
+row_name <- row.names(Mitosis_Ctrl_100)[row_index] #name of plot adapts depending on protein viewed
 
 # Step 2: Extrakt the data for Ctrl and RNase
 row_data_Ctrl <- Mitosis_Ctrl_100[row_index, ]
@@ -418,7 +399,7 @@ View a protein and its peak using the protein name
 
 ```{r}
 # Step 1: Select a specific row by name
-row_name <- "2A5E_HUMAN" # "ABCA1_HUMAN" (precipitated protein, but still shifter) 'ABT1_HUMAN' (right shifter) #'ABCF1_HUMAN' (left shifter) #UTP11_HUMAN (percipitated non shifting protein?) #ehemals problematisch: SQOR_HUMAN
+row_name <- "2A5E_HUMAN" #EXAMPLE PROTEINS: ABCA1_HUMAN (precipitated protein, but still shifter), ABT1_HUMAN (right shifter), ABCF1_HUMAN and RBM3_HUMAN (left shifters), SQOR_HUMAN (local shifter)
 
 # Step 2: Find the peaks for Ctrl in the row data
 row_data_Ctrl <- Mitosis_Ctrl_100[row_name, ]
@@ -451,10 +432,8 @@ legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd
 
 ## 4. Different shift finders
 
-#### 4.1 Peak finder (only absolute maxima)
+#### 4.1 Max shift: Global Peak finder
 
-Overview to know in which fraction the max was found. The vector should then help for further analysis.
-Overview for Ctrl Dataframe.
 ```{r Peak finder Ctrl}
 # Find the column index of the global maximum for each row
 column_indices <- apply(Mitosis_Ctrl_100, 1, which.max)
@@ -475,7 +454,7 @@ print(Ctrl_fraction_max_value)
 print(Ctrl_fraction_max)
 
 #Results as vector
-#as.vector(Ctrl_fraction_max) #just numbers (aka fractions where max) 
+#as.vector(Ctrl_fraction_max)
 
 ```
 
@@ -494,8 +473,6 @@ row_names <- row.names(Mitosis_RNase_100)
 # Create a dataframe with the results
 RNase_fraction_max_value <- data.frame(Fraction = column_indices, MaxValue = global_maxima)
 RNase_fraction_max <- data.frame(Fraction = column_indices)
-#hier kommt bei mir Fehler raus, da anscheinend unsere Daten unterschiedlich lang sind
-#Bei mir passt alles? Ist das noch aktuell? Wenn nein kommentare gern löschen - Verena
 
 # Print the results
 # Shows protein name, fraction where global maxima was found and the maximum value
@@ -503,13 +480,13 @@ print(RNase_fraction_max_value)
 print(RNase_fraction_max)
 
 #Results as vector
-#as.vector(RNase_fraction_max) #just numbers (aka fractions where max) 
+#as.vector(RNase_fraction_max)
 ```
 
 We subtract the value in Ctrl_fraction_max (Ctrl fraction where max) with the value in RNase_fraction_max (RNase fraction where max) . If the result:
-'=' 0: no shift
-'>' 0: (positive number) left shift (normal, bedeutet max fraction bei Control ist größer als max fraction bei RNase)
-'<' 0: (negative number) right shift (meist eher ungewöhnlich, bedeutet RNase Fraktion ist größer als Control fraktion, Protein ist irgendwie schwerer geowrden)
+'=','>-1'and'<1' 0: no shift
+'>1': left shift (max fraction in Control larger than max fraction in RNase)
+'<-1': right shift (max fraction in Control larger than max fraction in RNase)
 
 ```{r Peak assigner}
 # Subtract the values and determine the shift
@@ -529,7 +506,7 @@ colnames(shift_dataframe)[1] <- "Shift"
 # Print the new dataframe
 print(shift_dataframe)
 
-shift_dataframe["RBM3_HUMAN",] #RBM3 is a sure shifter, siehe graph etc. (aber auch komplex)
+shift_dataframe["RBM3_HUMAN",] #RBM3 is a sure right shifter, as a check for the method
 ```
 
 ```{r}
@@ -540,9 +517,10 @@ sum(shift_dataframe$Shift == "no shift")
 
 sum(shift_dataframe$Shift == "left shift") + sum(shift_dataframe$Shift == "right shift")
 ```
-#### 4.2.1 logischer y-shift
 
-nach max shift den Y shift durchführen mit alen proteinen die 0 als max shift hatten und somit weitere partial shifter identifizieren.
+##### 4.1.1  y-shift for identification of partial shifter
+
+After the max shift, we execute a y shift on all proteins which had 0, 1 or -1 shifts in the first part (no significant max shift). This allows us to identify additional partial shifters.
 
 ```{r}
 max_shift <- Ctrl_fraction_max - RNase_fraction_max
@@ -584,17 +562,17 @@ sum(y_max_subset$ProteinType == 'RBP') #503 additional partial shifters identifi
 ```
 
 
-
 #### 4.2 Local maxima
 
-Next step would to further analyse our left shift and right shift proteins.
+Next step would to further analyse our proteins with all their local peaks.
 
-For our shift proteins, we now want to compare all the location of the absolute and local maxima in Control and RNase with each other. Here, we save the column indices of Mitosis_RNase_100, with all maxima, no matter local or absolute, in a new dataframe (RNase_maxima) and repeat this process with Mitosis_Ctrl_100. 
+We now want to compare the location of all (absolute and local) maxima in Control and RNase with each other. Here, we save the column indices of Mitosis_RNase_100, with all maxima, no matter local or absolute, in a new dataframe (RNase_maxima) and repeat this process with Mitosis_Ctrl_100. 
 
-Then we compare if all peaks found in RNA are identical to all peaks found in Control (by comparing the column indices of the peaks). If they are identical, the condition results in TRUE, otherwise FALSE.
+Then we compare if all peaks found in RNA are identical to all peaks found in Control (by comparing the column indices of the peaks). If they are identical, the condition results in TRUE, otherwise FALSE. 
 
 TRUE: no shift, because all local maxima are identical
 FALSE: shifter -> change of amount or location of maxima
+
 ```{r}
 # Create an empty vector to store the results
 results <- vector("logical", nrow(Mitosis_Ctrl_100))
@@ -639,13 +617,11 @@ identical_fractions["SQOR_HUMAN",] #-> FALSE, thus this protein is rightly ident
 sum(identical_fractions$no_shift == FALSE) #-> 1570 proteins are identified as shifters
 ```
 
-We get TRUE results for all NO SHIFT proteins, meaning they have identical local and absolute maxima. 
 
-#### 4.2.1 Local Maxima code for kmean und linear regression 
+##### 4.2.1 Local Maxima code and linear regression 
 
-Dieser Code identifiziert nur die Anzahl der local shifts und wurde nur für das kmeans und linear regression gebracht
-
---> Hier wird jedoch nicht ein shift in den local maxima betrachtet, sondern nur ob mehr entstehen oder welche verschwinden zwischen Control und RNase. Dadurch werden ziemlich viele Proteine vernachlässigt, genauer gesagt 1570-900, also 670 Proteine werden dadurch nicht aufgeführt... Evt. später anpassen.
+This code quantifies the local shifts and is only used for kmeans and linear regression later on. In order to do this first all proteins with different numbers of local peaks are saved, then all remaining proteins are selected. Those are assigned the value 1 for when their peaks have different column indexes (of their peaks), between Control and RNase. If the peak number AND all column indexes are identical, the proteins have the value 0. 
+If we only take the difference in numbers of overall peaks, quite a few proteins are neglected, more precisely 670 proteins are not listed (proteins with same amount of peaks but which are found in different fractions). Using this method, we can quantify all local shifters for later evaluation in the linear regression. 
 
 ```{r}
 # Create an empty vector to store the results
@@ -678,6 +654,13 @@ for (i in 1:nrow(Mitosis_Ctrl_100)) {
   
   # Store the difference in the results vector
   results[i] <- diff_peaks
+  
+  #Compare the peaks between Ctrl and RNase
+  if (diff_peaks == 0 && !identical(peaks_Ctrl, peaks_RNase)) {
+    results[i] <- 1
+  } else {
+    NULL
+    }
 }
 
 # Create a data frame with the results
@@ -704,12 +687,10 @@ row.names(curve_quotients) <- row.names(Mitosis_Ctrl_100)
 print(curve_quotients)
 ```
 
-Hier bedeutet ein Wert von 1 eine komplette Übereinstimmung. Je mehr richtung null, desto größer ist der RNase Wert im Vergleich zum Control wert (aka RNase peak), je näher richtung 2, 3, 4 etc, desto größer ist der Ctrl Wert (aka Ctrl peak).
+Here a value of 1 means identical values. The closer to zero, the higher the RNase value compared to the control value (aka RNase peak), the closer to 2, 3, 4 etc, the higher the Ctrl value (aka Ctrl peak).
 
-Eine Möglichkeit jetzt wäre zu sagen, wir gucken welche proteine im Quotienten einen Wert tiefer als 0,8 haben, also eine abweichung um 25% (z.B. : Ctrl=4, und RNase=4 * 1,25, also 25% größer, und 4/(4 * 1,25) =0,8). Oder eben einen Wert größer als 1,25. Dann würden wir diese Proteine als shifter definieren.
---> Hier sind paar zu viele shifter identifiziert worden
-Alternativ: Werte weichen um 60% ab, dann Werte kleiner als 0,625 und Werte größer als 1,6. 
---> Hier ist fast nichts mehr ein shifter.
+Now we look at which proteins in the quotient have a value lower than 0.8, i.e. a deviation of 25% (e.g. : proteins with values greater than 1.25 would be assigned as shifters.) -> a lot of proteins are identified, possibly falsly including several statistcal fluctuations and identifying them as shifters
+--> 70% is a much more reliable margin.
 
 ```{r}
 # Create the shifting_quotients dataframe
@@ -728,50 +709,13 @@ shifting_quotients["RBM3_HUMAN",] #RBM3 is a sure shifter, but a bit complex
 ```
 This seems like an interesting alternative way to anaylse the proteins! For example 41_HUMAN is now identified as RBP, which was not the case in previous methods, and accoriding to RDeep it is really an RBP! So lets see what we do with this information.
 
-Additional shifter count:
+Shifter count:
 ```{r}
 sum(shifting_quotients$"Curve_shifters" == "shifter")
 ```
-This is A LOT OF SHIFTERS, even more than in the local shifter! Maybe we still have to adjust the threshold.
 
-Alternative method to determine shifters via z-test (t test doesnt work bc in some rows the values do not vary enough). The z-test is a statistical test that compares a sample mean to a population mean, assuming a known standard deviation. It identifies values that significantly deviate from the expected value based on the given confidence interval.
-```{r}
-# Create a function to perform z-test for each value
-perform_z_test <- function(value) {
-  z_score <- (value - 1) / sd_value  # Calculate the z-score
-  
-  if (abs(z_score) > #1.96) {  # Assuming 95% confidence interval. If the absolute value of the z-score is greater than 1.96, it indicates that the value significantly differs from the expectation value.
-                    1.645) {  # Assuming 90% confidence interval. The bigger the confidence interval, the more proteins are identified as shifters.
-    return("shifter")
-  } else {
-    return("no shifter")
-  }
-}
+For k-means analyse: save the minimal and maximal quotient value for each protein in a new table. 
 
-# Calculate the standard deviation across the entire dataframe
-sd_value <- sd(as.matrix(curve_quotients)) #shifter abhängig auch von der sd, hier über den gesamten Datensatz eine sd von 0.361562, je kleiner, desto näher nimmt man an sind die Werte aneinander, je größer, desto weiter entfernt.
-
-# Apply the z-test function to each value in the dataframe
-quotients_using_z <- apply(curve_quotients, 1, function(row) {
-  result <- sapply(row, perform_z_test)
-  if ("shifter" %in% result) {
-    return("shifter")
-  } else {
-    return("no shifter")
-  }
-})
-
-quotients_using_z <- data.frame(quotients_using_z)
-colnames(quotients_using_z) <- "Result"
-```
-
-```{r}
-# Print the count of "shifter" values
-table(quotients_using_z$Result)["shifter"]
-```
-For example 5NT3A_HUMAN	is identified as a shifter here, but not in the first two methods. RDeep says it is a shifter though. not that bad so maybe?
-
-Für Alexandra/k-means analyse: jedes Protein mit maximalen und minimalen Wert? Vllt bringt es was, nicht sicher wie die Daten aussehen müssen damit du k-means anwenden kannst.
 ```{r}
 # Calculate the minimum and maximum values for each row in curve_quotients
 quotients_minmax <- data.frame("Min" = apply(curve_quotients, 1, min), "Max" = apply(curve_quotients, 1, max), row.names = row.names(curve_quotients))
@@ -781,46 +725,104 @@ print(quotients_minmax)
 ```
 
 
-#### 4.4 y-shift VERALTET NACH FABIOS ARGUMENTATION
+## 5. Venn-Diagramm visualization
+
+First Loading the RBP2GO Dataset into our environment:
 
 ```{r}
-# Function to calculate difference in y-values between global maxima
-calculate_maxima_diff <- function(row_name, Mitosis_Ctrl_100, Mitosis_RNase_100) {
-  # Select the specific row from both dataframes
-  row_data_Ctrl <- Mitosis_Ctrl_mean[row_name, ]
-  row_data_RNase <- Mitosis_RNase_mean[row_name, ]
+comparison_RBP = read.csv("https://www.dropbox.com/s/xpjob8g8flxl3ik/Table_HS_RBP.txt?dl=1", sep = "", header = T, row.names = 1)
 
-  # Find the global maximum from the selected row in df1
-  row_global_max_Ctrl <- max(row_data_Ctrl)
+comparison_RBP = comparison_RBP[order(row.names(comparison_RBP)),]
 
-  # Find the global maximum from the selected row in df2
-  row_global_max_RNase <- max(row_data_RNase)
+comparison_non_RBP = read.csv("https://www.dropbox.com/s/cgbrvponhw7arpt/Table_HS_Non_RBP.txt?dl=1", sep = "", header = T, row.names = 1)
 
-  # Calculate the difference in y-values between the global maxima
-  y_diff <- row_global_max_Ctrl - row_global_max_RNase
+comparison_non_RBP = comparison_non_RBP[order(row.names(comparison_non_RBP)),]
 
-  # Return the difference in y-values
-  return(y_diff)
-}
-
-# Get the row names of df1
-row_names <- rownames(Mitosis_Ctrl_mean)
-
-# Apply the function to each row name
-results <- sapply(row_names, calculate_maxima_diff)
-
-# Create a dataframe with only the differences in y-values
-results_yshift <- data.frame(YDiff = results)
-
-# Print the results
-print(results_yshift) #results as Dataframe - columns showing protein name and the difference 
-
-#as.vector(results_yshift) #results as vector - maybe better to work with afterwards, if needed
+# View the loaded data
+head(comparison_non_RBP)
 ```
 
-## 5. Statistical analysis
-### 5.1 kmeans
-##### 5.1.1 For maxima
+Dataframe preparation:
+```{r}
+# max shift: 
+# Filter rows with "left shift" or "right shift" in the shift_dataframe:
+max_shifter_names <- shift_dataframe[shift_dataframe$Shift %in% c("left shift", "right shift"), , drop = FALSE]
+
+# y shift:
+# Filter rows from y_max_subset where ProteinType is 'RBP':
+y_rows <- y_max_subset[y_max_subset$ProteinType == 'RBP',, drop = FALSE ]
+
+# COMBINE YSHIFT ROWS WITH MAX SHIFT:
+colnames(y_rows) <- "Shift"
+y_rows$Shift <- ifelse(y_rows$Shift == "RBP", "left shift", y_rows$Shift)
+max_shifter_names <- rbind(max_shifter_names, y_rows)
+
+# local shift:
+# Filter rows with FALSE results in the identical_fractions dataframe:
+local_shifter_names <- subset(identical_fractions, no_shift == FALSE)
+
+# curve shift:
+# # Filter rows with "shifter" in the shifting_quotients dataframe:
+curve_shifter_names <- shifting_quotients[shifting_quotients$Curve_shifters == "shifter", , drop = FALSE]
+
+## I also checked the numbers, I did not loose any values.
+```
+
+Trying a Venn-Diagramm, without RBP2GO proteins:
+```{r}
+library(VennDiagram)
+
+# Extract the row names from each dataframe
+max_shifter_row_names <- rownames(max_shifter_names)
+local_shifter_row_names <- rownames(local_shifter_names)
+curve_shifter_row_names <- rownames(curve_shifter_names)
+
+# Create the Venn diagram
+venn_result <- venn.diagram(
+  x = list(max_shifter_row_names, local_shifter_row_names, curve_shifter_row_names),
+  category.names = c("Max & Y Shifters", "Local Shifters", "Curve Shifters"),
+  filename = NULL,  # Set filename to NULL to prevent saving as an image file
+  fill = c("dodgerblue", "firebrick1", "darkgoldenrod1"),  # Specify colors for the diagram elements
+  alpha = 0.5,  # Set transparency for the overlapping areas
+  cex = 1.5  # Increase the font size
+)
+
+# Print the Venn diagram
+grid.newpage()
+grid.draw(venn_result)
+```
+
+Venn Diagram with RBP2GO proteins:
+
+```{r}
+library(VennDiagram)
+
+# Extract the row names from each dataframe
+max_shifter_row_names <- rownames(max_shifter_names)
+local_shifter_row_names <- rownames(local_shifter_names)
+curve_shifter_row_names <- rownames(curve_shifter_names)
+#y_row_names <- rownames(y_rows)
+RBP_row_names <- rownames(comparison_RBP)
+
+# Create the Venn diagram
+venn_result <- venn.diagram(
+  x = list(max_shifter_row_names, local_shifter_row_names, curve_shifter_row_names, RBP_row_names),
+  category.names = c("Max Shifters", "Local Shifters", "Curve Shifters", "RBP2GO shifters"),
+  filename = NULL,  # Set filename to NULL to prevent saving as an image file
+  fill = c("dodgerblue", "firebrick1", "darkgoldenrod1", "springgreen"),
+  alpha = 0.5,  # Set transparency for the overlapping areas
+  cex = 1.5  # Increase the font size
+)
+
+# Print the Venn diagram
+grid.newpage()
+grid.draw(venn_result)
+```
+
+
+## 6. Statistical analysis
+### 6.1 kmeans
+##### 6.1.1 For maxima
 
 Trying to create three cluster: left-shift, right-shift (possibly RBP); no shift (no RBP). Here only goes for data generate from difference between the max-shifts
 
@@ -881,7 +883,7 @@ dotplot2 <- ggplot(clustered_data2, aes(x = Ctrl_fraction_max, y = RNase_fractio
 plot(dotplot2)
 ```
 
-##### 5.1.2 For quotients
+##### 6.1.2 For curve
 
 Since we are unsure how well kmeans worked for the maxima-clustering we now do the same clustering for quotients_minmax
 
@@ -893,7 +895,7 @@ show(quotients_minmax)
 fviz_nbclust(quotients_minmax, kmeans, method='silhouette') #optimal number of cluster = 2
 
 #then a k-means clustering with the optimal amount of cluster and interpretation
-km_q <- kmeans(quotients_minmax, centers = 2, nstart = 25, algorithm = "MacQueen")
+km_q <- kmeans(quotients_minmax, centers = 2, nstart = 25)
 
 #visualizing the result of kmeans
 km_q
@@ -906,192 +908,18 @@ show(clustered_data3)
 # Create a scatter plot using ggplot
 dotplot3 <- ggplot(clustered_data3, aes(x = Min, y = Max, color = cluster)) +
   geom_point() +
-  labs(title = "K-means Clustering for quotients",
+  labs(title = "K-means Clustering for curve",
        x = "Min",
        y = "Max",
        color = "Cluster")
 
 plot(dotplot3)
 ```
-Das sieht auf jeden Fall schonmal anders aus. Aber besser?! -> vielleicht
-
-Again for 3 clusters that we hoped for:
-```{r}
-km3_q <- kmeans(quotients_minmax, centers = 3, nstart = 25)
-#fviz_cluster(km3_q, data = quotients_minmax)
-
-# Create a data frame with clustered data and cluster labels
-clustered_data4 <- data.frame(quotients_minmax, cluster = as.factor(km3_q$cluster))
-show(clustered_data4)
-
-# Create a scatter plot using ggplot
-dotplot4 <- ggplot(clustered_data4, aes(x = Min, y = Max, color = cluster)) +
-  geom_point() +
-  labs(title = "K-means Clustering for quotients",
-       x = "Min",
-       y = "Max",
-       color = "Cluster")
-
-plot(dotplot4)
-```
-Finde ich besser als die kmeans plots für die Maxima. Aber wir sollten uns überlegen was aus "biologischer" Sicht hier logischer ist und das andere kmeans dann rausschmeissen.
-
-#### 5.1.3. For y-shift
-```{r}
-#need to generate new dataframe
-  row_global_max_Ctrl <- apply(Mitosis_Ctrl_100, 1, max)
-  row_global_max_RNase <- apply(Mitosis_RNase_100, 1, max)
-  
-results_yshift2 <- data.frame(row_global_max_Ctrl, row_global_max_RNase)
-show(results_yshift2) 
-
-fviz_nbclust(results_yshift2, kmeans, method='silhouette') #optimal number of cluster = 2
-
-#then a k-means clustering with the optimal amount of cluster and interpretation
-#visualizing the result of kmeans
-km_y <- kmeans(results_yshift2, centers = 2, nstart = 25)
-#fviz_cluster(km_y, data = results_yshift2)
-
-# Create a data frame with clustered data and cluster labels
-clustered_data5 <- data.frame(results_yshift2, cluster = as.factor(km_y$cluster))
-show(clustered_data5)
-
-# Create a scatter plot using ggplot
-dotplot5 <- ggplot(clustered_data5, aes(x = row_global_max_Ctrl, y = row_global_max_RNase, color = cluster)) +
-  geom_point() +
-  labs(title = "K-means Clustering for y-shift",
-       x = "row_data_Ctrl",
-       y = "row_data_RNase",
-       color = "Cluster")
-
-plot(dotplot5)
-```
-For 3 cluster
-```{r}
-#then a k-means clustering with the optimal amount of cluster and interpretation
-#visualizing the result of kmeans
-km3_y <- kmeans(results_yshift, centers = 3, nstart = 25)
-#fviz_cluster(km_y, data = results_yshift)
-
-# Create a data frame with clustered data and cluster labels
-clustered_data6 <- data.frame(results_yshift, cluster = as.factor(km3_y$cluster))
-show(clustered_data6)
-
-# Create a scatter plot using ggplot
-dotplot6 <- ggplot(clustered_data6, aes(x = row_global_max_Ctrl, y = row_global_max_RNase, color = cluster)) +
-  geom_point() +
-  labs(title = "K-means Clustering for y-shift",
-       x = "GlobalMax_Ctrl",
-       y = "GlobalMax_RNase",
-       color = "Cluster")
-
-plot(dotplot6)
-```
-###### 5.1.3.1 Description of cluster 2
-
-Lets take a closter look at cluster 2, as those proteins seem to be "extrem y-shifters"
-```{r}
-# Extract the cluster assignments from the kmeans_result object
-cluster_assignments <- km3_y$cluster
-
-# Filter the dataframe based on the cluster assignment
-cluster2_values <- results_yshift[cluster_assignments == 2, ]
-
-# Print the values in Cluster 2
-print(cluster2_values)
-
-# Count the number of values in Cluster 2
-num_cluster2_values <- nrow(cluster2_values)
-
-# Print the count
-print(num_cluster2_values)
-```
-So we have 4 "extrem y-shifters". Lets take a look at them
-
-```{r}
-# Step 1: Extract the row you want to find peaks in
-row_index <- 4269     # Adjust the row index as needed
-row_name <- row.names(Mitosis_Ctrl_100)[row_index] #name of plot adapts depending on protein viewed #also works if Mitosis_RNase_100, bc both dataframes would plot the same protein
-
-# Step 2: Extrakt the data for Ctrl and RNase
-row_data_Ctrl <- Mitosis_Ctrl_100[row_index, ]
-row_data_RNase <- Mitosis_RNase_100[row_index, ]
-
-# Step 3: Find the peaks in the row data
-peaks_Ctrl <- c()
-for (i in 2:(length(row_data_Ctrl) - 1)) {
-  if (row_data_Ctrl[i] > row_data_Ctrl[i-1] && row_data_Ctrl[i] > row_data_Ctrl[i+1]) {
-    peaks_Ctrl <- c(peaks_Ctrl, i)
-  }
-}
-
-peaks_RNase <- c()
-for (i in 2:(length(row_data_RNase) - 1)) {
-  if (row_data_RNase[i] > row_data_RNase[i-1] && row_data_RNase[i] > row_data_RNase[i+1]) {
-    peaks_RNase <- c(peaks_RNase, i)
-  }
-}
-
-# Step 4: Visualize the peaks on a plot
-plot(1:25, Mitosis_Ctrl_100[row_index, ], type = "l", col="blue", xlab = "Fractions", ylab = "Relative Protein amount",ylim=c(0,40), main = row_name)
-points(peaks_Ctrl, row_data_Ctrl[peaks_Ctrl], col = "blue", pch = 16)
-
-lines(1:25, Mitosis_RNase_100[row_index, ], type="l",col="red")
-points(peaks_RNase, row_data_RNase[peaks_RNase], col = "red", pch = 16)
-grid()
-legend("topright",legend=c("Control","RNase"),col=c("blue","red"),bg="white",lwd=2)
-```
-Auf diesen Grafiken sieht das auf jeden Fall nicht nach extrem-shifters auf
-
-### other correlation
-```{r}
-# Compute the distance matrix
-distance_matrix <- dist(maximum_fraction)
-
-# Perform hierarchical clustering
-hclust_result <- hclust(distance_matrix)
-
-# Cut the dendrogram into clusters
-num_clusters <- 3  # Specify the desired number of clusters
-clusters <- cutree(hclust_result, k = num_clusters)
-
-# Plot the dendrogram with customized options
-plot(hclust_result, main = "Hierarchical Clustering Dendrogram",
-     xlab = "Observations", ylab = "Distance",
-     labels = FALSE, hang = -1, cex = 0.8)
-
-# Add labels to the leaves of the dendrogram
-#labels <- rownames(maximum_fraction)  
-#text(x = seq_along(labels), y = par("usr")[3] - 0.1, labels = labels,
-     #srt = 90, adj = c(1, 0.5), xpd = TRUE, cex = 0.6)
-
-# Add cluster labels to the plot
-rect.hclust(hclust_result, k = num_clusters, border = 2:4)
-
-# Create an empty list to store split data
-split_data <- list()
-
-# Split each column based on cluster assignments
-for (col in colnames(maximum_fraction)) {
-  split_data[[col]] <- split(maximum_fraction[[col]], as.factor(clusters))
-}
-
-# Create a dataframe with each cluster as a column
-cluster_dataframe <- do.call(cbind, split_data)
-
-# Print the cluster dataframe
-print(cluster_dataframe)
 
 
-```
-Sagt mir halt irgendwie nichts
+## 7. Linear Regression
 
-
-## 6. Linear Regression
-Idee: columns nach jeder unserer Methoden (4) und wir finden so sozusagen die beiden Methoden die in größer Übereinstimmung RBPs bestimmt haben und wenden dann auf die LR an
-Ich denke das wäre bei uns ziemlich cool, eben weil wir diese verschiedenen Methoden haben
-
-#### 6.1 generate Dataframe
+#### 7.1 generate Dataframe
 
 ```{r}
 max_shift <- Ctrl_fraction_max - RNase_fraction_max
@@ -1099,7 +927,6 @@ max_shift <- Ctrl_fraction_max - RNase_fraction_max
 # Create shift_comparison dataframe
 shift_comparison <- data.frame(max_shift = max_shift,
                                local_shift = identical_fractions2,
-                               YDiff = results_yshift,
                                curve_shift = quotients_minmax$Max,
                                row.names = row.names(max_shift))
 colnames(shift_comparison)[1] <- "max_shift"
@@ -1109,7 +936,7 @@ print(shift_comparison)
 
 ```
 
-#### 6.2 identify two columns with a linear relationship
+#### 7.2 identify two columns with a linear relationship
 
 ```{r}
 # Initialize variables to store the best linear relationship found
@@ -1140,10 +967,9 @@ for (i in 1:(ncol(shift_comparison) - 1)) {
 # Print the columns with the best linear relationship found
 cat("Columns with the highest correlation were:", best_col1_name, "and", best_col2_name, "\n")
 ```
+As hoped, we can see that there is a linear relationship between the max-shift and the curve-shift. In the following we test whether that relationship is strong enought to give us a reliable linear regression model.
 
-Egal ob man den Maximalen Wert des Kurven Quotienten Codes nimmt oder den minimalen, in beiden Fällen wird die höchste Korrelation zwischen dem curve_shift daten und den max_shift daten gefunden!
-
-#### 6.3 perform a linear regression
+#### 7.3 perform a linear regression
 
 ```{r}
 # Perform linear regression on the columns with the best linear relationship
@@ -1153,8 +979,7 @@ model <- lm(shift_comparison[[best_col2_name]] ~ shift_comparison[[best_col1_nam
 # Print the regression summary
 summary(model)
 
-summary(model)$r.squared #ist bei 0.2482234, sehrrr gering...
-#habe das gleiche mit dem Min wert beim Curve shift durchgeführt, da ist der wert genauso auch bei 0.2482234
+summary(model)$r.squared 
 
 # Create a data frame with the two columns
 data <- data.frame(x = shift_comparison[[best_col1_name]], y = shift_comparison[[best_col2_name]])
@@ -1164,64 +989,30 @@ ggplot(data, aes(x = x, y = y)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, color = "blue") +
   labs(title = "Linear Regression", x = best_col1_name, y = best_col2_name)
+
+# Calculate RMSE
+predicted <- as.numeric(fitted(model))
+
+column1 <- data$x
+column2 <- data$y
+rmse <- rmse(predicted, c(column1, column2))
+
+cat("The Root Mean Square Error is ", rmse, "\n")
 ```
 
-Mhm. Sieht noch ziemlich sketchy aus, aber es ist ein erstes Ergebnis. 
 
-
-#### 6.4 Trying out new dataframes (caution: same name!!!!!!!!!)
-Okay, mit der ersten Methode haben wir jetzt einen R Wert von 0.2658505. Das ist nicht wirklich gut genug. Im folgenden 2 dataframe, die dann jeweils auch shift_comparison heißen. Dementsprechend immer den chunk des DF vor den Finden der beiden columns mit der höchsten linearen Beziehung ausführen.
+#### 7.4 QQ-Plot of the linear regression
 
 ```{r}
-shift_comparison <- data.frame(max_shift = max_shift,
-                               local_shift = identical_fractions2,
-                               YDiff = results_yshift,
-                               curve_shift = quotients_minmax$Max,
-                               row.names = row.names(max_shift))
-colnames(shift_comparison)[1] <- "max_shift"
+residuals <- rstandard(model)
 
-print(shift_comparison)
-
-```
-
-```{r}
-#first adadpted dataframe will have the columns independently scaled to 100
-
-# Apply separate scaling to each column
-shift_comparison <- as.data.frame(apply(shift_comparison, 2, function(x) {
-  min_val <- min(x, na.rm = TRUE)
-  max_val <- max(x, na.rm = TRUE)
-  scaled <- (x - min_val) / (max_val - min_val)
-  scaled <- ifelse(is.na(x), NA, scaled)  # Preserve NA values
-  scaled <- scaled * 100  # Scale to the range of 0 to 100
-  scaled
-}))
-
-# Print the original and scaled dataframes
-print(shift_comparison)
-
-#also der R-Wert beträgt noch immer 0.2658505
-
+# Create a QQ plot
+qqplot(qnorm(ppoints(length(residuals))), residuals,
+       xlab = "Theoretical Quantiles",
+       ylab = "Standardized Residuals",
+       main = "QQ Plot of Linear Model")
+abline(a = 0, b = 1, col = "blue", lwd = 2)
 ```
 
 
-```{r}
-# if that isnt enough the second dataframe will set all RBPs that we identyfied as 1 and all non-RBP as 0. For first two that would mean those with a value are set 1. For other two we take respective threshold and set those 1 that met criteria to be RBP and 0 those who do not met the threshold
 
-# Create a new dataframes
-new_df <- as.data.frame(ifelse(max_shift == 0, 0, 1))
-
-new_df2 <- as.data.frame(ifelse(identical_fractions == TRUE, 0, 1))
-
-
-
-shift_comparison <- data.frame(max_shift = new_df,
-                               local_shift = new_df2,
-                               YDiff = results_yshift,
-                               curve_shift = quotients_minmax$Max,
-                               row.names = row.names(max_shift))
-colnames(shift_comparison)[1] <- "max_shift"
-
-print(shift_comparison)
-
-```
