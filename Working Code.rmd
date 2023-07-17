@@ -173,11 +173,7 @@ rownames(p_values_Ctrl) <- rownames(RDeeP_HeLa_Mitosis_Ctrl)
 print(p_values_Ctrl)
 ```
 
-<<<<<<< HEAD
 Finding the maximum value for each row, then deciding if it is smaller than our significance level (10%)
-=======
-Finding the maximum value for each row
->>>>>>> 65a39dd5a1666188775609e97134025fc90c5eee
 
 ```{r}
 # Replace NA values with zero in p_values_Ctrl dataframe
