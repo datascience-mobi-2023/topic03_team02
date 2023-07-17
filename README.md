@@ -26,6 +26,7 @@ The data for the protein amount per fraction was collected using mass spectromet
   #### Working code
 The markdown that contains our code
   #### [Report](https://github.com/datascience-mobi-2023/topic03_team02/tree/main/Report)
+File containing our final report in pdf and its corresponding source format
   
 Our final report
   #### Data
