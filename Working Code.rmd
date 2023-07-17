@@ -879,7 +879,7 @@ dotplot2 <- ggplot(clustered_data2, aes(x = Ctrl_fraction_max, y = RNase_fractio
 plot(dotplot2)
 ```
 
-##### 6.1.2 For quotients
+##### 6.1.2 For curve
 
 Since we are unsure how well kmeans worked for the maxima-clustering we now do the same clustering for quotients_minmax
 
@@ -904,7 +904,7 @@ show(clustered_data3)
 # Create a scatter plot using ggplot
 dotplot3 <- ggplot(clustered_data3, aes(x = Min, y = Max, color = cluster)) +
   geom_point() +
-  labs(title = "K-means Clustering for quotients",
+  labs(title = "K-means Clustering for curve",
        x = "Min",
        y = "Max",
        color = "Cluster")
